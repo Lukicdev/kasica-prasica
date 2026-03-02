@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Transaction;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class DeleteAccountRequest extends FormRequest
+final class DeleteTransactionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

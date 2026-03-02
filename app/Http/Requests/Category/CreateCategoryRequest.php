@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Category;
 
-use App\Enums\AccountType;
-use App\Enums\Currency;
+use App\Enums\CategoryType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-final class CreateAccountRequest extends FormRequest
+final class CreateCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,9 +28,8 @@ final class CreateAccountRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', Rule::enum(AccountType::class)],
-            'currency' => ['required', 'string', Rule::enum(Currency::class)],
-            'initial_balance' => ['required', 'numeric', 'min:0'],
+            'type' => ['required', 'string', Rule::enum(CategoryType::class)],
+            'color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_shared' => ['sometimes', 'boolean'],
         ];
     }

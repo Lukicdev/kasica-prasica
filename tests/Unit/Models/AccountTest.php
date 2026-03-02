@@ -17,14 +17,14 @@ test('account can be created', function () {
         'name' => 'My Cash Account',
         'type' => AccountType::Cash,
         'currency' => Currency::EUR,
-        'initial_balance' => 1000.50,
+        'balance' => 1000.50,
         'is_shared' => false,
     ]);
 
     expect($account->name)->toBe('My Cash Account')
         ->and($account->type)->toBe(AccountType::Cash)
         ->and($account->currency)->toBe(Currency::EUR)
-        ->and($account->initial_balance)->toBe('1000.50')
+        ->and($account->balance)->toBe('1000.50')
         ->and($account->is_shared)->toBeFalse();
 });
 
@@ -57,10 +57,10 @@ test('account currency is cast to enum', function () {
         ->and($account->currency)->toBe(Currency::USD);
 });
 
-test('account initial balance is cast to decimal', function () {
-    $account = Account::factory()->create(['initial_balance' => 1234.56]);
+test('account balance is cast to decimal', function () {
+    $account = Account::factory()->create(['balance' => 1234.56]);
 
-    expect($account->initial_balance)->toBe('1234.56');
+    expect($account->balance)->toBe('1234.56');
 });
 
 test('account is shared is cast to boolean', function () {
@@ -100,10 +100,10 @@ test('account has default currency of EUR', function () {
     expect($account->currency)->toBe(Currency::EUR);
 });
 
-test('account has default initial balance of zero', function () {
+test('account has default balance of zero', function () {
     $account = Account::factory()->create();
 
-    expect($account->initial_balance)->toBe('0.00');
+    expect($account->balance)->toBe('0.00');
 });
 
 test('account has default is shared of false', function () {

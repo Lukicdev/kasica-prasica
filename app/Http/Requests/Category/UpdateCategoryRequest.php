@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Category;
 
-use App\Enums\AccountType;
-use App\Enums\Currency;
+use App\Enums\CategoryType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-final class UpdateAccountRequest extends FormRequest
+final class UpdateCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,9 +28,8 @@ final class UpdateAccountRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'type' => ['sometimes', 'required', 'string', Rule::enum(AccountType::class)],
-            'currency' => ['sometimes', 'required', 'string', Rule::enum(Currency::class)],
-            'initial_balance' => ['sometimes', 'required', 'numeric', 'min:0'],
+            'type' => ['sometimes', 'required', 'string', Rule::enum(CategoryType::class)],
+            'color' => ['sometimes', 'required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_shared' => ['sometimes', 'boolean'],
         ];
     }

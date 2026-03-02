@@ -34,7 +34,7 @@ final class AccountFactory extends Factory
             'name' => fake()->words(2, true),
             'type' => fake()->randomElement(AccountType::cases()),
             'currency' => Currency::EUR,
-            'initial_balance' => 0,
+            'balance' => 0,
             'is_shared' => false,
         ];
     }
@@ -70,12 +70,12 @@ final class AccountFactory extends Factory
     }
 
     /**
-     * Indicate that the account has a specific initial balance.
+     * Indicate that the account has a specific balance.
      */
     public function withBalance(float $balance): static
     {
         return $this->state(fn (array $attributes) => [
-            'initial_balance' => $balance,
+            'balance' => $balance,
         ]);
     }
 }
