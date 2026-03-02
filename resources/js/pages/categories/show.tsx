@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Edit, Trash2, Wallet } from 'lucide-react';
+import { ArrowLeft, Edit, Tag, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,36 +19,35 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
-import { destroy, edit, index } from '@/routes/accounts';
+import { destroy, edit, index } from '@/routes/categories';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Accounts',
+        title: 'Categories',
         href: index().url,
     },
 ];
 
-interface Account {
+interface Category {
     id: number;
     name: string;
     type: string;
-    currency: string;
-    balance: string;
-    is_shared: boolean;
-    user: {
+    color: string;
+    user_id: number | null;
+    user?: {
         id: number;
         name: string;
-    };
+    } | null;
 }
 
-interface AccountShowProps {
-    account: Account;
+interface CategoryShowProps {
+    category: Category;
 }
 
-export default function AccountShow({ account }: AccountShowProps) {
+export default function CategoryShow({ category }: CategoryShowProps) {
     const handleDelete = () => {
-        router.delete(destroy(account.id).url, {
+        router.delete(destroy(category.id).url, {
             onSuccess: () => {
                 router.visit(index().url);
             },
@@ -57,10 +56,10 @@ export default function AccountShow({ account }: AccountShowProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={account.name} />
+            <Head title={category.name} />
 
             <div className="p-4">
-                <div className="flex items-center justify-between m-2">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={index().url}>
@@ -69,16 +68,16 @@ export default function AccountShow({ account }: AccountShowProps) {
                         </Button>
                         <div>
                             <h1 className="text-2xl font-semibold">
-                                {account.name}
+                                {category.name}
                             </h1>
                             <p className="text-muted-foreground">
-                                Account details
+                                Category details
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={edit(account.id).url}>
+                            <Link href={edit(category.id).url}>
                                 <Edit className="mr-2 size-4" />
                                 Edit
                             </Link>
@@ -92,10 +91,10 @@ export default function AccountShow({ account }: AccountShowProps) {
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Delete Account</DialogTitle>
+                                    <DialogTitle>Delete Category</DialogTitle>
                                     <DialogDescription>
                                         Are you sure you want to delete this
-                                        account? This action cannot be undone.
+                                        category? This action cannot be undone.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <DialogFooter>
@@ -103,7 +102,7 @@ export default function AccountShow({ account }: AccountShowProps) {
                                         variant="destructive"
                                         onClick={handleDelete}
                                     >
-                                        Delete Account
+                                        Delete Category
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -111,38 +110,32 @@ export default function AccountShow({ account }: AccountShowProps) {
                     </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 mt-6">
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-2">
-                                <Wallet className="size-5" />
-                                <CardTitle>Account Information</CardTitle>
+                                <Tag className="size-5" />
+                                <CardTitle>Category Information</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
                                 <CardDescription>Name</CardDescription>
                                 <p className="text-sm font-medium">
-                                    {account.name}
+                                    {category.name}
                                 </p>
                             </div>
                             <div>
                                 <CardDescription>Type</CardDescription>
                                 <p className="text-sm font-medium">
-                                    {account.type.charAt(0).toUpperCase() +
-                                        account.type.slice(1)}
+                                    {category.type.charAt(0).toUpperCase() +
+                                        category.type.slice(1)}
                                 </p>
                             </div>
                             <div>
-                                <CardDescription>Currency</CardDescription>
+                                <CardDescription>Shared Category</CardDescription>
                                 <p className="text-sm font-medium">
-                                    {account.currency}
-                                </p>
-                            </div>
-                            <div>
-                                <CardDescription>Shared Account</CardDescription>
-                                <p className="text-sm font-medium">
-                                    {account.is_shared ? 'Yes' : 'No'}
+                                    {category.user_id === null ? 'Yes' : 'No'}
                                 </p>
                             </div>
                         </CardContent>
@@ -150,19 +143,23 @@ export default function AccountShow({ account }: AccountShowProps) {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Balance</CardTitle>
+                            <CardTitle>Color</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">
-                                {parseFloat(account.balance).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}{' '}
-                                {account.currency}
+                            <div className="flex items-center gap-4">
+                                <div
+                                    className="size-16 rounded-lg border-2 border-border"
+                                    style={{ backgroundColor: category.color }}
+                                />
+                                <div>
+                                    <p className="text-lg font-semibold">
+                                        {category.color}
+                                    </p>
+                                    <CardDescription className="mt-1">
+                                        Hex color code
+                                    </CardDescription>
+                                </div>
                             </div>
-                            <CardDescription className="mt-2">
-                                Balance
-                            </CardDescription>
                         </CardContent>
                     </Card>
                 </div>

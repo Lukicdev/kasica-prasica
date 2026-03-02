@@ -32,7 +32,7 @@ interface Account {
     name: string;
     type: string;
     currency: string;
-    initial_balance: string;
+    balance: string;
     is_shared: boolean;
 }
 
@@ -145,18 +145,18 @@ export default function AccountEdit({ account }: AccountEditProps) {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="initial_balance">
-                                        Initial Balance
+                                    <Label htmlFor="balance">
+                                        Balance
                                     </Label>
                                     <Input
-                                        id="initial_balance"
-                                        name="initial_balance"
+                                        id="balance"
+                                        name="balance"
                                         type="number"
                                         step="0.01"
                                         required
-                                        defaultValue={account.initial_balance}
+                                        defaultValue={account.balance}
                                     />
-                                    <InputError message={errors.initial_balance} />
+                                    <InputError message={errors.balance} />
                                 </div>
                             </div>
 

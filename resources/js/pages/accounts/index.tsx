@@ -25,7 +25,7 @@ interface Account {
     name: string;
     type: string;
     currency: string;
-    initial_balance: string;
+    balance: string;
     is_shared: boolean;
 }
 
@@ -98,7 +98,7 @@ export default function AccountsIndex({ accounts }: AccountsIndexProps) {
                                                 Balance
                                             </span>
                                             <span className="text-lg font-semibold">
-                                                {parseFloat(account.initial_balance).toLocaleString('en-US', {
+                                                {parseFloat(account.balance).toLocaleString('en-US', {
                                                     minimumFractionDigits: 2,
                                                     maximumFractionDigits: 2,
                                                 })}{' '}

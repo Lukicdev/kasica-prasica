@@ -17,28 +17,28 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { index, store } from '@/routes/accounts';
+import { index, store } from '@/routes/categories';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Accounts',
+        title: 'Categories',
         href: index().url,
     },
     {
-        title: 'Create Account',
-        href: '/accounts/create',
+        title: 'Create Category',
+        href: '/categories/create',
     },
 ];
 
-export default function CreateAccount() {
+export default function CreateCategory() {
     const [type, setType] = useState<string>('');
-    const [currency, setCurrency] = useState<string>('EUR');
+    const [color, setColor] = useState<string>('#3B82F6');
     const [isShared, setIsShared] = useState<boolean>(false);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Account" />
+            <Head title="Create Category" />
 
             <div className="p-4">
                 <div className="flex items-center gap-4 m-2">
@@ -49,10 +49,10 @@ export default function CreateAccount() {
                     </Button>
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Create Account
+                            Create Category
                         </h1>
                         <p className="text-muted-foreground">
-                            Add a new financial account
+                            Add a new transaction category
                         </p>
                     </div>
                 </div>
@@ -67,25 +67,25 @@ export default function CreateAccount() {
                     {({ processing, recentlySuccessful, errors }) => (
                         <>
                             <HeadingSmall
-                                title="Account Information"
-                                description="Enter the details for your new account"
+                                title="Category Information"
+                                description="Enter the details for your new category"
                             />
 
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Account Name</Label>
+                                    <Label htmlFor="name">Category Name</Label>
                                     <Input
                                         id="name"
                                         name="name"
                                         required
-                                        placeholder="e.g., Main Checking"
+                                        placeholder="e.g., Groceries"
                                         autoFocus
                                     />
                                     <InputError message={errors.name} />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="type">Account Type</Label>
+                                    <Label htmlFor="type">Category Type</Label>
                                     <Select
                                         required
                                         value={type}
@@ -95,8 +95,8 @@ export default function CreateAccount() {
                                             <SelectValue placeholder="Select type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="cash">Cash</SelectItem>
-                                            <SelectItem value="bank">Bank</SelectItem>
+                                            <SelectItem value="income">Income</SelectItem>
+                                            <SelectItem value="expense">Expense</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <input
@@ -109,46 +109,27 @@ export default function CreateAccount() {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="currency">Currency</Label>
-                                    <Select
-                                        required
-                                        value={currency}
-                                        onValueChange={setCurrency}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="EUR">EUR</SelectItem>
-                                            <SelectItem value="USD">USD</SelectItem>
-                                            <SelectItem value="RSD">RSD</SelectItem>
-                                            <SelectItem value="RUB">RUB</SelectItem>
-                                            <SelectItem value="CAD">CAD</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <input
-                                        type="hidden"
-                                        name="currency"
-                                        value={currency}
-                                        required
-                                    />
-                                    <InputError message={errors.currency} />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="balance">
-                                        Balance
-                                    </Label>
-                                    <Input
-                                        id="balance"
-                                        name="balance"
-                                        type="number"
-                                        step="0.01"
-                                        required
-                                        placeholder="0.00"
-                                        defaultValue="0"
-                                    />
-                                    <InputError message={errors.balance} />
+                                    <Label htmlFor="color">Color</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="color"
+                                            name="color"
+                                            type="color"
+                                            required
+                                            value={color}
+                                            onChange={(e) => setColor(e.target.value)}
+                                            className="h-10 w-20 cursor-pointer"
+                                        />
+                                        <Input
+                                            type="text"
+                                            value={color}
+                                            onChange={(e) => setColor(e.target.value)}
+                                            placeholder="#3B82F6"
+                                            maxLength={7}
+                                            className="flex-1"
+                                        />
+                                    </div>
+                                    <InputError message={errors.color} />
                                 </div>
                             </div>
 
@@ -169,14 +150,14 @@ export default function CreateAccount() {
                                     htmlFor="is_shared"
                                     className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
-                                    This is a shared account
+                                    This is a shared category
                                 </Label>
                             </div>
                             <InputError message={errors.is_shared} />
 
                             <div className="flex items-center gap-4">
                                 <Button disabled={processing} type="submit">
-                                    Create Account
+                                    Create Category
                                 </Button>
 
                                 <Button variant="outline" asChild>
@@ -191,7 +172,7 @@ export default function CreateAccount() {
                                     leaveTo="opacity-0"
                                 >
                                     <p className="text-sm text-neutral-600">
-                                        Account created successfully
+                                        Category created successfully
                                     </p>
                                 </Transition>
                             </div>
