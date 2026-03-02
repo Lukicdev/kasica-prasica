@@ -9,6 +9,7 @@ use App\Enums\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Account extends Model
 {
@@ -31,6 +32,14 @@ final class Account extends Model
     }
 
     /**
+     * Get the transactions for the account.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -40,7 +49,7 @@ final class Account extends Model
         return [
             'type' => AccountType::class,
             'currency' => Currency::class,
-            'initial_balance' => 'decimal:2',
+            'balance' => 'decimal:2',
             'is_shared' => 'boolean',
         ];
     }

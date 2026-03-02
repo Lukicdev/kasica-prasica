@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('type');
             $table->string('currency', 3)->default('EUR');
-            $table->decimal('initial_balance', 15, 2)->default(0);
+            $table->decimal('balance', 15, 2)->default(0);
             $table->boolean('is_shared')->default(false);
             $table->timestamps();
         });

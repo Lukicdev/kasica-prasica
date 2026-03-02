@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\CreateAccountAction;
-use App\Actions\DeleteAccountAction;
-use App\Actions\UpdateAccountAction;
-use App\Http\Requests\CreateAccountRequest;
-use App\Http\Requests\DeleteAccountRequest;
-use App\Http\Requests\UpdateAccountRequest;
+use App\Actions\Account\CreateAccountAction;
+use App\Actions\Account\DeleteAccountAction;
+use App\Actions\Account\UpdateAccountAction;
+use App\Http\Requests\Account\CreateAccountRequest;
+use App\Http\Requests\Account\DeleteAccountRequest;
+use App\Http\Requests\Account\UpdateAccountRequest;
 use App\Models\Account;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
