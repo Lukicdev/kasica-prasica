@@ -21,6 +21,33 @@ test('authenticated users can view transactions index', function () {
     $response = $this->actingAs($user)->get(route('transactions.index'));
 
     $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('transactions/index')
+        ->has('transactions.data')
+        ->has('sort')
+        ->has('direction')
+    );
+});
+
+test('transactions index supports sorting and pagination', function () {
+    $user = User::factory()->create();
+    Transaction::factory()->count(25)->create(['user_id' => $user->id]);
+
+    $response = $this->actingAs($user)->get(route('transactions.index', [
+        'sort' => 'transaction_date',
+        'direction' => 'asc',
+        'page' => 2,
+    ]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('transactions/index')
+        ->where('sort', 'transaction_date')
+        ->where('direction', 'asc')
+        ->where('transactions.current_page', 2)
+        ->where('transactions.per_page', 20)
+        ->has('transactions.data', 5)
+    );
 });
 
 test('authenticated users can view create transaction page', function () {

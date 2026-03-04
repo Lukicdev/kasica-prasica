@@ -6,11 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\Transaction\CreateTransactionAction;
 use App\Actions\Transaction\DeleteTransactionAction;
+use App\Actions\Transaction\GetCreateTransactionDataAction;
+use App\Actions\Transaction\GetEditTransactionDataAction;
+use App\Actions\Transaction\ListTransactionsAction;
 use App\Actions\Transaction\UpdateTransactionAction;
 use App\Http\Requests\Transaction\CreateTransactionRequest;
 use App\Http\Requests\Transaction\DeleteTransactionRequest;
 use App\Http\Requests\Transaction\UpdateTransactionRequest;
-use App\Models\Category;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,37 +24,27 @@ final class TransactionController extends Controller
     /**
      * Display a listing of transactions.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ListTransactionsAction $action): Response
     {
-        $transactions = $request->user()
-            ->transactions()
-            ->with(['account', 'category'])
-            ->latest('transaction_date')
-            ->latest('created_at')
-            ->get();
-
-        return Inertia::render('transactions/index', [
-            'transactions' => $transactions,
+        $validated = $request->validate([
+            'sort' => ['sometimes', 'string', 'in:transaction_date,description,type,amount,account_name,category_name'],
+            'direction' => ['sometimes', 'string', 'in:asc,desc'],
+            'page' => ['sometimes', 'integer', 'min:1'],
         ]);
+
+        $data = $action->handle($request->user(), $validated);
+
+        return Inertia::render('transactions/index', $data);
     }
 
     /**
      * Show the form for creating a new transaction.
      */
-    public function create(Request $request): Response
+    public function create(Request $request, GetCreateTransactionDataAction $action): Response
     {
-        $accounts = $request->user()->accounts()->get();
-        $categories = Category::query()
-            ->where(function ($query) use ($request) {
-                $query->where('user_id', $request->user()->id)
-                    ->orWhereNull('user_id');
-            })
-            ->get();
+        $data = $action->handle($request->user());
 
-        return Inertia::render('transactions/create', [
-            'accounts' => $accounts,
-            'categories' => $categories,
-        ]);
+        return Inertia::render('transactions/create', $data);
     }
 
     /**
@@ -78,21 +70,11 @@ final class TransactionController extends Controller
     /**
      * Show the form for editing the specified transaction.
      */
-    public function edit(Request $request, Transaction $transaction): Response
+    public function edit(Request $request, Transaction $transaction, GetEditTransactionDataAction $action): Response
     {
-        $accounts = $request->user()->accounts()->get();
-        $categories = Category::query()
-            ->where(function ($query) use ($request) {
-                $query->where('user_id', $request->user()->id)
-                    ->orWhereNull('user_id');
-            })
-            ->get();
+        $data = $action->handle($request->user(), $transaction);
 
-        return Inertia::render('transactions/edit', [
-            'transaction' => $transaction->load(['account', 'category']),
-            'accounts' => $accounts,
-            'categories' => $categories,
-        ]);
+        return Inertia::render('transactions/edit', $data);
     }
 
     /**
