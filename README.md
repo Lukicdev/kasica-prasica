@@ -2,14 +2,14 @@
 
 A private household money and budget management application built with Laravel, Inertia.js, and React.
 
-Kasica Prasica is a lightweight alternative to Firefly III, designed specifically for small households (2–3 users) who want full control over their financial data without relying on third-party SaaS platforms.
+Kasica Prasica is a lightweight alternative to Firefly III, designed specifically for people who want full control over their financial data without relying on third-party SaaS platforms.
 
 ---
 
 ## ✨ Features
 
 ### Core
-- Multi-account support (cash, bank, savings, credit)
+- Multi-account support (cash, bank, savings)
 - Income, expense, and transfer transactions
 - Shared and personal accounts
 - Category-based transaction organization
@@ -72,7 +72,6 @@ Financial containers such as:
 - Cash
 - Bank accounts
 - Savings accounts
-- Credit cards
 
 Supports:
 - Personal accounts
