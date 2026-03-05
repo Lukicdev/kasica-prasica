@@ -32,7 +32,30 @@ interface CategoriesIndexProps {
     categories: Category[];
 }
 
+const TYPE_ORDER: readonly string[] = ['income', 'expense'];
+
+function formatTypeName(type: string): string {
+    return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+function groupCategoriesByType(categories: Category[]): Map<string, Category[]> {
+    const grouped = new Map<string, Category[]>();
+    for (const category of categories) {
+        const type = category.type.toLowerCase();
+        const list = grouped.get(type) ?? [];
+        list.push(category);
+        grouped.set(type, list);
+    }
+    return grouped;
+}
+
 export default function CategoriesIndex({ categories }: CategoriesIndexProps) {
+    const byType = groupCategoriesByType(categories);
+    const orderedTypes = [
+        ...TYPE_ORDER.filter((t) => byType.has(t)),
+        ...[...byType.keys()].filter((t) => !TYPE_ORDER.includes(t)),
+    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Categories" />
@@ -70,45 +93,67 @@ export default function CategoriesIndex({ categories }: CategoriesIndexProps) {
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-6">
-                        {categories.map((category) => (
-                            <Card key={category.id} className="hover:shadow-md transition-shadow">
-                                <CardHeader>
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div
-                                                className="size-4 rounded-full"
-                                                style={{ backgroundColor: category.color }}
-                                            />
-                                            <div>
-                                                <CardTitle className="text-lg">
-                                                    {category.name}
-                                                </CardTitle>
-                                                <CardDescription className="mt-1">
-                                                    {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
-                                                    {category.user_id === null && (
-                                                        <span className="ml-2 text-xs">
-                                                            (Shared)
-                                                        </span>
-                                                    )}
-                                                </CardDescription>
-                                            </div>
-                                        </div>
+                    <div className="mt-6 flex flex-col gap-8">
+                        {orderedTypes.map((type) => {
+                            const typeCategories = byType.get(type) ?? [];
+                            return (
+                                <section key={type}>
+                                    <h2 className="mb-4 text-lg font-medium text-muted-foreground">
+                                        {formatTypeName(type)}
+                                    </h2>
+                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                        {typeCategories.map((category) => (
+                                            <Card
+                                                key={category.id}
+                                                className="transition-shadow hover:shadow-md"
+                                            >
+                                                <CardHeader>
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div
+                                                                className="size-4 rounded-full"
+                                                                style={{
+                                                                    backgroundColor:
+                                                                        category.color,
+                                                                }}
+                                                            />
+                                                            <div>
+                                                                <CardTitle className="text-lg">
+                                                                    {category.name}
+                                                                </CardTitle>
+                                                                <CardDescription className="mt-1">
+                                                                    {category.user_id ===
+                                                                        null && (
+                                                                        <span className="ml-2 text-xs">
+                                                                            (Shared)
+                                                                        </span>
+                                                                    )}
+                                                                </CardDescription>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                        className="w-full"
+                                                    >
+                                                        <Link
+                                                            href={show(
+                                                                category.id,
+                                                            ).url}
+                                                        >
+                                                            View Details
+                                                        </Link>
+                                                    </Button>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
                                     </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        asChild
-                                        variant="outline"
-                                        className="w-full"
-                                    >
-                                        <Link href={show(category.id).url}>
-                                            View Details
-                                        </Link>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                </section>
+                            );
+                        })}
                     </div>
                 )}
             </div>
