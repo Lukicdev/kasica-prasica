@@ -66,7 +66,8 @@ export default function CategoryEdit({ category }: CategoryEditProps) {
                 </div>
 
                 <Form
-                    {...update.form(category.id)}
+                    action={update.put(category.id).url}
+                    method="put"
                     className="space-y-6"
                     options={{
                         preserveScroll: true,

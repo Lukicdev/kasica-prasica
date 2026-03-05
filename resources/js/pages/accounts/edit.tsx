@@ -67,7 +67,8 @@ export default function AccountEdit({ account }: AccountEditProps) {
                 </div>
 
                 <Form
-                    {...update.form(account.id)}
+                    action={update.put(account.id).url}
+                    method="put"
                     className="space-y-6"
                     options={{
                         preserveScroll: true,

@@ -58,8 +58,9 @@ export default function CreateAccount() {
                 </div>
 
                 <Form
-                    {...store.form()}
+                    action={store.post().url}
                     className="space-y-6"
+                    method="post"
                     options={{
                         preserveScroll: true,
                     }}

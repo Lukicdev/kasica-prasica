@@ -93,7 +93,8 @@ export default function TransactionEdit({
                 </div>
 
                 <Form
-                    {...update.form(transaction.id)}
+                    action={update.put(transaction.id).url}
+                    method="put"
                     className="space-y-6"
                     options={{
                         preserveScroll: true,
