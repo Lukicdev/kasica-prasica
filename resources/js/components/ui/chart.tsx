@@ -65,12 +65,12 @@ const ChartContainer = React.forwardRef<HTMLDivElement, ChartContainerProps>(
 );
 ChartContainer.displayName = 'ChartContainer';
 
-interface ChartTooltipContentProps extends React.ComponentProps<'div'> {
+interface ChartTooltipContentProps {
     hideLabel?: boolean;
     formatter?: (value: number) => string;
     nameKey?: string;
     valueKey?: string;
-    /** Props injected by Recharts Tooltip */
+    /** Props injected by Recharts Tooltip (and other unknown props we ignore) */
     active?: boolean;
     payload?: Array<{
         name?: string;
@@ -79,6 +79,8 @@ interface ChartTooltipContentProps extends React.ComponentProps<'div'> {
         payload?: Record<string, unknown>;
     }>;
     label?: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 function ChartTooltipContent({
@@ -90,7 +92,7 @@ function ChartTooltipContent({
     payload,
     label,
     className,
-    ...props
+    style,
 }: ChartTooltipContentProps) {
     if (!active || !payload?.length) {
         return null;
@@ -109,7 +111,7 @@ function ChartTooltipContent({
                 "rounded-lg border border-border bg-background px-3 py-2 text-sm shadow-md",
                 className
             )}
-            {...props}
+            style={style}
         >
             {!hideLabel && name ? (
                 <div className="font-medium text-foreground">{name}</div>

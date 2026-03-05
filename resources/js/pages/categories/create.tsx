@@ -58,7 +58,8 @@ export default function CreateCategory() {
                 </div>
 
                 <Form
-                    {...store.form()}
+                    action={store.post().url}
+                    method="post"
                     className="space-y-6"
                     options={{
                         preserveScroll: true,
