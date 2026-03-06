@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Category\CreateCategoryAction;
 use App\Actions\Category\DeleteCategoryAction;
+use App\Actions\Category\ListCategoriesAction;
 use App\Actions\Category\UpdateCategoryAction;
 use App\Http\Requests\Category\CreateCategoryRequest;
 use App\Http\Requests\Category\DeleteCategoryRequest;
@@ -21,15 +22,9 @@ final class CategoryController extends Controller
     /**
      * Display a listing of categories.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ListCategoriesAction $action): Response
     {
-        $categories = Category::query()
-            ->where(function ($query) use ($request) {
-                $query->where('user_id', $request->user()->id)
-                    ->orWhereNull('user_id');
-            })
-            ->latest()
-            ->get();
+        $categories = $action->handle($request->user());
 
         return Inertia::render('categories/index', [
             'categories' => $categories,
