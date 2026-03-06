@@ -12,6 +12,7 @@ use App\Actions\Transaction\ListTransactionsAction;
 use App\Actions\Transaction\UpdateTransactionAction;
 use App\Http\Requests\Transaction\CreateTransactionRequest;
 use App\Http\Requests\Transaction\DeleteTransactionRequest;
+use App\Http\Requests\Transaction\IndexTransactionRequest;
 use App\Http\Requests\Transaction\UpdateTransactionRequest;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
@@ -24,15 +25,9 @@ final class TransactionController extends Controller
     /**
      * Display a listing of transactions.
      */
-    public function index(Request $request, ListTransactionsAction $action): Response
+    public function index(IndexTransactionRequest $request, ListTransactionsAction $action): Response
     {
-        $validated = $request->validate([
-            'sort' => ['sometimes', 'string', 'in:transaction_date,description,type,amount,account_name,category_name'],
-            'direction' => ['sometimes', 'string', 'in:asc,desc'],
-            'page' => ['sometimes', 'integer', 'min:1'],
-        ]);
-
-        $data = $action->handle($request->user(), $validated);
+        $data = $action->handle($request->user(), $request->validated());
 
         return Inertia::render('transactions/index', $data);
     }
