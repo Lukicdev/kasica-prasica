@@ -1,15 +1,32 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { index, store } from '@/routes/budgets';
 import { type BreadcrumbItem } from '@/types';
+
+interface ExpenseCategory {
+    id: number;
+    name: string;
+}
+
+interface CreateBudgetProps {
+    expenseCategories: ExpenseCategory[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,7 +39,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CreateBudget() {
+export default function CreateBudget({
+    expenseCategories,
+}: CreateBudgetProps) {
+    const [categoryId, setCategoryId] = useState<string>('');
+    const [periodMonth, setPeriodMonth] = useState<string>('');
+
+    const periodValue = periodMonth ? `${periodMonth}-01` : '';
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Budget" />
@@ -39,7 +63,7 @@ export default function CreateBudget() {
                             Create Budget
                         </h1>
                         <p className="text-muted-foreground">
-                            Set a budget name and amount
+                            Set a monthly budget for an expense category
                         </p>
                     </div>
                 </div>
@@ -56,21 +80,61 @@ export default function CreateBudget() {
                         <>
                             <HeadingSmall
                                 title="Budget Details"
-                                description="Enter the budget name, amount and period"
+                                description="Select category, month and amount"
                             />
 
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input
-                                        id="name"
-                                        name="name"
-                                        type="text"
+                                    <Label htmlFor="category_id">
+                                        Category (expense only)
+                                    </Label>
+                                    <Select
                                         required
-                                        placeholder="e.g. Monthly groceries"
-                                        autoFocus
+                                        value={categoryId}
+                                        onValueChange={setCategoryId}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select expense category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {expenseCategories.map(
+                                                (category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.id.toString()}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <input
+                                        type="hidden"
+                                        name="category_id"
+                                        value={categoryId}
+                                        required
                                     />
-                                    <InputError message={errors.name} />
+                                    <InputError message={errors.category_id} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="period">Month</Label>
+                                    <Input
+                                        id="period"
+                                        type="month"
+                                        required
+                                        value={periodMonth}
+                                        onChange={(e) =>
+                                            setPeriodMonth(e.target.value)
+                                        }
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name="period"
+                                        value={periodValue}
+                                        required
+                                    />
+                                    <InputError message={errors.period} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="amount">Amount</Label>
@@ -84,26 +148,6 @@ export default function CreateBudget() {
                                         placeholder="0.00"
                                     />
                                     <InputError message={errors.amount} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="period_start">Period Start</Label>
-                                    <Input
-                                        id="period_start"
-                                        name="period_start"
-                                        type="date"
-                                        required
-                                    />
-                                    <InputError message={errors.period_start} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="period_end">Period End</Label>
-                                    <Input
-                                        id="period_end"
-                                        name="period_end"
-                                        type="date"
-                                        required
-                                    />
-                                    <InputError message={errors.period_end} />
                                 </div>
                             </div>
 

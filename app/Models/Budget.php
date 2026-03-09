@@ -29,6 +29,14 @@ final class Budget extends Model
     }
 
     /**
+     * Get the category for the budget.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -37,8 +45,7 @@ final class Budget extends Model
     {
         return [
             'amount' => 'decimal:2',
-            'period_start' => 'date',
-            'period_end' => 'date',
+            'period' => 'date',
         ];
     }
 }

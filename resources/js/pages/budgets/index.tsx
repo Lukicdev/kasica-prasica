@@ -22,10 +22,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Budget {
     id: number;
-    name: string;
     amount: string;
-    period_start: string;
-    period_end: string;
+    period: string;
+    category: {
+        id: number;
+        name: string;
+    } | null;
 }
 
 interface BudgetsIndexProps {
@@ -39,10 +41,11 @@ function formatAmount(amount: string): string {
     }).format(Number(amount));
 }
 
-function formatDate(dateStr: string): string {
+function formatPeriod(periodStr: string): string {
     return new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'short',
-    }).format(new Date(dateStr));
+        month: 'short',
+        year: 'numeric',
+    }).format(new Date(periodStr));
 }
 
 export default function BudgetsIndex({ budgets }: BudgetsIndexProps) {
@@ -55,7 +58,7 @@ export default function BudgetsIndex({ budgets }: BudgetsIndexProps) {
                     <div>
                         <h1 className="text-2xl font-semibold">Budgets</h1>
                         <p className="text-muted-foreground">
-                            Set and track your budgets
+                            Set and track your monthly budgets
                         </p>
                     </div>
                     <Button asChild>
@@ -72,7 +75,7 @@ export default function BudgetsIndex({ budgets }: BudgetsIndexProps) {
                             <Banknote className="mb-4 size-12 text-muted-foreground" />
                             <CardTitle className="mb-2">No budgets yet</CardTitle>
                             <CardDescription className="mb-4">
-                                Get started by creating your first budget
+                                Get started by creating your first monthly budget
                             </CardDescription>
                             <Button asChild>
                                 <Link href={create().url}>
@@ -93,12 +96,11 @@ export default function BudgetsIndex({ budgets }: BudgetsIndexProps) {
                                     <div className="flex items-start justify-between">
                                         <div>
                                             <CardTitle className="text-lg">
-                                                {budget.name}
+                                                {budget.category?.name ?? '—'}{' '}
+                                                · {formatPeriod(budget.period)}
                                             </CardTitle>
                                             <CardDescription className="mt-1">
-                                                {formatAmount(budget.amount)} ·{' '}
-                                                {formatDate(budget.period_start)}{' '}
-                                                – {formatDate(budget.period_end)}
+                                                {formatAmount(budget.amount)}
                                             </CardDescription>
                                         </div>
                                     </div>

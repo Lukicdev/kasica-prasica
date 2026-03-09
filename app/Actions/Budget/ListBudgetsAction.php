@@ -18,6 +18,7 @@ final class ListBudgetsAction
     public function handle(User $user): Collection
     {
         return Budget::query()
+            ->with('category')
             ->where('user_id', $user->id)
             ->latest()
             ->get();

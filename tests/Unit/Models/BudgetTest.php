@@ -3,26 +3,42 @@
 declare(strict_types=1);
 
 use App\Models\Budget;
+use App\Models\Category;
 use App\Models\User;
 
 uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('budget can be created', function () {
     $user = User::factory()->create();
+    $expenseCategory = Category::factory()->expense()->create([
+        'user_id' => $user->id,
+    ]);
 
     $budget = Budget::factory()->create([
         'user_id' => $user->id,
-        'name' => 'Groceries',
+        'category_id' => $expenseCategory->id,
         'amount' => 500.50,
-        'period_start' => '2025-03-01',
-        'period_end' => '2025-03-31',
+        'period' => '2025-03-01',
     ]);
 
     expect($budget->amount)->toBe('500.50')
-        ->and($budget->name)->toBe('Groceries')
         ->and($budget->user_id)->toBe($user->id)
-        ->and($budget->period_start->format('Y-m-d'))->toBe('2025-03-01')
-        ->and($budget->period_end->format('Y-m-d'))->toBe('2025-03-31');
+        ->and($budget->category_id)->toBe($expenseCategory->id)
+        ->and($budget->period->format('Y-m-d'))->toBe('2025-03-01');
+});
+
+test('budget belongs to a category', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->expense()->create([
+        'user_id' => $user->id,
+    ]);
+    $budget = Budget::factory()->create([
+        'user_id' => $user->id,
+        'category_id' => $category->id,
+    ]);
+
+    expect($budget->category)->toBeInstanceOf(Category::class)
+        ->and($budget->category->id)->toBe($category->id);
 });
 
 test('budget belongs to a user', function () {

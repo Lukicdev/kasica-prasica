@@ -18,10 +18,9 @@ final class CreateBudgetAction
     {
         return Budget::create([
             'user_id' => $user->id,
-            'name' => $data['name'],
+            'category_id' => $data['category_id'],
             'amount' => $data['amount'],
-            'period_start' => $data['period_start'],
-            'period_end' => $data['period_end'],
+            'period' => $data['period'],
         ]);
     }
 }

@@ -31,10 +31,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Budget {
     id: number;
-    name: string;
     amount: string;
-    period_start: string;
-    period_end: string;
+    period: string;
+    category: {
+        id: number;
+        name: string;
+    } | null;
 }
 
 interface BudgetShowProps {
@@ -48,10 +50,11 @@ function formatAmount(amount: string): string {
     }).format(Number(amount));
 }
 
-function formatDate(dateStr: string): string {
+function formatPeriod(periodStr: string): string {
     return new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-    }).format(new Date(dateStr));
+        month: 'long',
+        year: 'numeric',
+    }).format(new Date(periodStr));
 }
 
 export default function BudgetShow({ budget }: BudgetShowProps) {
@@ -63,9 +66,11 @@ export default function BudgetShow({ budget }: BudgetShowProps) {
         });
     };
 
+    const title = `${budget.category?.name ?? 'Budget'} – ${formatPeriod(budget.period)}`;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Budget: ${budget.name}`} />
+            <Head title={title} />
 
             <div className="p-4">
                 <div className="flex items-center justify-between">
@@ -77,7 +82,7 @@ export default function BudgetShow({ budget }: BudgetShowProps) {
                         </Button>
                         <div>
                             <h1 className="text-2xl font-semibold">
-                                {budget.name}
+                                {title}
                             </h1>
                             <p className="text-muted-foreground">
                                 Budget details
@@ -129,22 +134,21 @@ export default function BudgetShow({ budget }: BudgetShowProps) {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <CardDescription>Name</CardDescription>
+                                <CardDescription>Category</CardDescription>
                                 <p className="text-sm font-medium">
-                                    {budget.name}
+                                    {budget.category?.name ?? '—'}
+                                </p>
+                            </div>
+                            <div>
+                                <CardDescription>Month</CardDescription>
+                                <p className="text-sm font-medium">
+                                    {formatPeriod(budget.period)}
                                 </p>
                             </div>
                             <div>
                                 <CardDescription>Amount</CardDescription>
                                 <p className="text-sm font-medium">
                                     {formatAmount(budget.amount)}
-                                </p>
-                            </div>
-                            <div>
-                                <CardDescription>Period</CardDescription>
-                                <p className="text-sm font-medium">
-                                    {formatDate(budget.period_start)} –{' '}
-                                    {formatDate(budget.period_end)}
                                 </p>
                             </div>
                         </CardContent>

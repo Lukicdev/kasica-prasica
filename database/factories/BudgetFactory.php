@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Budget;
+use App\Models\Category;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -27,15 +28,15 @@ final class BudgetFactory extends Factory
      */
     public function definition(): array
     {
-        $periodStart = fake()->dateTimeBetween('-1 year', 'now');
-        $periodEnd = (clone $periodStart)->modify('+1 month');
+        $year = fake()->numberBetween(2024, 2026);
+        $month = fake()->numberBetween(1, 12);
+        $period = sprintf('%04d-%02d-01', $year, $month);
 
         return [
             'user_id' => User::factory(),
-            'name' => fake()->words(2, true),
+            'category_id' => Category::factory()->expense(),
             'amount' => fake()->randomFloat(2, 10, 5000),
-            'period_start' => $periodStart->format('Y-m-d'),
-            'period_end' => $periodEnd->format('Y-m-d'),
+            'period' => $period,
         ];
     }
 }

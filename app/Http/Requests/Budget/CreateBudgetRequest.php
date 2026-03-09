@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Budget;
 
+use App\Enums\CategoryType;
+use App\Models\Budget;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class CreateBudgetRequest extends FormRequest
 {
@@ -24,11 +28,30 @@ final class CreateBudgetRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'category_id' => [
+                'required',
+                Rule::exists('categories', 'id')
+                    ->where('type', CategoryType::Expense)
+                    ->where(fn ($query) => $query->where('user_id', $user->id)->orWhereNull('user_id')),
+            ],
             'amount' => ['required', 'numeric', 'min:0'],
-            'period_start' => ['required', 'date'],
-            'period_end' => ['required', 'date', 'after_or_equal:period_start'],
+            'period' => [
+                'required',
+                'date',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $exists = Budget::query()
+                        ->where('user_id', $this->user()->id)
+                        ->where('category_id', (int) $this->input('category_id'))
+                        ->whereDate('period', $value)
+                        ->exists();
+                    if ($exists) {
+                        $fail('A budget already exists for this category and month.');
+                    }
+                },
+            ],
         ];
     }
 }

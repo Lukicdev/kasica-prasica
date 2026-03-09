@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Budget\CreateBudgetAction;
 use App\Actions\Budget\DeleteBudgetAction;
+use App\Actions\Budget\GetExpenseCategoriesAction;
 use App\Actions\Budget\ListBudgetsAction;
 use App\Actions\Budget\UpdateBudgetAction;
 use App\Http\Requests\Budget\CreateBudgetRequest;
@@ -34,9 +35,11 @@ final class BudgetController extends Controller
     /**
      * Show the form for creating a new budget.
      */
-    public function create(): Response
+    public function create(Request $request, GetExpenseCategoriesAction $action): Response
     {
-        return Inertia::render('budgets/create');
+        return Inertia::render('budgets/create', [
+            'expenseCategories' => $action->handle($request->user()),
+        ]);
     }
 
     /**
@@ -54,6 +57,8 @@ final class BudgetController extends Controller
      */
     public function show(Budget $budget): Response
     {
+        $budget->load('category');
+
         return Inertia::render('budgets/show', [
             'budget' => $budget,
         ]);
@@ -62,10 +67,11 @@ final class BudgetController extends Controller
     /**
      * Show the form for editing the specified budget.
      */
-    public function edit(Budget $budget): Response
+    public function edit(Request $request, Budget $budget, GetExpenseCategoriesAction $action): Response
     {
         return Inertia::render('budgets/edit', [
             'budget' => $budget,
+            'expenseCategories' => $action->handle($request->user()),
         ]);
     }
 

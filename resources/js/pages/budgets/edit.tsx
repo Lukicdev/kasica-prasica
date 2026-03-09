@@ -8,6 +8,13 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { index, show, update } from '@/routes/budgets';
 import { type BreadcrumbItem } from '@/types';
@@ -19,31 +26,41 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface Budget {
+interface ExpenseCategory {
     id: number;
     name: string;
+}
+
+interface Budget {
+    id: number;
     amount: string;
-    period_start: string;
-    period_end: string;
+    category_id: number;
+    period: string;
 }
 
 interface BudgetsEditProps {
     budget: Budget;
+    expenseCategories: ExpenseCategory[];
 }
 
-function toDateInputValue(dateStr: string): string {
-    return dateStr?.slice(0, 10) ?? '';
+function toMonthInputValue(dateStr: string): string {
+    if (!dateStr) return '';
+    return dateStr.slice(0, 7);
 }
 
-export default function EditBudget({ budget }: BudgetsEditProps) {
-    const [name, setName] = useState<string>(budget.name);
+export default function EditBudget({
+    budget,
+    expenseCategories,
+}: BudgetsEditProps) {
     const [amount, setAmount] = useState<string>(budget.amount);
-    const [periodStart, setPeriodStart] = useState<string>(
-        toDateInputValue(budget.period_start),
+    const [categoryId, setCategoryId] = useState<string>(
+        budget.category_id.toString(),
     );
-    const [periodEnd, setPeriodEnd] = useState<string>(
-        toDateInputValue(budget.period_end),
+    const [periodMonth, setPeriodMonth] = useState<string>(
+        toMonthInputValue(budget.period),
     );
+
+    const periodValue = periodMonth ? `${periodMonth}-01` : '';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -61,7 +78,7 @@ export default function EditBudget({ budget }: BudgetsEditProps) {
                             Edit Budget
                         </h1>
                         <p className="text-muted-foreground">
-                            Update the budget name and amount
+                            Update the monthly budget amount
                         </p>
                     </div>
                 </div>
@@ -78,24 +95,61 @@ export default function EditBudget({ budget }: BudgetsEditProps) {
                         <>
                             <HeadingSmall
                                 title="Budget Details"
-                                description="Update the name, amount and period"
+                                description="Update category, month and amount"
                             />
 
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input
-                                        id="name"
-                                        name="name"
-                                        type="text"
+                                    <Label htmlFor="category_id">
+                                        Category (expense only)
+                                    </Label>
+                                    <Select
                                         required
-                                        value={name}
-                                        onChange={(e) =>
-                                            setName(e.target.value)
-                                        }
-                                        placeholder="e.g. Monthly groceries"
+                                        value={categoryId}
+                                        onValueChange={setCategoryId}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select expense category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {expenseCategories.map(
+                                                (category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.id.toString()}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <input
+                                        type="hidden"
+                                        name="category_id"
+                                        value={categoryId}
+                                        required
                                     />
-                                    <InputError message={errors.name} />
+                                    <InputError message={errors.category_id} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="period">Month</Label>
+                                    <Input
+                                        id="period"
+                                        type="month"
+                                        required
+                                        value={periodMonth}
+                                        onChange={(e) =>
+                                            setPeriodMonth(e.target.value)
+                                        }
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name="period"
+                                        value={periodValue}
+                                        required
+                                    />
+                                    <InputError message={errors.period} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="amount">Amount</Label>
@@ -113,34 +167,6 @@ export default function EditBudget({ budget }: BudgetsEditProps) {
                                         placeholder="0.00"
                                     />
                                     <InputError message={errors.amount} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="period_start">Period Start</Label>
-                                    <Input
-                                        id="period_start"
-                                        name="period_start"
-                                        type="date"
-                                        required
-                                        value={periodStart}
-                                        onChange={(e) =>
-                                            setPeriodStart(e.target.value)
-                                        }
-                                    />
-                                    <InputError message={errors.period_start} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="period_end">Period End</Label>
-                                    <Input
-                                        id="period_end"
-                                        name="period_end"
-                                        type="date"
-                                        required
-                                        value={periodEnd}
-                                        onChange={(e) =>
-                                            setPeriodEnd(e.target.value)
-                                        }
-                                    />
-                                    <InputError message={errors.period_end} />
                                 </div>
                             </div>
 
