@@ -48,6 +48,14 @@ final class User extends Authenticatable
     }
 
     /**
+     * Get the budgets for the user.
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    /**
      * Get the categories for the user.
      */
     public function categories(): HasMany
