@@ -33,6 +33,8 @@ interface Budget {
     id: number;
     name: string;
     amount: string;
+    period_start: string;
+    period_end: string;
 }
 
 interface BudgetShowProps {
@@ -44,6 +46,12 @@ function formatAmount(amount: string): string {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(Number(amount));
+}
+
+function formatDate(dateStr: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+    }).format(new Date(dateStr));
 }
 
 export default function BudgetShow({ budget }: BudgetShowProps) {
@@ -130,6 +138,13 @@ export default function BudgetShow({ budget }: BudgetShowProps) {
                                 <CardDescription>Amount</CardDescription>
                                 <p className="text-sm font-medium">
                                     {formatAmount(budget.amount)}
+                                </p>
+                            </div>
+                            <div>
+                                <CardDescription>Period</CardDescription>
+                                <p className="text-sm font-medium">
+                                    {formatDate(budget.period_start)} –{' '}
+                                    {formatDate(budget.period_end)}
                                 </p>
                             </div>
                         </CardContent>

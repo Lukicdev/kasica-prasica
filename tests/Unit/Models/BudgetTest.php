@@ -14,11 +14,15 @@ test('budget can be created', function () {
         'user_id' => $user->id,
         'name' => 'Groceries',
         'amount' => 500.50,
+        'period_start' => '2025-03-01',
+        'period_end' => '2025-03-31',
     ]);
 
     expect($budget->amount)->toBe('500.50')
         ->and($budget->name)->toBe('Groceries')
-        ->and($budget->user_id)->toBe($user->id);
+        ->and($budget->user_id)->toBe($user->id)
+        ->and($budget->period_start->format('Y-m-d'))->toBe('2025-03-01')
+        ->and($budget->period_end->format('Y-m-d'))->toBe('2025-03-31');
 });
 
 test('budget belongs to a user', function () {

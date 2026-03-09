@@ -27,6 +27,8 @@ final class UpdateBudgetRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0'],
+            'period_start' => ['sometimes', 'required', 'date'],
+            'period_end' => ['sometimes', 'required', 'date', 'after_or_equal:period_start'],
         ];
     }
 }

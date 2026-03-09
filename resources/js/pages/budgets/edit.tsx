@@ -23,15 +23,27 @@ interface Budget {
     id: number;
     name: string;
     amount: string;
+    period_start: string;
+    period_end: string;
 }
 
 interface BudgetsEditProps {
     budget: Budget;
 }
 
+function toDateInputValue(dateStr: string): string {
+    return dateStr?.slice(0, 10) ?? '';
+}
+
 export default function EditBudget({ budget }: BudgetsEditProps) {
     const [name, setName] = useState<string>(budget.name);
     const [amount, setAmount] = useState<string>(budget.amount);
+    const [periodStart, setPeriodStart] = useState<string>(
+        toDateInputValue(budget.period_start),
+    );
+    const [periodEnd, setPeriodEnd] = useState<string>(
+        toDateInputValue(budget.period_end),
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -66,7 +78,7 @@ export default function EditBudget({ budget }: BudgetsEditProps) {
                         <>
                             <HeadingSmall
                                 title="Budget Details"
-                                description="Update the name and amount"
+                                description="Update the name, amount and period"
                             />
 
                             <div className="grid gap-6 md:grid-cols-2">
@@ -101,6 +113,34 @@ export default function EditBudget({ budget }: BudgetsEditProps) {
                                         placeholder="0.00"
                                     />
                                     <InputError message={errors.amount} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="period_start">Period Start</Label>
+                                    <Input
+                                        id="period_start"
+                                        name="period_start"
+                                        type="date"
+                                        required
+                                        value={periodStart}
+                                        onChange={(e) =>
+                                            setPeriodStart(e.target.value)
+                                        }
+                                    />
+                                    <InputError message={errors.period_start} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="period_end">Period End</Label>
+                                    <Input
+                                        id="period_end"
+                                        name="period_end"
+                                        type="date"
+                                        required
+                                        value={periodEnd}
+                                        onChange={(e) =>
+                                            setPeriodEnd(e.target.value)
+                                        }
+                                    />
+                                    <InputError message={errors.period_end} />
                                 </div>
                             </div>
 

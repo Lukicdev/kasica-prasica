@@ -56,7 +56,7 @@ export default function CreateBudget() {
                         <>
                             <HeadingSmall
                                 title="Budget Details"
-                                description="Enter the budget name and amount"
+                                description="Enter the budget name, amount and period"
                             />
 
                             <div className="grid gap-6 md:grid-cols-2">
@@ -82,9 +82,28 @@ export default function CreateBudget() {
                                         min="0"
                                         required
                                         placeholder="0.00"
-                                        autoFocus
                                     />
                                     <InputError message={errors.amount} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="period_start">Period Start</Label>
+                                    <Input
+                                        id="period_start"
+                                        name="period_start"
+                                        type="date"
+                                        required
+                                    />
+                                    <InputError message={errors.period_start} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="period_end">Period End</Label>
+                                    <Input
+                                        id="period_end"
+                                        name="period_end"
+                                        type="date"
+                                        required
+                                    />
+                                    <InputError message={errors.period_end} />
                                 </div>
                             </div>
 

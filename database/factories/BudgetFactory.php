@@ -27,10 +27,15 @@ final class BudgetFactory extends Factory
      */
     public function definition(): array
     {
+        $periodStart = fake()->dateTimeBetween('-1 year', 'now');
+        $periodEnd = (clone $periodStart)->modify('+1 month');
+
         return [
             'user_id' => User::factory(),
             'name' => fake()->words(2, true),
             'amount' => fake()->randomFloat(2, 10, 5000),
+            'period_start' => $periodStart->format('Y-m-d'),
+            'period_end' => $periodEnd->format('Y-m-d'),
         ];
     }
 }

@@ -35,6 +35,8 @@ test('authenticated users can create a budget', function () {
     $response = $this->actingAs($user)->post(route('budgets.store'), [
         'name' => 'Monthly groceries',
         'amount' => 500.50,
+        'period_start' => '2025-03-01',
+        'period_end' => '2025-03-31',
     ]);
 
     $response->assertSessionHasNoErrors()->assertRedirect(route('budgets.index'));
@@ -42,7 +44,9 @@ test('authenticated users can create a budget', function () {
     $budget = Budget::where('user_id', $user->id)->where('name', 'Monthly groceries')->first();
     expect($budget)->not->toBeNull()
         ->and($budget->amount)->toBe('500.50')
-        ->and($budget->name)->toBe('Monthly groceries');
+        ->and($budget->name)->toBe('Monthly groceries')
+        ->and($budget->period_start->format('Y-m-d'))->toBe('2025-03-01')
+        ->and($budget->period_end->format('Y-m-d'))->toBe('2025-03-31');
 });
 
 test('budget creation requires valid data', function () {
@@ -50,7 +54,20 @@ test('budget creation requires valid data', function () {
 
     $response = $this->actingAs($user)->post(route('budgets.store'), []);
 
-    $response->assertSessionHasErrors(['name', 'amount']);
+    $response->assertSessionHasErrors(['name', 'amount', 'period_start', 'period_end']);
+});
+
+test('budget period_end must be on or after period_start', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('budgets.store'), [
+        'name' => 'Monthly groceries',
+        'amount' => 500,
+        'period_start' => '2025-03-31',
+        'period_end' => '2025-03-01',
+    ]);
+
+    $response->assertSessionHasErrors(['period_end']);
 });
 
 test('authenticated users can view their own budget', function () {
@@ -79,13 +96,17 @@ test('authenticated users can update their own budget', function () {
     $response = $this->actingAs($user)->put(route('budgets.update', $budget), [
         'name' => 'Updated budget',
         'amount' => 750.00,
+        'period_start' => '2025-04-01',
+        'period_end' => '2025-04-30',
     ]);
 
     $response->assertSessionHasNoErrors()->assertRedirect(route('budgets.index'));
 
     $budget->refresh();
     expect($budget->amount)->toBe('750.00')
-        ->and($budget->name)->toBe('Updated budget');
+        ->and($budget->name)->toBe('Updated budget')
+        ->and($budget->period_start->format('Y-m-d'))->toBe('2025-04-01')
+        ->and($budget->period_end->format('Y-m-d'))->toBe('2025-04-30');
 });
 
 test('authenticated users can delete their own budget', function () {

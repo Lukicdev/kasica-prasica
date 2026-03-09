@@ -37,6 +37,8 @@ final class Budget extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'period_start' => 'date',
+            'period_end' => 'date',
         ];
     }
 }

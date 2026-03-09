@@ -20,6 +20,8 @@ final class CreateBudgetAction
             'user_id' => $user->id,
             'name' => $data['name'],
             'amount' => $data['amount'],
+            'period_start' => $data['period_start'],
+            'period_end' => $data['period_end'],
         ]);
     }
 }

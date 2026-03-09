@@ -27,6 +27,8 @@ final class CreateBudgetRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
+            'period_start' => ['required', 'date'],
+            'period_end' => ['required', 'date', 'after_or_equal:period_start'],
         ];
     }
 }

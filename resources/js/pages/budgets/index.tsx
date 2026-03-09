@@ -24,6 +24,8 @@ interface Budget {
     id: number;
     name: string;
     amount: string;
+    period_start: string;
+    period_end: string;
 }
 
 interface BudgetsIndexProps {
@@ -35,6 +37,12 @@ function formatAmount(amount: string): string {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(Number(amount));
+}
+
+function formatDate(dateStr: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'short',
+    }).format(new Date(dateStr));
 }
 
 export default function BudgetsIndex({ budgets }: BudgetsIndexProps) {
@@ -88,7 +96,9 @@ export default function BudgetsIndex({ budgets }: BudgetsIndexProps) {
                                                 {budget.name}
                                             </CardTitle>
                                             <CardDescription className="mt-1">
-                                                {formatAmount(budget.amount)}
+                                                {formatAmount(budget.amount)} ·{' '}
+                                                {formatDate(budget.period_start)}{' '}
+                                                – {formatDate(budget.period_end)}
                                             </CardDescription>
                                         </div>
                                     </div>
