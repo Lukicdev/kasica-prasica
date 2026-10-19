@@ -73,6 +73,11 @@ final class Decimal
         );
     }
 
+    public function subtract(self $other): self
+    {
+        return $this->add(new self(-$other->coefficient, $other->scale));
+    }
+
     public function divide(self $divisor, int $scale): self
     {
         if ($divisor->coefficient === 0) {

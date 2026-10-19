@@ -49,6 +49,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<Account, $this>
+     */
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
+
+    /**
      * @return HasOne<User, $this>
      */
     public function admin(): HasOne

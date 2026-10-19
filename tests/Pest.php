@@ -1,5 +1,11 @@
 <?php
 
+use App\Actions\Transactions\CreateTransaction;
+use App\Enums\Currency;
+use App\Enums\TransactionType;
+use App\Models\Account;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +50,35 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * @param  array<string, mixed>  $overrides
+ */
+function recordTransaction(Account $account, User $user, array $overrides = []): Transaction
 {
-    // ..
+    $currency = $overrides['currency'] ?? $account->currency;
+
+    return app(CreateTransaction::class)->handle($account, $user, array_merge([
+        'type' => TransactionType::Expense,
+        'amount' => '10.00',
+        'currency' => $currency,
+        'booked_on' => '2026-10-02',
+        'note' => null,
+    ], $overrides));
+}
+
+function recordExpense(
+    Account $account,
+    User $user,
+    string $amount,
+    string $bookedOn = '2026-10-02',
+    ?string $note = null,
+    Currency $currency = Currency::Rsd,
+): Transaction {
+    return recordTransaction($account, $user, [
+        'type' => TransactionType::Expense,
+        'amount' => $amount,
+        'currency' => $currency,
+        'booked_on' => $bookedOn,
+        'note' => $note,
+    ]);
 }
