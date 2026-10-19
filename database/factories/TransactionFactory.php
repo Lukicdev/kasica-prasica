@@ -23,6 +23,7 @@ class TransactionFactory extends Factory
         return [
             'workspace_id' => fn (): int => Workspace::shared()->id,
             'account_id' => Account::factory(),
+            'category_id' => null,
             'person_id' => User::factory(),
             'type' => TransactionType::Expense,
             'amount' => '10.00',

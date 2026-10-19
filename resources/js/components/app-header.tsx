@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, Menu, Search, Wallet } from 'lucide-react';
+import { LayoutGrid, Menu, Search, Tags, Wallet } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -29,6 +29,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as accounts } from '@/routes/accounts';
+import { index as categories } from '@/routes/categories';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -45,6 +46,11 @@ const mainNavItems: NavItem[] = [
         title: 'Accounts',
         href: accounts(),
         icon: Wallet,
+    },
+    {
+        title: 'Categories',
+        href: categories(),
+        icon: Tags,
     },
 ];
 
