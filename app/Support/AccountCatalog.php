@@ -1,0 +1,215 @@
+<?php
+
+namespace App\Support;
+
+use App\Enums\Currency;
+use App\Models\Account;
+use Illuminate\Support\Collection;
+
+/**
+ * The account page: balances in each account's currency, and one total in the
+ * display currency. The total is converted from the dinar sum.
+ */
+class AccountCatalog
+{
+    public function __construct(
+        private AccountBalance $balances,
+        private MoneyConverter $converter,
+        private MoneyFormatter $formatter,
+    ) {}
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     * @return array{
+     *     groups: list<array{
+     *         type: string,
+     *         label: string,
+     *         accounts: list<array{
+     *             id: int,
+     *             name: string,
+     *             type: string,
+     *             type_label: string,
+     *             currency: string,
+     *             balance: array{amount: string, currency: string, formatted: string, negative: bool},
+     *             archived: bool,
+     *             note: string|null
+     *         }>
+     *     }>,
+     *     total: array{amount: string, currency: string, formatted: string, negative: bool}
+     * }
+     */
+    public function list(Collection $accounts, Currency $display): array
+    {
+        $balances = $this->balances->forAccounts($accounts);
+        $grouped = [];
+
+        $sorted = $accounts->sortBy(fn (Account $account): array => [
+            $account->type->order(),
+            $account->archived_at === null ? 0 : 1,
+            mb_strtolower($account->name),
+        ])->values();
+
+        foreach ($sorted as $account) {
+            $type = $account->type->value;
+
+            if (! isset($grouped[$type])) {
+                $grouped[$type] = [
+                    'type' => $type,
+                    'label' => $account->type->label(),
+                    'accounts' => [],
+                ];
+            }
+
+            $grouped[$type]['accounts'][] = $this->summary($account, $balances[$account->id]);
+        }
+
+        return [
+            'groups' => array_values($grouped),
+            'total' => $this->money($this->displayTotal($accounts, $balances, $display), $display),
+        ];
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     type: string,
+     *     type_label: string,
+     *     currency: string,
+     *     opening_balance: string,
+     *     opening_balance_on: string,
+     *     note: string|null,
+     *     currency_locked: bool,
+     *     archived: bool,
+     *     can_delete: bool,
+     *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
+     *     created_by: string|null,
+     *     updated_by: string|null
+     * }
+     */
+    public function detail(Account $account): array
+    {
+        $this->ensureTransactionCount($account);
+        $account->loadMissing(['creator:id,name', 'editor:id,name']);
+        $editor = $account->editor;
+        $updatedBy = null;
+
+        if (
+            $editor !== null
+            && $account->updated_at !== null
+            && $account->created_at !== null
+            && $account->updated_at->greaterThan($account->created_at)
+        ) {
+            $updatedBy = $editor->name;
+        }
+
+        return [
+            ...$this->form($account),
+            'type_label' => $account->type->label(),
+            'balance' => $this->money($this->balances->of($account), $account->currency),
+            'created_by' => $account->creator?->name,
+            'updated_by' => $updatedBy,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     type: string,
+     *     currency: string,
+     *     opening_balance: string,
+     *     opening_balance_on: string,
+     *     note: string|null,
+     *     currency_locked: bool,
+     *     archived: bool,
+     *     can_delete: bool
+     * }
+     */
+    public function form(Account $account): array
+    {
+        $this->ensureTransactionCount($account);
+        $transactionCount = (int) $account->transactions_count;
+
+        return [
+            'id' => $account->id,
+            'name' => $account->name,
+            'type' => $account->type->value,
+            'currency' => $account->currency->value,
+            'opening_balance' => Decimal::of((string) $account->opening_balance)->toString(MoneyConverter::SCALE),
+            'opening_balance_on' => $account->opening_balance_on->toDateString(),
+            'note' => $account->note,
+            'currency_locked' => $transactionCount > 0,
+            'archived' => $account->archived_at !== null,
+            'can_delete' => $transactionCount === 0,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     * @param  array<int, string>  $balances
+     */
+    public function displayTotal(Collection $accounts, array $balances, Currency $display): string
+    {
+        $total = Decimal::of('0');
+
+        foreach ($accounts as $account) {
+            $balance = $balances[$account->id];
+            $base = $account->currency->isBase()
+                ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
+                : $this->converter->baseAmount($balance, $account->currency);
+
+            $total = $total->add(Decimal::of($base));
+        }
+
+        return $this->converter->displayAmount($total->toString(MoneyConverter::SCALE), $display);
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     type: string,
+     *     type_label: string,
+     *     currency: string,
+     *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
+     *     archived: bool,
+     *     note: string|null
+     * }
+     */
+    private function summary(Account $account, string $balance): array
+    {
+        return [
+            'id' => $account->id,
+            'name' => $account->name,
+            'type' => $account->type->value,
+            'type_label' => $account->type->label(),
+            'currency' => $account->currency->value,
+            'balance' => $this->money($balance, $account->currency),
+            'archived' => $account->archived_at !== null,
+            'note' => $account->note,
+        ];
+    }
+
+    /**
+     * @return array{amount: string, currency: string, formatted: string, negative: bool}
+     */
+    private function money(string $amount, Currency $currency): array
+    {
+        $normalized = Decimal::of($amount)->toString(MoneyConverter::SCALE);
+
+        return [
+            'amount' => $normalized,
+            'currency' => $currency->value,
+            'formatted' => $this->formatter->format($normalized, $currency),
+            'negative' => Decimal::of($normalized)->isNegative(),
+        ];
+    }
+
+    private function ensureTransactionCount(Account $account): void
+    {
+        if ($account->transactions_count === null) {
+            $account->loadCount('transactions');
+        }
+    }
+}
