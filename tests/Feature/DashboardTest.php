@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\User;
+use App\Models\Workspace;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('guests are redirected to the login page', function () {
     $response = $this->get(route('dashboard'));
@@ -16,3 +19,17 @@ test('authenticated users can visit the dashboard', function () {
     $response = $this->get(route('dashboard'));
     $response->assertOk();
 });
+
+test('the dashboard shows whether the user is the workspace admin', function (bool $isAdmin) {
+    $user = User::factory()->when($isAdmin, fn ($factory) => $factory->admin())->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.is_admin', $isAdmin)
+            ->where('auth.user.workspace.name', Workspace::DEFAULT_NAME));
+})->with([
+    'admin' => true,
+    'member' => false,
+]);
