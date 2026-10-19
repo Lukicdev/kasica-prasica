@@ -1,3 +1,5 @@
+import type { CurrencyCode } from '@/types/currency';
+
 export type Workspace = {
     id: number;
     name: string;
@@ -10,6 +12,7 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     is_admin: boolean;
+    display_currency: CurrencyCode;
     workspace?: Workspace | null;
     two_factor_enabled?: boolean;
     created_at: string;
