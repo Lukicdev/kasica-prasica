@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $workspace_id
  * @property int $account_id
+ * @property int|null $category_id
  * @property int|null $person_id
  * @property TransactionType $type
  * @property string $amount
@@ -36,11 +37,13 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Account $account
+ * @property-read Category|null $category
  * @property-read User|null $person
  */
 #[Fillable([
     'workspace_id',
     'account_id',
+    'category_id',
     'person_id',
     'type',
     'amount',
@@ -80,6 +83,14 @@ class Transaction extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /**
+     * @return BelongsTo<Category, $this>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     /**

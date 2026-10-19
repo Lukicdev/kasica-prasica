@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Actions\Categories\SeedDefaultCategories;
+use App\Observers\WorkspaceObserver;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name'])]
+#[ObservedBy(WorkspaceObserver::class)]
 class Workspace extends Model
 {
     public const string DEFAULT_NAME = 'Household';
@@ -35,9 +39,14 @@ class Workspace extends Model
             return $workspace;
         }
 
-        return static::query()->create([
+        $workspace = static::query()->create([
             'name' => self::DEFAULT_NAME,
         ]);
+
+        // Model events are off while seeding, so the observer does not run then.
+        app(SeedDefaultCategories::class)->handle($workspace);
+
+        return $workspace;
     }
 
     /**
@@ -54,6 +63,14 @@ class Workspace extends Model
     public function accounts(): HasMany
     {
         return $this->hasMany(Account::class);
+    }
+
+    /**
+     * @return HasMany<Category, $this>
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
     }
 
     /**
