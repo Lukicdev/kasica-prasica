@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Contracts\ExchangeRate;
+use App\Enums\Currency;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -15,6 +17,8 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(private ExchangeRate $exchangeRate) {}
 
     /**
      * Determines the current asset version.
@@ -46,6 +50,14 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
+            ],
+            'currencies' => [
+                'base' => Currency::base()->value,
+                'supported' => array_map(fn (Currency $currency): array => [
+                    'code' => $currency->value,
+                    'name' => $currency->label(),
+                ], Currency::cases()),
+                'eurToRsd' => $this->exchangeRate->rsdPerUnit(Currency::Eur),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

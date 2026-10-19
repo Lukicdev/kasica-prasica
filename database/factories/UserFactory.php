@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Currency;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -32,6 +33,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'is_admin' => false,
+            'display_currency' => Currency::Rsd,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -46,6 +48,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'is_admin' => true,
+        ]);
+    }
+
+    /**
+     * Indicate the currency this user wants figures shown in.
+     */
+    public function displaysIn(Currency $currency): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'display_currency' => $currency,
         ]);
     }
 
