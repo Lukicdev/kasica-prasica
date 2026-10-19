@@ -1,10 +1,8 @@
 <?php
 
-declare(strict_types=1);
-
 use App\Models\User;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();

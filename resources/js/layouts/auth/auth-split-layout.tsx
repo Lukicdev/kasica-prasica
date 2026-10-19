@@ -1,21 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
-import { type PropsWithChildren } from 'react';
-
 import AppLogoIcon from '@/components/app-logo-icon';
 import { home } from '@/routes';
-import { type SharedData } from '@/types';
-
-interface AuthLayoutProps {
-    title?: string;
-    description?: string;
-}
+import type { AuthLayoutProps } from '@/types';
 
 export default function AuthSplitLayout({
     children,
     title,
     description,
-}: PropsWithChildren<AuthLayoutProps>) {
-    const { name } = usePage<SharedData>().props;
+}: AuthLayoutProps) {
+    const { name } = usePage().props;
 
     return (
         <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">

@@ -1,7 +1,6 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useMemo, useState } from 'react';
-
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,6 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
-import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
 
 export default function TwoFactorChallenge() {
@@ -25,7 +23,7 @@ export default function TwoFactorChallenge() {
     }>(() => {
         if (showRecoveryInput) {
             return {
-                title: 'Recovery Code',
+                title: 'Recovery code',
                 description:
                     'Please confirm access to your account by entering one of your emergency recovery codes.',
                 toggleText: 'login using an authentication code',
@@ -33,12 +31,17 @@ export default function TwoFactorChallenge() {
         }
 
         return {
-            title: 'Authentication Code',
+            title: 'Authentication code',
             description:
                 'Enter the authentication code provided by your authenticator application.',
             toggleText: 'login using a recovery code',
         };
     }, [showRecoveryInput]);
+
+    setLayoutProps({
+        title: authConfigContent.title,
+        description: authConfigContent.description,
+    });
 
     const toggleRecoveryMode = (clearErrors: () => void): void => {
         setShowRecoveryInput(!showRecoveryInput);
@@ -47,16 +50,12 @@ export default function TwoFactorChallenge() {
     };
 
     return (
-        <AuthLayout
-            title={authConfigContent.title}
-            description={authConfigContent.description}
-        >
-            <Head title="Two-Factor Authentication" />
+        <>
+            <Head title="Two-factor authentication" />
 
             <div className="space-y-6">
                 <Form
-                    action={store.post().url}
-                    method="post"
+                    {...store.form()}
                     className="space-y-4"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
@@ -86,6 +85,7 @@ export default function TwoFactorChallenge() {
                                             onChange={(value) => setCode(value)}
                                             disabled={processing}
                                             pattern={REGEXP_ONLY_DIGITS}
+                                            autoFocus
                                         >
                                             <InputOTPGroup>
                                                 {Array.from(
@@ -128,6 +128,6 @@ export default function TwoFactorChallenge() {
                     )}
                 </Form>
             </div>
-        </AuthLayout>
+        </>
     );
 }
