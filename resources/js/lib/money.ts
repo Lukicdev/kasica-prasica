@@ -83,6 +83,16 @@ function operate(
     return combined ? toAmount(combined) : null;
 }
 
+export function canonicalAmount(value: string): string | null {
+    const parsed = parse(value.trim());
+
+    if (!parsed || parsed.coefficient < 0n) {
+        return null;
+    }
+
+    return toAmount(parsed);
+}
+
 export function normalizeAmount(value: string): string | null {
     const parsed = parse(value);
 

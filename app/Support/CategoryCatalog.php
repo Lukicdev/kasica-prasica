@@ -78,9 +78,9 @@ class CategoryCatalog
      */
     public function form(Category $category): array
     {
-        $this->ensureTransactionCount($category);
+        $this->ensureHistoryCounts($category);
         $category->loadMissing(['creator:id,name', 'editor:id,name']);
-        $transactionCount = (int) $category->transactions_count;
+        $inUse = (int) $category->transactions_count > 0 || (int) $category->budgets_count > 0;
         $editor = $category->editor;
         $updatedBy = null;
 
@@ -95,8 +95,8 @@ class CategoryCatalog
 
         return [
             ...$this->summary($category),
-            'kind_locked' => $transactionCount > 0,
-            'can_delete' => $transactionCount === 0,
+            'kind_locked' => $inUse,
+            'can_delete' => ! $inUse,
             'created_by' => $category->creator?->name,
             'updated_by' => $updatedBy,
         ];
@@ -117,10 +117,10 @@ class CategoryCatalog
         ];
     }
 
-    private function ensureTransactionCount(Category $category): void
+    private function ensureHistoryCounts(Category $category): void
     {
-        if ($category->transactions_count === null) {
-            $category->loadCount('transactions');
+        if ($category->transactions_count === null || $category->budgets_count === null) {
+            $category->loadCount(['transactions', 'budgets']);
         }
     }
 }

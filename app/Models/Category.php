@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property int|null $transactions_count
+ * @property int|null $budgets_count
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Workspace $workspace
@@ -106,6 +107,23 @@ class Category extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * @return HasMany<CategoryBudget, $this>
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(CategoryBudget::class);
+    }
+
+    /**
+     * A category that already has transactions or a budget is history.
+     * It can be archived, and it cannot be deleted or change kind.
+     */
+    public function isInUse(): bool
+    {
+        return $this->transactions()->exists() || $this->budgets()->exists();
     }
 
     /**

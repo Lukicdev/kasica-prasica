@@ -20,9 +20,9 @@ class UpdateCategory
     {
         $this->guard($actor, $category);
 
-        if ($category->transactions()->exists() && $attributes['kind'] !== $category->kind) {
+        if ($category->isInUse() && $attributes['kind'] !== $category->kind) {
             throw ValidationException::withMessages([
-                'kind' => 'Kind cannot change once the category has transactions.',
+                'kind' => 'Kind cannot change once the category has history.',
             ]);
         }
 

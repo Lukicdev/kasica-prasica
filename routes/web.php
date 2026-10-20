@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('categories/{category}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
 
     Route::resource('transactions', TransactionController::class);
+
+    Route::get('budget', [BudgetController::class, 'index'])->name('budget.index');
+    Route::post('budget', [BudgetController::class, 'store'])->name('budget.store');
+    Route::put('budget', [BudgetController::class, 'update'])->name('budget.update');
 });
 
 require __DIR__.'/settings.php';

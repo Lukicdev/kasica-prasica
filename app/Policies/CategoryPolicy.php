@@ -30,7 +30,7 @@ class CategoryPolicy
     public function delete(User $user, Category $category): bool
     {
         return $this->sharesWorkspace($user, $category)
-            && ! $category->transactions()->exists();
+            && ! $category->isInUse();
     }
 
     private function sharesWorkspace(User $user, Category $category): bool
