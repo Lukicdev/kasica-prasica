@@ -276,7 +276,7 @@ class TransactionCatalog
     public function form(User $user, ?Transaction $transaction = null, array $prefill = []): array
     {
         $workspace = $user->workspace;
-        $transaction?->loadMissing('account');
+        $transaction?->loadMissing(['account']);
 
         $accounts = Account::query()
             ->whereBelongsTo($workspace)

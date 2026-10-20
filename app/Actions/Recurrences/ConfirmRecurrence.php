@@ -84,7 +84,7 @@ class ConfirmRecurrence
                 $bookedOn,
             );
 
-            return Transaction::query()->create([
+            $created = Transaction::query()->create([
                 'workspace_id' => $locked->workspace_id,
                 'account_id' => $account->id,
                 'category_id' => $category->id,
@@ -102,6 +102,8 @@ class ConfirmRecurrence
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
             ]);
+
+            return $created;
         });
     }
 

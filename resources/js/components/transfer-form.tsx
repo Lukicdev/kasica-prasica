@@ -91,10 +91,7 @@ function withoutCurrentTransfer(
         );
     }
 
-    if (
-        account.id === transfer.to_account_id &&
-        transfer.destination_amount
-    ) {
+    if (account.id === transfer.to_account_id && transfer.destination_amount) {
         return (
             subtractAmounts(account.balance, transfer.destination_amount) ??
             account.balance

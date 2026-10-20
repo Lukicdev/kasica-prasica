@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\InsightsController;
 use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\RecurrenceController;
@@ -14,6 +15,7 @@ Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [OverviewController::class, 'index'])->name('dashboard');
+    Route::get('insights', [InsightsController::class, 'index'])->name('insights.index');
 
     Route::resource('accounts', AccountController::class);
     Route::get('accounts/{account}/reconcile', [ReconciliationController::class, 'create'])->name('accounts.reconcile');

@@ -75,6 +75,8 @@ export type OverviewDrilldownTransaction = {
     amount: OverviewFigure;
 };
 
+export type OverviewExpenseSort = 'category' | 'overspend';
+
 export type OverviewDrilldown = {
     id: number;
     name: string;
