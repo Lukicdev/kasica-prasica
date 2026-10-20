@@ -161,7 +161,10 @@ export default function ReconcileAccount({
                                         setNote(event.target.value)
                                     }
                                     rows={3}
-                                    className={cn(fieldClassName, 'h-auto py-2')}
+                                    className={cn(
+                                        fieldClassName,
+                                        'h-auto py-2',
+                                    )}
                                 />
                                 <InputError message={errors.note} />
                             </div>

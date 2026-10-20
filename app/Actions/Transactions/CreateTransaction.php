@@ -16,7 +16,9 @@ use Illuminate\Validation\ValidationException;
 
 class CreateTransaction
 {
-    public function __construct(private TransactionAmounts $amounts) {}
+    public function __construct(
+        private TransactionAmounts $amounts,
+    ) {}
 
     /**
      * @param  array{
@@ -64,7 +66,7 @@ class CreateTransaction
         );
         $note = trim((string) ($attributes['note'] ?? ''));
 
-        return Transaction::query()->create([
+        $transaction = Transaction::query()->create([
             'workspace_id' => $account->workspace_id,
             'account_id' => $account->id,
             'category_id' => $category?->id,
@@ -81,6 +83,8 @@ class CreateTransaction
             'created_by' => $actor->id,
             'updated_by' => $actor->id,
         ]);
+
+        return $transaction;
     }
 
     private function guardWorkspace(User $user, int $workspaceId): void

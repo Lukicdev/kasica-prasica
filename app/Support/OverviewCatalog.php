@@ -35,14 +35,14 @@ class OverviewCatalog
      *     budget_started: bool,
      *     steps: list<array{key: string, done: bool}>,
      *     income: array{rows: list<array<string, mixed>>, total: array<string, mixed>},
-     *     expenses: array{rows: list<array<string, mixed>>, total: array<string, mixed>},
+     *     expenses: array{rows: list<array<string, mixed>>, total: array<string, mixed>, sort: string, overspends: list<array<string, mixed>>},
      *     totals: array<string, array<string, mixed>>,
      *     accounts: array{items: list<array<string, mixed>>, total: array<string, mixed>},
      *     drilldown: array<string, mixed>|null,
      *     pending: list<array<string, mixed>>
      * }
      */
-    public function page(User $user, CalendarMonth $month, ?int $categoryId): array
+    public function page(User $user, CalendarMonth $month, ?int $categoryId, string $sort = 'category'): array
     {
         $workspace = $user->workspace;
         $display = $user->display_currency;
@@ -105,6 +105,17 @@ class OverviewCatalog
             $expenseRows[] = $this->expenseRow(null, 'Uncategorised', null, false, $uncategorisedSpent, '0.00', $display);
         }
 
+        $sort = $sort === 'overspend' ? 'overspend' : 'category';
+        $overspends = $this->byOverspend($expenseRows);
+        $overspends = array_values(array_filter(
+            $overspends,
+            fn (array $row): bool => $row['status'] === 'over',
+        ));
+
+        if ($sort === 'overspend') {
+            $expenseRows = $this->byOverspend($expenseRows);
+        }
+
         $uncategorisedIncome = $incomeByCategory['none'] ?? null;
         if ($uncategorisedIncome !== null) {
             $incomeRows[] = $this->incomeRow(null, 'Uncategorised', null, false, $uncategorisedIncome, [], $display);
@@ -147,6 +158,8 @@ class OverviewCatalog
                     'status' => $difference['status'],
                     'status_label' => $difference['label'],
                 ],
+                'sort' => $sort,
+                'overspends' => $overspends,
             ],
             'totals' => [
                 'income' => $this->figure($incomeBase, $display),
@@ -409,6 +422,41 @@ class OverviewCatalog
         }
 
         return $total->toString(MoneyConverter::SCALE);
+    }
+
+    /**
+     * Largest amount over budget first. Difference is spent minus budget.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function byOverspend(array $rows): array
+    {
+        usort($rows, function (array $left, array $right): int {
+            $leftDifference = is_array($left['difference'] ?? null) ? (string) ($left['difference']['base_amount'] ?? '0') : '0';
+            $rightDifference = is_array($right['difference'] ?? null) ? (string) ($right['difference']['base_amount'] ?? '0') : '0';
+            $byAmount = $this->compareMoney($rightDifference, $leftDifference);
+
+            if ($byAmount !== 0) {
+                return $byAmount;
+            }
+
+            return [(string) ($left['name'] ?? ''), (int) ($left['id'] ?? 0)]
+                <=> [(string) ($right['name'] ?? ''), (int) ($right['id'] ?? 0)];
+        });
+
+        return $rows;
+    }
+
+    private function compareMoney(string $left, string $right): int
+    {
+        $difference = Decimal::of($left)->subtract(Decimal::of($right));
+
+        if ($difference->isZero()) {
+            return 0;
+        }
+
+        return $difference->isNegative() ? -1 : 1;
     }
 
     /**

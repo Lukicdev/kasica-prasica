@@ -17,7 +17,9 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateTransaction
 {
-    public function __construct(private TransactionAmounts $amounts) {}
+    public function __construct(
+        private TransactionAmounts $amounts,
+    ) {}
 
     /**
      * @param  array{

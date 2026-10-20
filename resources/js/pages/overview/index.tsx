@@ -14,6 +14,7 @@ import {
     show as showAccount,
 } from '@/routes/accounts';
 import { index as budget } from '@/routes/budget';
+import { index as insights } from '@/routes/insights';
 import {
     create as createTransaction,
     show as showTransaction,
@@ -23,6 +24,7 @@ import type {
     OverviewAccounts,
     OverviewDrilldown,
     OverviewExpenseRow,
+    OverviewExpenseSort,
     OverviewExpenseTotal,
     OverviewFigure,
     OverviewIncomeRow,
@@ -53,10 +55,15 @@ const steps: Record<
     },
 };
 
-function monthQuery(month: string, category: number | null) {
+function monthQuery(
+    month: string,
+    category: number | null,
+    sort: OverviewExpenseSort,
+) {
     return {
         month,
         category,
+        ...(sort === 'overspend' ? { sort: 'overspend' } : {}),
     };
 }
 
@@ -88,7 +95,12 @@ export default function Overview({
     budget_started: boolean;
     steps: OverviewStep[];
     income: { rows: OverviewIncomeRow[]; total: OverviewFigure };
-    expenses: { rows: OverviewExpenseRow[]; total: OverviewExpenseTotal };
+    expenses: {
+        rows: OverviewExpenseRow[];
+        total: OverviewExpenseTotal;
+        sort: OverviewExpenseSort;
+        overspends: OverviewExpenseRow[];
+    };
     totals: OverviewTotals;
     accounts: OverviewAccounts;
     drilldown: OverviewDrilldown | null;
@@ -114,6 +126,19 @@ export default function Overview({
                         </p>
                     </div>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="h-11 w-full sm:w-auto"
+                        >
+                            <Link
+                                href={insights({
+                                    query: { right: month.value },
+                                })}
+                            >
+                                Insights
+                            </Link>
+                        </Button>
                         <Button asChild className="h-11 w-full sm:w-auto">
                             <Link
                                 href={createTransaction({
@@ -134,6 +159,7 @@ export default function Overview({
                                 query: monthQuery(
                                     month.previous,
                                     drilldown?.id ?? null,
+                                    expenses.sort,
                                 ),
                             })}
                             data-test="previous-month"
@@ -148,6 +174,7 @@ export default function Overview({
                                 query: monthQuery(
                                     month.next,
                                     drilldown?.id ?? null,
+                                    expenses.sort,
                                 ),
                             })}
                             data-test="next-month"
@@ -167,6 +194,9 @@ export default function Overview({
                             name="category"
                             value={drilldown.id}
                         />
+                    ) : null}
+                    {expenses.sort === 'overspend' ? (
+                        <input type="hidden" name="sort" value="overspend" />
                     ) : null}
                     <div className="grid flex-1 gap-2">
                         <Label htmlFor="month">Month</Label>
@@ -195,7 +225,11 @@ export default function Overview({
                     <>
                         <Totals totals={totals} />
                         {drilldown ? (
-                            <Drilldown month={month} drilldown={drilldown} />
+                            <Drilldown
+                                month={month}
+                                drilldown={drilldown}
+                                sort={expenses.sort}
+                            />
                         ) : (
                             <>
                                 {!recorded ? (
@@ -221,11 +255,14 @@ export default function Overview({
                                     month={month}
                                     rows={income.rows}
                                     total={income.total}
+                                    sort={expenses.sort}
                                 />
                                 <ExpenseTable
                                     month={month}
                                     rows={expenses.rows}
                                     total={expenses.total}
+                                    sort={expenses.sort}
+                                    overspends={expenses.overspends}
                                 />
                             </>
                         )}
@@ -395,10 +432,12 @@ function IncomeBlock({
     month,
     rows,
     total,
+    sort,
 }: {
     month: OverviewMonth;
     rows: OverviewIncomeRow[];
     total: OverviewFigure;
+    sort: OverviewExpenseSort;
 }) {
     return (
         <section className="flex flex-col gap-3">
@@ -417,7 +456,11 @@ function IncomeBlock({
                     >
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex flex-col gap-1">
-                                <CategoryName row={row} month={month} />
+                                <CategoryName
+                                    row={row}
+                                    month={month}
+                                    sort={sort}
+                                />
                                 {row.description ? (
                                     <span className="text-sm text-muted-foreground">
                                         {row.description}
@@ -472,16 +515,71 @@ function ExpenseTable({
     month,
     rows,
     total,
+    sort,
+    overspends,
 }: {
     month: OverviewMonth;
     rows: OverviewExpenseRow[];
     total: OverviewExpenseTotal;
+    sort: OverviewExpenseSort;
+    overspends: OverviewExpenseRow[];
 }) {
     return (
         <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-medium text-muted-foreground">
-                Expenses
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <h2 className="text-sm font-medium text-muted-foreground">
+                    Expenses
+                </h2>
+                <div
+                    className="grid grid-cols-2 gap-2 sm:flex"
+                    role="group"
+                    aria-label="Sort expenses"
+                >
+                    <Button
+                        asChild
+                        variant={sort === 'category' ? 'default' : 'outline'}
+                        className="h-11"
+                    >
+                        <Link
+                            href={dashboard({
+                                query: monthQuery(
+                                    month.value,
+                                    null,
+                                    'category',
+                                ),
+                            })}
+                            data-test="sort-category"
+                            aria-current={
+                                sort === 'category' ? 'true' : undefined
+                            }
+                        >
+                            Category order
+                        </Link>
+                    </Button>
+                    <Button
+                        asChild
+                        variant={sort === 'overspend' ? 'default' : 'outline'}
+                        className="h-11"
+                    >
+                        <Link
+                            href={dashboard({
+                                query: monthQuery(
+                                    month.value,
+                                    null,
+                                    'overspend',
+                                ),
+                            })}
+                            data-test="sort-overspend"
+                            aria-current={
+                                sort === 'overspend' ? 'true' : undefined
+                            }
+                        >
+                            Biggest overspend
+                        </Link>
+                    </Button>
+                </div>
+            </div>
+            <Overspends month={month} rows={overspends} sort={sort} />
             <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                 <table
                     className="w-full min-w-[44rem] border-collapse text-left text-sm"
@@ -531,7 +629,11 @@ function ExpenseTable({
                                     className="sticky left-0 bg-background px-3 py-3 font-medium"
                                 >
                                     <div className="flex flex-col items-start gap-1">
-                                        <CategoryName row={row} month={month} />
+                                        <CategoryName
+                                            row={row}
+                                            month={month}
+                                            sort={sort}
+                                        />
                                         {row.description ? (
                                             <span className="text-sm font-normal text-muted-foreground">
                                                 {row.description}
@@ -626,12 +728,74 @@ function ExpenseTable({
     );
 }
 
+function Overspends({
+    month,
+    rows,
+    sort,
+}: {
+    month: OverviewMonth;
+    rows: OverviewExpenseRow[];
+    sort: OverviewExpenseSort;
+}) {
+    return (
+        <section
+            className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+            data-test="biggest-overspends"
+        >
+            <div className="flex flex-col gap-1">
+                <h3 className="font-medium">Biggest overspends</h3>
+                <p className="text-sm text-muted-foreground">
+                    Categories where spent is above the budget, largest first.
+                </p>
+            </div>
+            {rows.length === 0 ? (
+                <p className="text-sm">Nothing is over budget this month.</p>
+            ) : (
+                <ol className="flex flex-col gap-2">
+                    {rows.map((row, index) => (
+                        <li
+                            key={row.id ?? row.name}
+                            className="flex flex-wrap items-baseline justify-between gap-2"
+                            data-test="overspend-row"
+                        >
+                            <span className="flex flex-wrap items-center gap-2">
+                                <span className="text-muted-foreground">
+                                    {index + 1}.
+                                </span>
+                                <CategoryName
+                                    row={row}
+                                    month={month}
+                                    sort={sort}
+                                />
+                            </span>
+                            <span className="flex flex-wrap items-center gap-2">
+                                <MoneyAmount
+                                    formatted={row.difference.formatted}
+                                    originalFormatted={
+                                        row.difference.original_formatted
+                                    }
+                                />
+                                <Standing
+                                    status={row.status}
+                                    label={row.status_label}
+                                />
+                            </span>
+                        </li>
+                    ))}
+                </ol>
+            )}
+        </section>
+    );
+}
+
 function Drilldown({
     month,
     drilldown,
+    sort,
 }: {
     month: OverviewMonth;
     drilldown: OverviewDrilldown;
+    sort: OverviewExpenseSort;
 }) {
     const totalLabel = drilldown.kind === 'income' ? 'Received' : 'Spent';
 
@@ -644,7 +808,9 @@ function Drilldown({
                     className="h-11 w-full sm:w-auto"
                 >
                     <Link
-                        href={dashboard({ query: { month: month.value } })}
+                        href={dashboard({
+                            query: monthQuery(month.value, null, sort),
+                        })}
                         data-test="back-to-overview"
                     >
                         Back to {month.label}
@@ -831,9 +997,11 @@ function AccountsPanel({ panel }: { panel: OverviewAccounts }) {
 function CategoryName({
     row,
     month,
+    sort,
 }: {
     row: { id: number | null; name: string; archived: boolean };
     month: OverviewMonth;
+    sort: OverviewExpenseSort;
 }) {
     return (
         <span className="flex flex-wrap items-center gap-2">
@@ -842,7 +1010,7 @@ function CategoryName({
             ) : (
                 <Link
                     href={dashboard({
-                        query: monthQuery(month.value, row.id),
+                        query: monthQuery(month.value, row.id, sort),
                     })}
                     className="underline-offset-4 hover:underline"
                     data-test="open-category"
@@ -894,7 +1062,13 @@ function Standing({
 
     return (
         <Badge
-            variant={status === 'over' ? 'destructive' : 'outline'}
+            variant={
+                status === 'over'
+                    ? 'destructive'
+                    : status === 'under'
+                      ? 'success'
+                      : 'outline'
+            }
             data-test="budget-status"
         >
             {icon}

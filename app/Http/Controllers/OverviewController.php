@@ -22,6 +22,7 @@ class OverviewController extends Controller
             $request->user(),
             CalendarMonth::fromQuery($request->string('month')->toString()),
             $request->filled('category') ? $request->integer('category') : null,
+            $request->string('sort')->toString() === 'overspend' ? 'overspend' : 'category',
         ));
     }
 }

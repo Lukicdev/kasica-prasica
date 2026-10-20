@@ -1,5 +1,12 @@
 import { Link } from '@inertiajs/react';
-import { LayoutGrid, PiggyBank, Receipt, Tags, Wallet } from 'lucide-react';
+import {
+    ChartColumn,
+    LayoutGrid,
+    PiggyBank,
+    Receipt,
+    Tags,
+    Wallet,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -16,6 +23,7 @@ import { dashboard } from '@/routes';
 import { index as accounts } from '@/routes/accounts';
 import { index as budget } from '@/routes/budget';
 import { index as categories } from '@/routes/categories';
+import { index as insights } from '@/routes/insights';
 import { index as transactions } from '@/routes/transactions';
 import type { NavItem } from '@/types';
 
@@ -29,6 +37,11 @@ const mainNavItems: NavItem[] = [
         title: 'Transactions',
         href: transactions(),
         icon: Receipt,
+    },
+    {
+        title: 'Insights',
+        href: insights(),
+        icon: ChartColumn,
     },
     {
         title: 'Budget',
