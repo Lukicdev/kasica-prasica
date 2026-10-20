@@ -1,5 +1,6 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -415,6 +416,7 @@ function BudgetRow({
         >
             <div className="flex flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
+                    <EntityIcon name={category.icon} />
                     {editable ? (
                         <Label htmlFor={inputId} className="font-medium">
                             {category.name}

@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { EntityIcon } from '@/components/entity-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { create, edit, index, reorder } from '@/routes/categories';
@@ -168,6 +169,7 @@ function CategoryRow({
         >
             <div className="flex flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
+                    <EntityIcon name={category.icon} />
                     <span className="font-medium">{category.name}</span>
                     {category.archived ? (
                         <Badge variant="outline" data-test="archived-category">

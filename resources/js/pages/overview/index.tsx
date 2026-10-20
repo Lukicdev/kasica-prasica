@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
+import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Badge } from '@/components/ui/badge';
@@ -817,7 +818,8 @@ function Drilldown({
                     </Link>
                 </Button>
                 <div className="flex flex-col gap-1">
-                    <h2 className="text-lg font-semibold tracking-tight">
+                    <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                        <EntityIcon name={drilldown.icon} />
                         {drilldown.name}
                     </h2>
                     {drilldown.description ? (
@@ -964,6 +966,7 @@ function AccountsPanel({ panel }: { panel: OverviewAccounts }) {
                                 className="flex min-h-11 flex-wrap items-center justify-between gap-2 py-3"
                             >
                                 <span className="flex flex-wrap items-center gap-2">
+                                    <EntityIcon name={account.icon} />
                                     <span className="font-medium">
                                         {account.name}
                                     </span>
@@ -999,12 +1002,18 @@ function CategoryName({
     month,
     sort,
 }: {
-    row: { id: number | null; name: string; archived: boolean };
+    row: {
+        id: number | null;
+        name: string;
+        icon: string | null;
+        archived: boolean;
+    };
     month: OverviewMonth;
     sort: OverviewExpenseSort;
 }) {
     return (
         <span className="flex flex-wrap items-center gap-2">
+            <EntityIcon name={row.icon} />
             {row.id === null ? (
                 <span>{row.name}</span>
             ) : (

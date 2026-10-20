@@ -105,6 +105,7 @@ class InsightsCatalog
                 $category->id,
                 $category->name,
                 $category->description,
+                $category->icon,
                 $category->archived_at !== null,
                 $left[$category->id] ?? '0.00',
                 $right[$category->id] ?? '0.00',
@@ -116,6 +117,7 @@ class InsightsCatalog
             $rows[] = $this->comparisonRow(
                 null,
                 'Uncategorised',
+                null,
                 null,
                 false,
                 $left['none'] ?? '0.00',
@@ -149,6 +151,7 @@ class InsightsCatalog
         ?int $id,
         string $name,
         ?string $description,
+        ?string $icon,
         bool $archived,
         string $left,
         string $right,
@@ -159,6 +162,7 @@ class InsightsCatalog
         return [
             'id' => $id,
             'name' => $name,
+            'icon' => $icon,
             'description' => $description,
             'archived' => $archived,
             'left' => $this->figure($left, $display),

@@ -27,6 +27,7 @@ class AccountCatalog
      *         accounts: list<array{
      *             id: int,
      *             name: string,
+     *             icon: string|null,
      *             type: string,
      *             type_label: string,
      *             currency: string,
@@ -73,6 +74,7 @@ class AccountCatalog
      * @return array{
      *     id: int,
      *     name: string,
+     *     icon: string|null,
      *     type: string,
      *     type_label: string,
      *     currency: string,
@@ -117,6 +119,7 @@ class AccountCatalog
      * @return array{
      *     id: int,
      *     name: string,
+     *     icon: string|null,
      *     type: string,
      *     currency: string,
      *     opening_balance: string,
@@ -134,6 +137,7 @@ class AccountCatalog
         return [
             'id' => $account->id,
             'name' => $account->name,
+            'icon' => $account->icon,
             'type' => $account->type->value,
             'currency' => $account->currency->value,
             'opening_balance' => Decimal::of((string) $account->opening_balance)->toString(MoneyConverter::SCALE),
@@ -169,6 +173,7 @@ class AccountCatalog
      * @return array{
      *     id: int,
      *     name: string,
+     *     icon: string|null,
      *     type: string,
      *     type_label: string,
      *     currency: string,
@@ -182,6 +187,7 @@ class AccountCatalog
         return [
             'id' => $account->id,
             'name' => $account->name,
+            'icon' => $account->icon,
             'type' => $account->type->value,
             'type_label' => $account->type->label(),
             'currency' => $account->currency->value,

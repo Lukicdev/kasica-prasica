@@ -1,6 +1,7 @@
 export type CategorySummary = {
     id: number;
     name: string;
+    icon: string | null;
     kind: string;
     description: string | null;
     label: string;

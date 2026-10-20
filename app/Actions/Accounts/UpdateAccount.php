@@ -14,6 +14,7 @@ class UpdateAccount
     /**
      * @param  array{
      *     name: string,
+     *     icon: string|null,
      *     type: AccountType,
      *     currency: Currency,
      *     opening_balance: string,
@@ -35,6 +36,7 @@ class UpdateAccount
 
         $account->update([
             'name' => $attributes['name'],
+            'icon' => $attributes['icon'],
             'type' => $attributes['type'],
             'currency' => $attributes['currency'],
             'opening_balance' => $attributes['opening_balance'],

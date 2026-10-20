@@ -124,8 +124,10 @@ test('a month can be started empty and each expense budget is edited in dinars',
             ->where('budget.base_amount', '75700.50')
             ->where('budget.formatted', '75,700.50 RSD')
             ->where('categories', fn ($categories) => collect($categories)->firstWhere('name', 'Mortgage')['amount'] === '75700.50'
+                && collect($categories)->firstWhere('name', 'Mortgage')['icon'] === 'house'
                 && collect($categories)->firstWhere('name', 'Mortgage')['updated_by'] === null
-                && collect($categories)->firstWhere('name', 'Groceries')['amount'] === '0.00'));
+                && collect($categories)->firstWhere('name', 'Groceries')['amount'] === '0.00'
+                && collect($categories)->firstWhere('name', 'Groceries')['icon'] === 'shopping-cart'));
 });
 
 test('a budget cannot be edited until the month is started or with a bad amount', function () {

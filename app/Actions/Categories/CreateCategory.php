@@ -12,7 +12,7 @@ class CreateCategory
     public function __construct(private ReorderCategories $reorder) {}
 
     /**
-     * @param  array{name: string, kind: CategoryKind, description: string|null}  $attributes
+     * @param  array{name: string, icon: string|null, kind: CategoryKind, description: string|null}  $attributes
      */
     public function handle(User $actor, array $attributes): Category
     {
@@ -20,6 +20,7 @@ class CreateCategory
             $category = Category::query()->create([
                 'workspace_id' => $actor->workspace_id,
                 'name' => $attributes['name'],
+                'icon' => $attributes['icon'],
                 'kind' => $attributes['kind'],
                 'description' => $attributes['description'],
                 'position' => 100_000,

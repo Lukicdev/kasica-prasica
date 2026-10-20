@@ -4,6 +4,7 @@ namespace App\Concerns;
 
 use App\Enums\CategoryKind;
 use App\Models\Category;
+use App\Support\Icons;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -16,10 +17,12 @@ trait CategoryValidationRules
     protected function prepareForValidation(): void
     {
         $description = $this->input('description');
+        $icon = $this->input('icon');
 
         $this->merge([
             'name' => trim($this->string('name')->toString()),
             'description' => is_string($description) ? trim($description) : $description,
+            'icon' => is_string($icon) && trim($icon) === '' ? null : $icon,
         ]);
     }
 
@@ -42,6 +45,7 @@ trait CategoryValidationRules
 
         return [
             'name' => ['required', 'string', 'max:100', $unique],
+            'icon' => ['nullable', 'string', Rule::in(Icons::names())],
             'kind' => ['required', Rule::enum(CategoryKind::class)],
             'description' => ['nullable', 'string', 'max:255'],
         ];
@@ -56,6 +60,7 @@ trait CategoryValidationRules
             'name.required' => 'Enter a name.',
             'name.max' => 'Keep the name under 100 characters.',
             'name.unique' => 'A category with this name already exists.',
+            'icon.in' => 'Choose an icon from the list.',
             'kind.required' => 'Choose income or expense.',
             'kind.enum' => 'Choose income or expense.',
             'description.max' => 'Keep the description under 255 characters.',
@@ -63,14 +68,16 @@ trait CategoryValidationRules
     }
 
     /**
-     * @return array{name: string, kind: CategoryKind, description: string|null}
+     * @return array{name: string, icon: string|null, kind: CategoryKind, description: string|null}
      */
     public function categoryAttributes(): array
     {
         $description = trim($this->string('description')->toString());
+        $icon = trim($this->string('icon')->toString());
 
         return [
             'name' => trim($this->string('name')->toString()),
+            'icon' => $icon === '' ? null : $icon,
             'kind' => CategoryKind::from($this->string('kind')->toString()),
             'description' => $description === '' ? null : $description,
         ];

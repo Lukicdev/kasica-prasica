@@ -1,5 +1,7 @@
 import { Form } from '@inertiajs/react';
+import { useState } from 'react';
 import CategoryController from '@/actions/App/Http/Controllers/CategoryController';
+import { IconPicker } from '@/components/icon-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +20,7 @@ export function CategoryForm({
     kinds: CategoryKindOption[];
 }) {
     const editing = category !== undefined;
+    const [icon, setIcon] = useState<string | null>(category?.icon ?? null);
 
     return (
         <Form
@@ -41,6 +44,9 @@ export function CategoryForm({
                         />
                         <InputError message={errors.name} />
                     </div>
+
+                    <IconPicker id="icon" value={icon} onChange={setIcon} />
+                    <InputError message={errors.icon} />
 
                     <div className="grid gap-2">
                         <Label htmlFor="kind">Kind</Label>

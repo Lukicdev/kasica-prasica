@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { AccountBalance } from '@/components/account-balance';
+import { EntityIcon } from '@/components/entity-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { create, index, show } from '@/routes/accounts';
@@ -71,6 +72,9 @@ export default function Accounts({
                                             className="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 p-4 transition-colors hover:bg-accent dark:border-sidebar-border"
                                         >
                                             <span className="flex flex-wrap items-center gap-2">
+                                                <EntityIcon
+                                                    name={account.icon}
+                                                />
                                                 <span className="font-medium">
                                                     {account.name}
                                                 </span>
