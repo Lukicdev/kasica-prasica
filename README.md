@@ -2,6 +2,18 @@
 
 A shared household budget. Everyone in the household sees the same accounts, transactions, and monthly plan, and can enter spending as it happens.
 
+## Features
+
+- Shared workspace: any number of users see the same live numbers
+- Accounts (cash, bank, card) with balances that update from transactions
+- Income and expense transactions with amount, currency, category, date, account, person, and note
+- Transfers between accounts and balance reconciliation
+- Recurring transactions carried into each new month
+- Expense categories with a monthly budget, copied forward from the previous month
+- Monthly overview of income, spending, budget, and leftover
+- Insights: month-over-month comparison and spending trends
+- RSD and EUR, with a switch to show figures in either currency
+
 ## Stack
 
 - PHP 8.3, Laravel
