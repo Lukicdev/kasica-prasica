@@ -13,16 +13,18 @@ export default function CreateAccount({
     return (
         <>
             <Head title="New account" />
-            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        New account
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Name it, choose RSD or EUR, and enter the balance you
-                        are starting from.
-                    </p>
-                </div>
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-lg font-semibold tracking-tight">
+                            New account
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Name it, choose RSD or EUR, and enter the balance
+                            you are starting from.
+                        </p>
+                    </div>
+                </section>
                 <AccountForm types={types} today={today} />
             </div>
         </>

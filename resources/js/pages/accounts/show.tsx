@@ -18,10 +18,10 @@ export default function AccountShow({
     return (
         <>
             <Head title={account.name} />
-            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-xl font-semibold tracking-tight">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-lg font-semibold tracking-tight">
                             {account.name}
                         </h1>
                         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -45,7 +45,7 @@ export default function AccountShow({
                     >
                         <Link href={edit(account.id)}>Edit</Link>
                     </Button>
-                </div>
+                </section>
 
                 <section
                     aria-label="Current balance"
