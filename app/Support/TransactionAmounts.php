@@ -26,7 +26,6 @@ class TransactionAmounts
         Account $account,
         string $amount,
         Currency $currency,
-        ?string $accountAmount,
         CarbonInterface $on,
     ): array {
         $normalized = Decimal::of($amount)->toString(MoneyConverter::SCALE);
@@ -37,42 +36,15 @@ class TransactionAmounts
             ]);
         }
 
-        if ($currency === $account->currency) {
-            $settled = $normalized;
-        } else {
-            $settled = $this->confirmedAccountAmount($normalized, $accountAmount);
-        }
+        $base = $this->converter->baseAmount($normalized, $currency, $on);
 
         return [
             'amount' => $normalized,
-            'account_amount' => $settled,
-            'base_amount' => $this->converter->baseAmount($normalized, $currency, $on),
+            'account_amount' => $currency === $account->currency
+                ? $normalized
+                : $this->converter->displayAmount($base, $account->currency, $on),
+            'base_amount' => $base,
             'exchange_rate' => $this->exchangeRate->rsdPerUnit($currency, $on),
         ];
-    }
-
-    private function confirmedAccountAmount(string $amount, ?string $accountAmount): string
-    {
-        if ($accountAmount === null || trim($accountAmount) === '') {
-            throw ValidationException::withMessages([
-                'account_amount' => 'Confirm the amount in the account currency.',
-            ]);
-        }
-
-        $settled = Decimal::of($accountAmount)->toString(MoneyConverter::SCALE);
-
-        if (Decimal::of($settled)->isZero()) {
-            throw ValidationException::withMessages([
-                'account_amount' => 'Confirm the amount in the account currency.',
-            ]);
-        }
-
-        if (Decimal::of($settled)->isNegative() !== Decimal::of($amount)->isNegative()) {
-            throw ValidationException::withMessages([
-                'account_amount' => 'The account amount must have the same sign as the transaction amount.',
-            ]);
-        }
-
-        return $settled;
     }
 }

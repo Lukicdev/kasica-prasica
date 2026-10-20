@@ -17,8 +17,8 @@ export default function CreateCategory({
                         New category
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Choose income or expense. Add a short description if
-                        the name needs explaining.
+                        Choose income or expense. Add a short description if the
+                        name needs explaining.
                     </p>
                 </div>
                 <CategoryForm kinds={kinds} />

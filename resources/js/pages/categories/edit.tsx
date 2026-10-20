@@ -34,8 +34,8 @@ export default function EditCategory({
                         </p>
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            Rename it, or add a description people will see
-                            when they pick it.
+                            Rename it, or add a description people will see when
+                            they pick it.
                         </p>
                     )}
                 </div>

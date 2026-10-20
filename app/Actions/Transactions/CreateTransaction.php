@@ -5,6 +5,7 @@ namespace App\Actions\Transactions;
 use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
+use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\TransactionAmounts;
@@ -25,7 +26,7 @@ class CreateTransaction
      *     booked_on: CarbonInterface|string,
      *     note?: string|null,
      *     person?: User|null,
-     *     account_amount?: string|null
+     *     category?: Category|null
      * }  $attributes
      */
     public function handle(Account $account, User $actor, array $attributes): Transaction
@@ -41,12 +42,17 @@ class CreateTransaction
         $person = $attributes['person'] ?? $actor;
         $this->guardWorkspace($person, $account->workspace_id);
 
+        $category = $attributes['category'] ?? null;
+
+        if ($category instanceof Category) {
+            $this->guardCategory($category, $account->workspace_id, $attributes['type']);
+        }
+
         $bookedOn = Carbon::parse($attributes['booked_on']);
         $resolved = $this->amounts->resolve(
             $account,
             $attributes['amount'],
             $attributes['currency'],
-            $attributes['account_amount'] ?? null,
             $bookedOn,
         );
         $note = trim((string) ($attributes['note'] ?? ''));
@@ -54,6 +60,7 @@ class CreateTransaction
         return Transaction::query()->create([
             'workspace_id' => $account->workspace_id,
             'account_id' => $account->id,
+            'category_id' => $category?->id,
             'person_id' => $person->id,
             'type' => $attributes['type'],
             'amount' => $resolved['amount'],
@@ -72,6 +79,25 @@ class CreateTransaction
     {
         if ($user->workspace_id !== $workspaceId) {
             throw new AuthorizationException('This account is outside your workspace.');
+        }
+    }
+
+    private function guardCategory(Category $category, int $workspaceId, TransactionType $type): void
+    {
+        if ($category->workspace_id !== $workspaceId) {
+            throw new AuthorizationException('This category is outside your workspace.');
+        }
+
+        if ($category->kind->value !== $type->value) {
+            throw ValidationException::withMessages([
+                'category_id' => 'Choose a category of the same kind.',
+            ]);
+        }
+
+        if ($category->archived_at !== null) {
+            throw ValidationException::withMessages([
+                'category_id' => 'This category cannot be used for new transactions.',
+            ]);
         }
     }
 }

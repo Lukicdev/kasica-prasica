@@ -151,7 +151,7 @@ test('deleting a transaction puts the balance back', function () {
             ->where('lines', fn ($lines) => count($lines) === 1));
 });
 
-test('a transaction in another currency uses the confirmed account amount', function () {
+test('a transaction in another currency moves the account at the exchange rate', function () {
     $user = User::factory()->create();
     $account = Account::factory()->create([
         'opening_balance' => '2000.00',
@@ -162,22 +162,21 @@ test('a transaction in another currency uses the confirmed account amount', func
         'type' => TransactionType::Expense,
         'amount' => '10.00',
         'currency' => Currency::Eur,
-        'account_amount' => '1200.00',
         'booked_on' => '2026-10-05',
         'note' => 'Train ticket',
     ]);
 
     expect(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('1175.00')
         ->and(Decimal::of((string) $transaction->exchange_rate)->toString(1))->toBe('117.5')
-        ->and(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('1200.00');
+        ->and(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('1175.00');
 
     $this->actingAs($user)
         ->get(route('accounts.show', $account))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('account.balance.amount', '800.00')
-            ->where('lines.1.amount.formatted', '1,200.00 RSD')
+            ->where('account.balance.amount', '825.00')
+            ->where('lines.1.amount.formatted', '1,175.00 RSD')
             ->where('lines.1.amount.original_formatted', '10.00 EUR')
-            ->where('lines.1.running_balance.formatted', '800.00 RSD'));
+            ->where('lines.1.running_balance.formatted', '825.00 RSD'));
 });
 
 test('an euro account balance stays in euros', function () {
@@ -220,7 +219,6 @@ test('a later exchange rate does not change a saved transaction', function () {
         'type' => TransactionType::Expense,
         'amount' => '10.00',
         'currency' => Currency::Eur,
-        'account_amount' => '1000.00',
     ]);
 
     expect(Decimal::of((string) $saved->refresh()->base_amount)->toString(2))->toBe('1175.00')
@@ -241,21 +239,19 @@ test('matching currencies ignore a different account amount', function () {
     expect(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('15.00');
 });
 
-test('a different currency needs a confirmed account amount with the same sign', function (array $overrides) {
+test('a different currency does not need a typed account amount', function () {
     $user = User::factory()->create();
     $account = Account::factory()->create(['currency' => Currency::Rsd]);
 
-    expect(fn () => recordTransaction($account, $user, [
+    $transaction = recordTransaction($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '10.00',
         'currency' => Currency::Eur,
-        ...$overrides,
-    ]))->toThrow(ValidationException::class);
-})->with([
-    'missing amount' => [[]],
-    'zero amount' => [['account_amount' => '0']],
-    'opposite sign' => [['account_amount' => '-1175.00']],
-]);
+    ]);
+
+    expect(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('1175.00')
+        ->and(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('1175.00');
+});
 
 test('archived and imported accounts cannot be picked for a new transaction', function () {
     $user = User::factory()->create();
