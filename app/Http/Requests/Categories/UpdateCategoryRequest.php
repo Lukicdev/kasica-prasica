@@ -51,7 +51,7 @@ class UpdateCategoryRequest extends FormRequest
                     return;
                 }
 
-                if (! $category->transactions()->exists()) {
+                if (! $category->isInUse()) {
                     return;
                 }
 
@@ -61,7 +61,7 @@ class UpdateCategoryRequest extends FormRequest
 
                 $validator->errors()->add(
                     'kind',
-                    'Kind cannot change once the category has transactions.',
+                    'Kind cannot change once the category has history.',
                 );
             },
         ];

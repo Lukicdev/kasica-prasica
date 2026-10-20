@@ -93,8 +93,8 @@ export default function EditCategory({
                         </Button>
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            This category has transactions, so it can be
-                            archived and cannot be deleted.
+                            This category has history, so it can be archived and
+                            cannot be deleted.
                         </p>
                     )}
                 </section>
