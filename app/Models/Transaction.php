@@ -7,9 +7,12 @@ use App\Enums\TransactionType;
 use App\Support\Decimal;
 use Database\Factories\TransactionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -35,6 +38,8 @@ use Illuminate\Support\Carbon;
  * @property string $exchange_rate
  * @property Carbon $booked_on
  * @property string|null $note
+ * @property bool $repeats
+ * @property int|null $recurrence_id
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property Carbon|null $created_at
@@ -46,6 +51,8 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $person
  * @property-read User|null $creator
  * @property-read User|null $editor
+ * @property-read Transaction|null $recurrence
+ * @property-read Collection<int, Transaction> $occurrences
  */
 #[Fillable([
     'workspace_id',
@@ -62,6 +69,8 @@ use Illuminate\Support\Carbon;
     'exchange_rate',
     'booked_on',
     'note',
+    'repeats',
+    'recurrence_id',
     'created_by',
     'updated_by',
 ])]
@@ -69,6 +78,13 @@ class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
     use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'repeats' => false,
+    ];
 
     /**
      * @return array<string, string>
@@ -84,7 +100,19 @@ class Transaction extends Model
             'base_amount' => 'decimal:2',
             'exchange_rate' => 'decimal:6',
             'booked_on' => 'date',
+            'repeats' => 'boolean',
         ];
+    }
+
+    /**
+     * Income and expenses marked to appear again each month.
+     *
+     * @param  Builder<Transaction>  $query
+     * @return Builder<Transaction>
+     */
+    public function scopeRepeating(Builder $query): Builder
+    {
+        return $query->where('repeats', true);
     }
 
     /**
@@ -141,6 +169,26 @@ class Transaction extends Model
     public function editor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * The transaction this confirmed entry was copied from.
+     *
+     * @return BelongsTo<Transaction, $this>
+     */
+    public function recurrence(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'recurrence_id');
+    }
+
+    /**
+     * Confirmed copies of a repeating transaction.
+     *
+     * @return HasMany<Transaction, $this>
+     */
+    public function occurrences(): HasMany
+    {
+        return $this->hasMany(self::class, 'recurrence_id');
     }
 
     /**

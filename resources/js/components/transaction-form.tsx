@@ -109,6 +109,7 @@ export function TransactionForm({
     );
     const [date, setDate] = useState(transaction?.booked_on ?? defaults.date);
     const [note, setNote] = useState(transaction?.note ?? '');
+    const [recurring, setRecurring] = useState(transaction?.recurring ?? false);
 
     const account = accounts.find((item) => String(item.id) === accountId);
     const accountCurrency =
@@ -373,6 +374,28 @@ export function TransactionForm({
                         />
                         <InputError message={errors.note} />
                     </div>
+
+                    <label className="flex min-h-11 items-start gap-3 text-sm">
+                        <input
+                            type="checkbox"
+                            name="recurring"
+                            value="1"
+                            checked={recurring}
+                            onChange={(event) =>
+                                setRecurring(event.target.checked)
+                            }
+                            className="mt-0.5 size-5"
+                            data-test="recurring"
+                        />
+                        <span>
+                            Repeat every month
+                            <span className="mt-1 block text-muted-foreground">
+                                Later months stay pending until you confirm
+                                them. Pending items are left out of spending and
+                                balances.
+                            </span>
+                        </span>
+                    </label>
 
                     <div className="sticky bottom-0 -mx-4 flex flex-col gap-4 border-t bg-background px-4 py-4">
                         <div

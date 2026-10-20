@@ -24,6 +24,7 @@ class OverviewCatalog
     public function __construct(
         private AccountCatalog $accounts,
         private MoneyConverter $converter,
+        private RecurrenceCatalog $recurrences,
     ) {}
 
     /**
@@ -37,7 +38,8 @@ class OverviewCatalog
      *     expenses: array{rows: list<array<string, mixed>>, total: array<string, mixed>},
      *     totals: array<string, array<string, mixed>>,
      *     accounts: array{items: list<array<string, mixed>>, total: array<string, mixed>},
-     *     drilldown: array<string, mixed>|null
+     *     drilldown: array<string, mixed>|null,
+     *     pending: list<array<string, mixed>>
      * }
      */
     public function page(User $user, CalendarMonth $month, ?int $categoryId): array
@@ -162,6 +164,7 @@ class OverviewCatalog
             ],
             'accounts' => $this->accountPanel($user, $display),
             'drilldown' => $this->drilldown($user, $month, $categories, $categoryId, $spentByCategory, $incomeByCategory, $lines, $display),
+            'pending' => $this->recurrences->pending($user, $month),
         ];
     }
 

@@ -22,6 +22,7 @@ class TransactionCatalog
         private AccountBalance $balances,
         private MoneyConverter $converter,
         private MoneyFormatter $formatter,
+        private RecurrenceCatalog $recurrences,
     ) {}
 
     /**
@@ -55,9 +56,31 @@ class TransactionCatalog
      *             original_currency: string|null,
      *             original_formatted: string|null
      *         },
-     *         added_by: string|null
+     *         added_by: string|null,
+     *         repeats: bool
      *     }>,
-     *     total: array{amount: string, currency: string, formatted: string, negative: bool, caption: string}
+     *     total: array{amount: string, currency: string, formatted: string, negative: bool, caption: string},
+     *     pending: list<array{
+     *         id: int,
+     *         month: string,
+     *         date: string,
+     *         date_label: string,
+     *         type: string,
+     *         type_label: string,
+     *         category: string|null,
+     *         note: string|null,
+     *         account: string,
+     *         person: string|null,
+     *         amount: array{
+     *             amount: string,
+     *             currency: string,
+     *             formatted: string,
+     *             original_amount: string|null,
+     *             original_currency: string|null,
+     *             original_formatted: string|null
+     *         },
+     *         status_label: string
+     *     }>
      * }
      */
     public function list(User $user, TransactionFilters $filters): array
@@ -137,6 +160,7 @@ class TransactionCatalog
             'base_amount',
             'booked_on',
             'note',
+            'repeats',
             'created_by',
         ]);
 
@@ -209,8 +233,19 @@ class TransactionCatalog
                     $transaction->booked_on,
                 )->toArray(),
                 'added_by' => $transaction->creator?->name,
+                'repeats' => $transaction->repeats,
             ])->all()),
             'total' => $this->total($transactions, $display, $start),
+            'pending' => $this->recurrences->pending(
+                $user,
+                CalendarMonth::fromValue($filters->month),
+                $filters->type,
+                $categoryId,
+                $accountId,
+                $personId,
+                $filters->currency,
+                $filters->search,
+            ),
         ];
     }
 
@@ -228,7 +263,8 @@ class TransactionCatalog
      *         category_id: int|null,
      *         booked_on: string,
      *         person_id: int|null,
-     *         note: string|null
+     *         note: string|null,
+     *         recurring: bool
      *     }|null,
      *     accounts: list<array{id: int, name: string, currency: string, balance: string, archived: bool}>,
      *     categories: list<array{id: int, name: string, kind: string, label: string, archived: bool}>,
@@ -340,7 +376,9 @@ class TransactionCatalog
      *     account_amount: array{amount: string, currency: string, formatted: string, negative: bool},
      *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
      *     added_by: string|null,
-     *     updated_by: string|null
+     *     updated_by: string|null,
+     *     repeats: bool,
+     *     from_recurrence: bool
      * }
      */
     public function detail(Transaction $transaction, User $user): array
@@ -406,6 +444,8 @@ class TransactionCatalog
             'balance' => $this->money($balance, $account->currency),
             'added_by' => $transaction->creator?->name,
             'updated_by' => $updatedBy,
+            'repeats' => $transaction->repeats,
+            'from_recurrence' => $transaction->recurrence_id !== null,
         ];
     }
 
@@ -503,7 +543,8 @@ class TransactionCatalog
      *     category_id: int|null,
      *     booked_on: string,
      *     person_id: int|null,
-     *     note: string|null
+     *     note: string|null,
+     *     recurring: bool
      * }
      */
     private function formValues(Transaction $transaction): array
@@ -525,6 +566,7 @@ class TransactionCatalog
             'booked_on' => $transaction->booked_on->toDateString(),
             'person_id' => $transaction->person_id,
             'note' => $transaction->note,
+            'recurring' => $transaction->repeats,
         ];
     }
 

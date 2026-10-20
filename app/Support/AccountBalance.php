@@ -14,7 +14,8 @@ use Illuminate\Support\Collection;
  * Balance = opening balance + income − expenses + adjustments, using each
  * movement in the account's own currency. A transfer subtracts from the
  * source account and adds to the destination. A negative expense is a refund,
- * so it increases the balance.
+ * so it increases the balance. Pending repeats are not transactions, so they
+ * are left out.
  */
 class AccountBalance
 {
