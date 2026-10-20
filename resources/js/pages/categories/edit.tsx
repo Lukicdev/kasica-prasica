@@ -23,22 +23,24 @@ export default function EditCategory({
     return (
         <>
             <Head title={`Edit ${category.name}`} />
-            <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-4">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        Edit {category.name}
-                    </h1>
-                    {category.description ? (
-                        <p className="text-sm text-muted-foreground">
-                            {category.label}
-                        </p>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">
-                            Rename it, or add a description people will see when
-                            they pick it.
-                        </p>
-                    )}
-                </div>
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-lg font-semibold tracking-tight">
+                            Edit {category.name}
+                        </h1>
+                        {category.description ? (
+                            <p className="text-sm text-muted-foreground">
+                                {category.label}
+                            </p>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                Rename it, or add a description people will see
+                                when they pick it.
+                            </p>
+                        )}
+                    </div>
+                </section>
 
                 <CategoryForm category={category} kinds={kinds} />
 

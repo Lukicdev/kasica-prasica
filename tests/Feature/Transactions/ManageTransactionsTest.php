@@ -527,6 +527,20 @@ test('editing and deleting update the affected balances', function () {
         ->assertInertia(fn (Assert $page) => $page->where('account.balance.amount', '200.00'));
 });
 
+test('opening the list without a month uses the current month', function () {
+    $this->travelTo('2026-03-15');
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('transactions.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('month.value', '2026-03')
+            ->where('month.label', 'March 2026')
+            ->where('filtered', false));
+});
+
 test('the table lists one month and can be filtered', function () {
     $user = User::factory()->create(['name' => 'Ada']);
     $partner = User::factory()->create(['name' => 'Bea']);

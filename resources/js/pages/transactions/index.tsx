@@ -79,10 +79,10 @@ export default function Transactions({
     return (
         <>
             <Head title="Transactions" />
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border">
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-xl font-semibold tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight">
                             Transactions
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -94,7 +94,7 @@ export default function Transactions({
                             Add a transaction
                         </Link>
                     </Button>
-                </div>
+                </section>
 
                 <div className="flex items-center justify-between gap-3">
                     <Button asChild variant="outline" className="h-11">
@@ -121,6 +121,7 @@ export default function Transactions({
                 </div>
 
                 <Form
+                    key={`${month.value}|${filters.type ?? ''}|${filters.category ?? ''}|${filters.account ?? ''}|${filters.person ?? ''}|${filters.currency ?? ''}|${filters.search}|${sort.column}|${sort.direction}`}
                     {...index.form()}
                     className="grid gap-4 rounded-xl border border-sidebar-border/70 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:border-sidebar-border"
                 >
@@ -245,7 +246,8 @@ export default function Transactions({
                             className="h-11 sm:w-auto"
                         >
                             <Link
-                                href={index({ query: { month: month.value } })}
+                                href={index()}
+                                data-test="clear-filters"
                             >
                                 Clear
                             </Link>
