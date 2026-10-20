@@ -23,6 +23,7 @@ export type BudgetFigure = {
 export type BudgetCategory = {
     id: number;
     name: string;
+    icon: string | null;
     description: string | null;
     archived: boolean;
     amount: string;

@@ -1,9 +1,12 @@
 import { Form, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import AccountController from '@/actions/App/Http/Controllers/AccountController';
+import { IconPicker } from '@/components/icon-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { accountTypeIcons } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import type { AccountFormValues, AccountTypeOption } from '@/types/account';
 
@@ -21,6 +24,11 @@ export function AccountForm({
 }) {
     const { currencies } = usePage().props;
     const editing = account !== undefined;
+    const [type, setType] = useState(account?.type ?? 'cash');
+    const [icon, setIcon] = useState<string | null>(
+        account?.icon ?? accountTypeIcons[account?.type ?? 'cash'] ?? null,
+    );
+    const [iconChosen, setIconChosen] = useState(account?.icon != null);
 
     return (
         <Form
@@ -45,14 +53,32 @@ export function AccountForm({
                         <InputError message={errors.name} />
                     </div>
 
+                    <IconPicker
+                        id="icon"
+                        value={icon}
+                        onChange={(next) => {
+                            setIconChosen(true);
+                            setIcon(next);
+                        }}
+                    />
+                    <InputError message={errors.icon} />
+
                     <div className="grid gap-2">
                         <Label htmlFor="type">Type</Label>
                         <select
                             id="type"
                             name="type"
                             required
-                            defaultValue={account?.type ?? 'cash'}
+                            value={type}
                             className={fieldClassName}
+                            onChange={(event) => {
+                                const next = event.target.value;
+                                setType(next);
+
+                                if (!iconChosen) {
+                                    setIcon(accountTypeIcons[next] ?? null);
+                                }
+                            }}
                         >
                             {types.map((type) => (
                                 <option key={type.value} value={type.value}>

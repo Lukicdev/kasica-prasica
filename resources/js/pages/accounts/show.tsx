@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { AccountBalance } from '@/components/account-balance';
+import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,8 @@ export default function AccountShow({
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border">
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-lg font-semibold tracking-tight">
+                        <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                            <EntityIcon name={account.icon} />
                             {account.name}
                         </h1>
                         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

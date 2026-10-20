@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $workspace_id
  * @property string $name
+ * @property string|null $icon
  * @property AccountType $type
  * @property Currency $currency
  * @property string $opening_balance
@@ -39,6 +40,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'workspace_id',
     'name',
+    'icon',
     'type',
     'currency',
     'opening_balance',

@@ -123,7 +123,34 @@ test('account details are validated', function (array $overrides, string $field)
     'too many decimals' => [['opening_balance' => '10.555'], 'opening_balance'],
     'missing date' => [['opening_balance_on' => ''], 'opening_balance_on'],
     'long note' => [['note' => str_repeat('a', 1001)], 'note'],
+    'unknown icon' => [['icon' => 'not-an-icon'], 'icon'],
 ]);
+
+test('a member can choose an account icon and clear it later', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('accounts.store'), accountPayload(['icon' => 'wallet']))
+        ->assertSessionHasNoErrors();
+
+    $account = Account::query()->where('name', 'Household cash')->first();
+
+    expect($account)->not->toBeNull()
+        ->and($account->icon)->toBe('wallet');
+
+    $this->actingAs($user)
+        ->get(route('accounts.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('groups.0.accounts.0.icon', 'wallet')
+            ->where('groups.0.accounts.0.name', 'Household cash'));
+
+    $this->actingAs($user)
+        ->patch(route('accounts.update', $account), accountPayload(['icon' => '']))
+        ->assertSessionHasNoErrors();
+
+    expect($account->refresh()->icon)->toBeNull();
+});
 
 test('a member can edit every field while the account has no transactions', function () {
     $user = User::factory()->create();

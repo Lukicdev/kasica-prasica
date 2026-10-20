@@ -31,6 +31,7 @@ class BudgetCatalog
      *     categories: list<array{
      *         id: int,
      *         name: string,
+     *         icon: string|null,
      *         description: string|null,
      *         archived: bool,
      *         amount: string,
@@ -180,6 +181,7 @@ class BudgetCatalog
      * @return array{
      *     id: int,
      *     name: string,
+     *     icon: string|null,
      *     description: string|null,
      *     archived: bool,
      *     amount: string,
@@ -203,6 +205,7 @@ class BudgetCatalog
         return [
             'id' => $category->id,
             'name' => $category->name,
+            'icon' => $category->icon,
             'description' => $category->description,
             'archived' => $category->archived_at !== null,
             'amount' => $amount,

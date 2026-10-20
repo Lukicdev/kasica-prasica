@@ -53,6 +53,8 @@ test('a new workspace starts with the spreadsheet categories', function () {
     expect($income->pluck('name')->all())->toBe(array_column(DefaultCategories::forKind(CategoryKind::Income), 'name'))
         ->and($expenses->pluck('name')->all())->toBe(array_column(DefaultCategories::forKind(CategoryKind::Expense), 'name'))
         ->and($expenses->firstWhere('name', 'A1 (mobile provider)')->description)->toBe('Mobile provider')
+        ->and($expenses->firstWhere('name', 'Groceries')->icon)->toBe('shopping-cart')
+        ->and($income->firstWhere('name', 'Salary')->icon)->toBe('briefcase')
         ->and($income->first()->position)->toBe(1)
         ->and($expenses->last()->position)->toBe(14)
         ->and($categories->every(fn (Category $category): bool => $category->archived_at === null))->toBeTrue();
@@ -97,6 +99,8 @@ test('the category list shows descriptions and the label used when picking one',
             ->where('groups.1.categories.8.name', 'A1 (mobile provider)')
             ->where('groups.1.categories.8.description', 'Mobile provider')
             ->where('groups.1.categories.8.label', 'A1 (mobile provider): Mobile provider')
+            ->where('groups.1.categories.8.icon', 'smartphone')
+            ->where('groups.0.categories.0.icon', 'briefcase')
             ->where('groups.1.categories.13.name', 'Medical')
             ->where('groups.1.archived', []));
 });
@@ -135,6 +139,31 @@ test('default categories can be renamed straight away', function () {
             ->where('category.updated_by', 'Ada')
             ->where('category.kind_locked', false)
             ->where('category.can_delete', true));
+});
+
+test('a member can choose an icon and clear it later', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('categories.store'), categoryPayload(['icon' => 'dog']))
+        ->assertSessionHasNoErrors();
+
+    $category = Category::query()->where('name', 'Dog food')->first();
+
+    expect($category)->not->toBeNull()
+        ->and($category->icon)->toBe('dog');
+
+    $this->actingAs($user)
+        ->get(route('categories.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('groups.1.categories', fn ($categories) => collect($categories)->firstWhere('name', 'Dog food')['icon'] === 'dog'));
+
+    $this->actingAs($user)
+        ->patch(route('categories.update', $category), categoryPayload(['icon' => '']))
+        ->assertSessionHasNoErrors();
+
+    expect($category->refresh()->icon)->toBeNull();
 });
 
 test('a member can add a category at the end of its kind', function () {
@@ -193,6 +222,7 @@ test('category details are validated', function (array $overrides, string $field
     'long name' => [['name' => str_repeat('a', 101)], 'name'],
     'long description' => [['description' => str_repeat('a', 256)], 'description'],
     'duplicate name in the same kind' => [['name' => 'Groceries', 'kind' => 'expense'], 'name'],
+    'unknown icon' => [['icon' => 'not-an-icon'], 'icon'],
 ]);
 
 test('the same name can exist once as income and once as expense', function () {

@@ -8,6 +8,7 @@ export type MoneyFigure = {
 export type AccountSummary = {
     id: number;
     name: string;
+    icon: string | null;
     type: string;
     type_label: string;
     currency: string;
@@ -30,6 +31,7 @@ export type AccountTypeOption = {
 export type AccountFormValues = {
     id: number;
     name: string;
+    icon: string | null;
     type: string;
     currency: string;
     opening_balance: string;

@@ -14,7 +14,7 @@ class UpdateCategory
     public function __construct(private ReorderCategories $reorder) {}
 
     /**
-     * @param  array{name: string, kind: CategoryKind, description: string|null}  $attributes
+     * @param  array{name: string, icon: string|null, kind: CategoryKind, description: string|null}  $attributes
      */
     public function handle(Category $category, User $actor, array $attributes): Category
     {
@@ -32,6 +32,7 @@ class UpdateCategory
         DB::transaction(function () use ($category, $actor, $attributes, $previousKind, $kindChanged): void {
             $category->update([
                 'name' => $attributes['name'],
+                'icon' => $attributes['icon'],
                 'kind' => $attributes['kind'],
                 'description' => $attributes['description'],
                 'position' => $kindChanged ? 100_000 : $category->position,

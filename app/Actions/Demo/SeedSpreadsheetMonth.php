@@ -45,6 +45,7 @@ class SeedSpreadsheetMonth
         $workspace = $first->workspace;
         $cash = $this->accounts->handle($first, [
             'name' => 'Cash',
+            'icon' => 'banknote',
             'type' => AccountType::Cash,
             'currency' => Currency::Rsd,
             'opening_balance' => '0.00',
@@ -53,6 +54,7 @@ class SeedSpreadsheetMonth
         ]);
         $bank = $this->accounts->handle($first, [
             'name' => 'Bank',
+            'icon' => 'landmark',
             'type' => AccountType::Bank,
             'currency' => Currency::Rsd,
             'opening_balance' => '0.00',

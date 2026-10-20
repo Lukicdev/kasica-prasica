@@ -10,6 +10,7 @@ export type InsightsDirection = 'up' | 'down' | 'same';
 export type InsightsComparisonRow = {
     id: number | null;
     name: string;
+    icon: string | null;
     description: string | null;
     archived: boolean;
     left: OverviewFigure;

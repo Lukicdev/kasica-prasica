@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
+import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -110,6 +111,7 @@ function ComparisonRow({
             data-test="comparison-row"
         >
             <div className="flex flex-wrap items-center gap-2">
+                <EntityIcon name={row.icon} />
                 <span className="font-medium">{row.name}</span>
                 {row.archived ? (
                     <Badge variant="outline">Archived</Badge>

@@ -20,6 +20,8 @@ class SeedDefaultCategories
             return;
         }
 
+        $iconColumn = Schema::hasColumn((new Category)->getTable(), 'icon');
+
         foreach (CategoryKind::ordered() as $kind) {
             foreach (DefaultCategories::forKind($kind) as $index => $category) {
                 $workspace->categories()->create([
@@ -27,6 +29,7 @@ class SeedDefaultCategories
                     'kind' => $kind,
                     'description' => $category['description'],
                     'position' => $index + 1,
+                    ...($iconColumn ? ['icon' => $category['icon']] : []),
                 ]);
             }
         }

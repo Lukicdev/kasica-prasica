@@ -30,6 +30,7 @@ export type OverviewPerson = {
 export type OverviewIncomeRow = {
     id: number | null;
     name: string;
+    icon: string | null;
     description: string | null;
     archived: boolean;
     amount: OverviewFigure;
@@ -39,6 +40,7 @@ export type OverviewIncomeRow = {
 export type OverviewExpenseRow = {
     id: number | null;
     name: string;
+    icon: string | null;
     description: string | null;
     archived: boolean;
     spent: OverviewFigure;
@@ -80,6 +82,7 @@ export type OverviewExpenseSort = 'category' | 'overspend';
 export type OverviewDrilldown = {
     id: number;
     name: string;
+    icon: string | null;
     description: string | null;
     kind: 'income' | 'expense';
     total: OverviewFigure;

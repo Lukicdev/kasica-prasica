@@ -12,6 +12,7 @@ class CreateAccount
     /**
      * @param  array{
      *     name: string,
+     *     icon: string|null,
      *     type: AccountType,
      *     currency: Currency,
      *     opening_balance: string,
@@ -24,6 +25,7 @@ class CreateAccount
         return Account::query()->create([
             'workspace_id' => $actor->workspace_id,
             'name' => $attributes['name'],
+            'icon' => $attributes['icon'],
             'type' => $attributes['type'],
             'currency' => $attributes['currency'],
             'opening_balance' => $attributes['opening_balance'],
