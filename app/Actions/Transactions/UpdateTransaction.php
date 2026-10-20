@@ -5,6 +5,7 @@ namespace App\Actions\Transactions;
 use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
+use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\TransactionAmounts;
@@ -25,7 +26,7 @@ class UpdateTransaction
      *     booked_on: CarbonInterface|string,
      *     note?: string|null,
      *     person?: User|null,
-     *     account_amount?: string|null
+     *     category?: Category|null
      * }  $attributes
      */
     public function handle(Transaction $transaction, Account $account, User $actor, array $attributes): Transaction
@@ -47,18 +48,40 @@ class UpdateTransaction
             throw new AuthorizationException('This account is outside your workspace.');
         }
 
+        $category = array_key_exists('category', $attributes)
+            ? $attributes['category']
+            : ($transaction->category_id === null ? null : $transaction->category);
+
+        if ($category instanceof Category) {
+            if ($category->workspace_id !== $transaction->workspace_id) {
+                throw new AuthorizationException('This category is outside your workspace.');
+            }
+
+            if ($category->kind->value !== $attributes['type']->value) {
+                throw ValidationException::withMessages([
+                    'category_id' => 'Choose a category of the same kind.',
+                ]);
+            }
+
+            if ($category->id !== $transaction->category_id && $category->archived_at !== null) {
+                throw ValidationException::withMessages([
+                    'category_id' => 'This category cannot be used for new transactions.',
+                ]);
+            }
+        }
+
         $bookedOn = Carbon::parse($attributes['booked_on']);
         $resolved = $this->amounts->resolve(
             $account,
             $attributes['amount'],
             $attributes['currency'],
-            $attributes['account_amount'] ?? null,
             $bookedOn,
         );
         $note = trim((string) ($attributes['note'] ?? ''));
 
         $transaction->update([
             'account_id' => $account->id,
+            'category_id' => $category?->id,
             'person_id' => $person->id,
             'type' => $attributes['type'],
             'amount' => $resolved['amount'],

@@ -36,9 +36,12 @@ use Illuminate\Support\Carbon;
  * @property int|null $updated_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Workspace $workspace
  * @property-read Account $account
  * @property-read Category|null $category
  * @property-read User|null $person
+ * @property-read User|null $creator
+ * @property-read User|null $editor
  */
 #[Fillable([
     'workspace_id',
@@ -78,6 +81,14 @@ class Transaction extends Model
     }
 
     /**
+     * @return BelongsTo<Workspace, $this>
+     */
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    /**
      * @return BelongsTo<Account, $this>
      */
     public function account(): BelongsTo
@@ -102,11 +113,36 @@ class Transaction extends Model
     }
 
     /**
+     * @return BelongsTo<User, $this>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function editor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
      * A refund is a negative expense. It reduces spending and increases the balance.
      */
     public function isRefund(): bool
     {
         return $this->type === TransactionType::Expense
             && Decimal::of((string) $this->amount)->isNegative();
+    }
+
+    public function typeLabel(): string
+    {
+        if ($this->isRefund()) {
+            return 'Refund';
+        }
+
+        return $this->type->label();
     }
 }

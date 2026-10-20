@@ -62,8 +62,7 @@ export default function Categories({ groups }: { groups: CategoryGroup[] }) {
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Income and expenses, in the order you want. A
-                            description shows here and when you pick a
-                            category.
+                            description shows here and when you pick a category.
                         </p>
                     </div>
                     <Button asChild className="h-11 w-full sm:w-auto">

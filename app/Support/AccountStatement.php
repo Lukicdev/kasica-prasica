@@ -69,7 +69,7 @@ class AccountStatement
                 'date' => $transaction->booked_on->toDateString(),
                 'date_label' => $transaction->booked_on->format('j M Y'),
                 'type' => $transaction->type->value,
-                'type_label' => $this->typeLabel($transaction),
+                'type_label' => $transaction->typeLabel(),
                 'note' => $transaction->note,
                 'person' => $transaction->person?->name,
                 'amount' => $this->amount($transaction, $account),
@@ -78,15 +78,6 @@ class AccountStatement
         }
 
         return $lines;
-    }
-
-    private function typeLabel(Transaction $transaction): string
-    {
-        if ($transaction->isRefund()) {
-            return 'Refund';
-        }
-
-        return $transaction->type->label();
     }
 
     /**
