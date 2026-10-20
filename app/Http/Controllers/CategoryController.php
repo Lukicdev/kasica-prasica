@@ -12,7 +12,6 @@ use App\Http\Requests\Categories\ReorderCategoriesRequest;
 use App\Http\Requests\Categories\StoreCategoryRequest;
 use App\Http\Requests\Categories\UpdateCategoryRequest;
 use App\Models\Category;
-use App\Models\User;
 use App\Support\CategoryCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +25,7 @@ class CategoryController extends Controller
 
     public function index(Request $request): Response
     {
-        $user = $this->user($request);
+        $user = $request->user();
 
         Gate::authorize('viewAny', Category::class);
 
@@ -48,7 +47,8 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request, CreateCategory $create): RedirectResponse
     {
-        $category = $create->handle($this->user($request), $request->categoryAttributes());
+        $user = $request->user();
+        $category = $create->handle($user, $request->categoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category created.']);
 
@@ -67,7 +67,9 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, Category $category, UpdateCategory $update): RedirectResponse
     {
-        $update->handle($category, $this->user($request), $request->categoryAttributes());
+        $user = $request->user();
+
+        $update->handle($category, $user, $request->categoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category updated.']);
 
@@ -78,7 +80,7 @@ class CategoryController extends Controller
     {
         Gate::authorize('delete', $category);
 
-        $user = $this->user($request);
+        $user = $request->user();
         $workspace = $user->workspace;
         $kind = $category->kind;
 
@@ -95,7 +97,9 @@ class CategoryController extends Controller
     {
         Gate::authorize('update', $category);
 
-        $archive->handle($category, $this->user($request));
+        $user = $request->user();
+
+        $archive->handle($category, $user);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category archived.']);
 
@@ -106,7 +110,9 @@ class CategoryController extends Controller
     {
         Gate::authorize('update', $category);
 
-        $restore->handle($category, $this->user($request));
+        $user = $request->user();
+
+        $restore->handle($category, $user);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category restored.']);
 
@@ -115,23 +121,14 @@ class CategoryController extends Controller
 
     public function reorder(ReorderCategoriesRequest $request, ReorderCategories $reorder): RedirectResponse
     {
+        $user = $request->user();
+
         $reorder->handle(
-            $this->user($request)->workspace,
+            $user->workspace,
             $request->kind(),
             $request->ids(),
         );
 
         return back();
-    }
-
-    private function user(Request $request): User
-    {
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            abort(403);
-        }
-
-        return $user;
     }
 }

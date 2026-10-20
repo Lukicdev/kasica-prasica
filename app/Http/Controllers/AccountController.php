@@ -8,7 +8,6 @@ use App\Enums\AccountType;
 use App\Http\Requests\Accounts\StoreAccountRequest;
 use App\Http\Requests\Accounts\UpdateAccountRequest;
 use App\Models\Account;
-use App\Models\User;
 use App\Support\AccountCatalog;
 use App\Support\AccountStatement;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +25,7 @@ class AccountController extends Controller
 
     public function index(Request $request): Response
     {
-        $user = $this->user($request);
+        $user = $request->user();
 
         Gate::authorize('viewAny', Account::class);
 
@@ -53,7 +52,8 @@ class AccountController extends Controller
 
     public function store(StoreAccountRequest $request, CreateAccount $create): RedirectResponse
     {
-        $account = $create->handle($this->user($request), $request->accountAttributes());
+        $user = $request->user();
+        $account = $create->handle($user, $request->accountAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account created.']);
 
@@ -62,7 +62,6 @@ class AccountController extends Controller
 
     public function show(Account $account): Response
     {
-        $this->ensureListed($account);
         Gate::authorize('view', $account);
 
         return Inertia::render('accounts/show', [
@@ -73,7 +72,6 @@ class AccountController extends Controller
 
     public function edit(Account $account): Response
     {
-        $this->ensureListed($account);
         Gate::authorize('update', $account);
 
         return Inertia::render('accounts/edit', [
@@ -84,9 +82,9 @@ class AccountController extends Controller
 
     public function update(UpdateAccountRequest $request, Account $account, UpdateAccount $update): RedirectResponse
     {
-        $this->ensureListed($account);
+        $user = $request->user();
 
-        $update->handle($account, $this->user($request), $request->accountAttributes());
+        $update->handle($account, $user, $request->accountAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account updated.']);
 
@@ -95,7 +93,6 @@ class AccountController extends Controller
 
     public function destroy(Account $account): RedirectResponse
     {
-        $this->ensureListed($account);
         Gate::authorize('delete', $account);
 
         $account->delete();
@@ -107,13 +104,14 @@ class AccountController extends Controller
 
     public function archive(Request $request, Account $account): RedirectResponse
     {
-        $this->ensureListed($account);
         Gate::authorize('update', $account);
+
+        $user = $request->user();
 
         if ($account->archived_at === null) {
             $account->update([
                 'archived_at' => now(),
-                'updated_by' => $this->user($request)->id,
+                'updated_by' => $user->id,
             ]);
         }
 
@@ -124,36 +122,19 @@ class AccountController extends Controller
 
     public function restore(Request $request, Account $account): RedirectResponse
     {
-        $this->ensureListed($account);
         Gate::authorize('update', $account);
+
+        $user = $request->user();
 
         if ($account->archived_at !== null) {
             $account->update([
                 'archived_at' => null,
-                'updated_by' => $this->user($request)->id,
+                'updated_by' => $user->id,
             ]);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account restored.']);
 
         return to_route('accounts.show', $account);
-    }
-
-    private function ensureListed(Account $account): void
-    {
-        if ($account->is_imported_history) {
-            abort(404);
-        }
-    }
-
-    private function user(Request $request): User
-    {
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            abort(403);
-        }
-
-        return $user;
     }
 }

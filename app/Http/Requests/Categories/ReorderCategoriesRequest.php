@@ -4,7 +4,6 @@ namespace App\Http\Requests\Categories;
 
 use App\Enums\CategoryKind;
 use App\Models\Category;
-use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,7 +13,7 @@ class ReorderCategoriesRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() instanceof User;
+        return $this->user() !== null;
     }
 
     /**
@@ -57,7 +56,7 @@ class ReorderCategoriesRequest extends FormRequest
 
                 $user = $this->user();
 
-                if (! $user instanceof User) {
+                if ($user === null) {
                     return;
                 }
 

@@ -357,13 +357,43 @@ test('another member sees the same accounts and an outsider does not', function 
         ->assertForbidden();
 });
 
-test('imported history stays off the account pages', function () {
+test('an imported history account can be opened and edited', function () {
     $user = User::factory()->create();
-    $hidden = Account::factory()->importedHistory()->create();
+    $account = Account::factory()->importedHistory()->create();
 
-    $this->actingAs($user)->get(route('accounts.show', $hidden))->assertNotFound();
-    $this->actingAs($user)->get(route('accounts.edit', $hidden))->assertNotFound();
-    $this->actingAs($user)->patch(route('accounts.archive', $hidden))->assertNotFound();
+    $this->actingAs($user)
+        ->get(route('accounts.show', $account))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('account.name', 'Imported history'));
+
+    $this->actingAs($user)
+        ->get(route('accounts.edit', $account))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('account.name', 'Imported history'));
+
+    $this->actingAs($user)
+        ->patch(route('accounts.update', $account), accountPayload([
+            'name' => 'Old import',
+        ]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('accounts.show', $account));
+
+    expect($account->fresh()->name)->toBe('Old import')
+        ->and($account->fresh()->is_imported_history)->toBeTrue();
+
+    $this->actingAs($user)
+        ->patch(route('accounts.archive', $account))
+        ->assertRedirect(route('accounts.show', $account));
+
+    $this->actingAs($user)
+        ->patch(route('accounts.restore', $account))
+        ->assertRedirect(route('accounts.show', $account));
+
+    $this->actingAs($user)
+        ->delete(route('accounts.destroy', $account))
+        ->assertRedirect(route('accounts.index'));
+
+    expect(Account::query()->whereKey($account->id)->exists())->toBeFalse();
 });
 
 /**

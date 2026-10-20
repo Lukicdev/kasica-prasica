@@ -4,7 +4,6 @@ namespace App\Concerns;
 
 use App\Enums\CategoryKind;
 use App\Models\Category;
-use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,8 +28,7 @@ trait CategoryValidationRules
      */
     protected function categoryRules(?Category $category = null): array
     {
-        $user = $this->user();
-        $workspaceId = $user instanceof User ? $user->workspace_id : null;
+        $workspaceId = $this->user()?->workspace_id;
         $kind = $this->string('kind')->toString();
 
         $unique = Rule::unique((new Category)->getTable(), 'name')
