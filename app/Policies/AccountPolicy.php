@@ -30,7 +30,6 @@ class AccountPolicy
     public function delete(User $user, Account $account): bool
     {
         return $this->sharesWorkspace($user, $account)
-            && ! $account->is_imported_history
             && ! $account->transactions()->exists();
     }
 
