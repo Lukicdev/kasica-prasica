@@ -33,9 +33,18 @@ class TransactionFactory extends Factory
             'exchange_rate' => '1',
             'booked_on' => '2026-10-02',
             'note' => null,
+            'repeats' => false,
+            'recurrence_id' => null,
             'created_by' => null,
             'updated_by' => null,
         ];
+    }
+
+    public function repeating(): static
+    {
+        return $this->state(fn (): array => [
+            'repeats' => true,
+        ]);
     }
 
     public function income(): static

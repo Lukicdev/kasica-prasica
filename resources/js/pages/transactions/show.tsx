@@ -5,7 +5,10 @@ import { MoneyAmount } from '@/components/money-amount';
 import { Button } from '@/components/ui/button';
 import { edit as editAdjustment } from '@/routes/adjustments';
 import { create, edit, index, show } from '@/routes/transactions';
-import { create as createTransfer, edit as editTransfer } from '@/routes/transfers';
+import {
+    create as createTransfer,
+    edit as editTransfer,
+} from '@/routes/transfers';
 import type { TransactionDetail } from '@/types/transaction';
 
 export default function TransactionShow({
@@ -64,6 +67,14 @@ export default function TransactionShow({
                                 : ''}
                         </p>
                         {transaction.note ? <p>{transaction.note}</p> : null}
+                        {transaction.repeats ? (
+                            <p data-test="repeats-monthly">
+                                Repeats every month. Later months stay pending
+                                until confirmed.
+                            </p>
+                        ) : transaction.from_recurrence ? (
+                            <p>Confirmed from a monthly repeat.</p>
+                        ) : null}
                     </div>
                     <Button
                         asChild

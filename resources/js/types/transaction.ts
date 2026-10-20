@@ -60,6 +60,7 @@ export type TransactionRow = {
     person: string | null;
     amount: DisplayedMoney;
     added_by: string | null;
+    repeats: boolean;
 };
 
 export type TransactionTotal = {
@@ -90,6 +91,7 @@ export type TransactionFormValues = {
     booked_on: string;
     person_id: number | null;
     note: string | null;
+    recurring: boolean;
 };
 
 export type TransactionDefaults = {
@@ -116,7 +118,11 @@ export type TransactionFormPage = {
     people: TransactionOption[];
     defaults: TransactionDefaults;
     needs_account: boolean;
-    confirmation: { id: number | null; account: string; formatted: string } | null;
+    confirmation: {
+        id: number | null;
+        account: string;
+        formatted: string;
+    } | null;
 };
 
 export type TransactionDetail = {
@@ -159,4 +165,6 @@ export type TransactionDetail = {
     };
     added_by: string | null;
     updated_by: string | null;
+    repeats: boolean;
+    from_recurrence: boolean;
 };

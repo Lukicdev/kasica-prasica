@@ -12,6 +12,7 @@ use App\Support\TransactionAmounts;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class UpdateTransaction
@@ -26,7 +27,8 @@ class UpdateTransaction
      *     booked_on: CarbonInterface|string,
      *     note?: string|null,
      *     person?: User|null,
-     *     category?: Category|null
+     *     category?: Category|null,
+     *     recurring?: bool
      * }  $attributes
      */
     public function handle(Transaction $transaction, Account $account, User $actor, array $attributes): Transaction
@@ -84,21 +86,34 @@ class UpdateTransaction
             $bookedOn,
         );
         $note = trim((string) ($attributes['note'] ?? ''));
+        $recurring = array_key_exists('recurring', $attributes)
+            ? $attributes['recurring'] === true
+            : $transaction->repeats;
 
-        $transaction->update([
-            'account_id' => $account->id,
-            'category_id' => $category?->id,
-            'person_id' => $person->id,
-            'type' => $attributes['type'],
-            'amount' => $resolved['amount'],
-            'currency' => $attributes['currency'],
-            'account_amount' => $resolved['account_amount'],
-            'base_amount' => $resolved['base_amount'],
-            'exchange_rate' => $resolved['exchange_rate'],
-            'booked_on' => $bookedOn->toDateString(),
-            'note' => $note === '' ? null : $note,
-            'updated_by' => $actor->id,
-        ]);
+        DB::transaction(function () use ($transaction, $account, $actor, $attributes, $resolved, $category, $person, $bookedOn, $note, $recurring): void {
+            if ($recurring && $transaction->recurrence_id !== null) {
+                Transaction::query()->whereKey($transaction->recurrence_id)->update([
+                    'repeats' => false,
+                    'updated_by' => $actor->id,
+                ]);
+            }
+
+            $transaction->update([
+                'account_id' => $account->id,
+                'category_id' => $category?->id,
+                'person_id' => $person->id,
+                'type' => $attributes['type'],
+                'amount' => $resolved['amount'],
+                'currency' => $attributes['currency'],
+                'account_amount' => $resolved['account_amount'],
+                'base_amount' => $resolved['base_amount'],
+                'exchange_rate' => $resolved['exchange_rate'],
+                'booked_on' => $bookedOn->toDateString(),
+                'note' => $note === '' ? null : $note,
+                'repeats' => $recurring,
+                'updated_by' => $actor->id,
+            ]);
+        });
 
         return $transaction;
     }

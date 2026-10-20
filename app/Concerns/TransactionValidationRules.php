@@ -44,6 +44,7 @@ trait TransactionValidationRules
             'booked_on' => ['required', 'date'],
             'person_id' => ['required', 'integer'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'recurring' => ['sometimes', 'boolean'],
             'another' => ['sometimes', 'boolean'],
         ];
     }
@@ -107,7 +108,8 @@ trait TransactionValidationRules
      *     booked_on: string,
      *     note: string|null,
      *     person: User,
-     *     category: Category
+     *     category: Category,
+     *     recurring: bool
      * }
      */
     public function transactionAttributes(): array
@@ -139,6 +141,7 @@ trait TransactionValidationRules
             'note' => $note === '' ? null : $note,
             'person' => $this->resolvedPerson,
             'category' => $this->resolvedCategory,
+            'recurring' => $this->boolean('recurring'),
         ];
     }
 

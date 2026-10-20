@@ -2,14 +2,23 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
 import { MoneyAmount } from '@/components/money-amount';
+import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
-import { create as createAccount, index as accounts, show as showAccount } from '@/routes/accounts';
+import {
+    create as createAccount,
+    index as accounts,
+    show as showAccount,
+} from '@/routes/accounts';
 import { index as budget } from '@/routes/budget';
-import { create as createTransaction, show as showTransaction } from '@/routes/transactions';
+import {
+    create as createTransaction,
+    show as showTransaction,
+} from '@/routes/transactions';
+import type { PendingRecurrence } from '@/types/recurrence';
 import type {
     OverviewAccounts,
     OverviewDrilldown,
@@ -71,6 +80,7 @@ export default function Overview({
     totals,
     accounts: accountPanel,
     drilldown,
+    pending,
 }: {
     month: OverviewMonth;
     first_run: boolean;
@@ -82,6 +92,7 @@ export default function Overview({
     totals: OverviewTotals;
     accounts: OverviewAccounts;
     drilldown: OverviewDrilldown | null;
+    pending: PendingRecurrence[];
 }) {
     const accountReady =
         progress.find((step) => step.key === 'account')?.done ?? false;
@@ -98,8 +109,8 @@ export default function Overview({
                             Overview
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {month.label}. Income, spending and the plan, in
-                            the display currency from the header.
+                            {month.label}. Income, spending and the plan, in the
+                            display currency from the header.
                         </p>
                     </div>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -172,6 +183,8 @@ export default function Overview({
                     </Button>
                 </Form>
 
+                <PendingRecurrences items={pending} />
+
                 {first_run ? (
                     <FirstRun
                         month={month}
@@ -182,10 +195,7 @@ export default function Overview({
                     <>
                         <Totals totals={totals} />
                         {drilldown ? (
-                            <Drilldown
-                                month={month}
-                                drilldown={drilldown}
-                            />
+                            <Drilldown month={month} drilldown={drilldown} />
                         ) : (
                             <>
                                 {!recorded ? (
@@ -521,10 +531,7 @@ function ExpenseTable({
                                     className="sticky left-0 bg-background px-3 py-3 font-medium"
                                 >
                                     <div className="flex flex-col items-start gap-1">
-                                        <CategoryName
-                                            row={row}
-                                            month={month}
-                                        />
+                                        <CategoryName row={row} month={month} />
                                         {row.description ? (
                                             <span className="text-sm font-normal text-muted-foreground">
                                                 {row.description}
@@ -631,7 +638,11 @@ function Drilldown({
     return (
         <section className="flex flex-col gap-4" data-test="drilldown">
             <div className="flex flex-col gap-3">
-                <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+                <Button
+                    asChild
+                    variant="outline"
+                    className="h-11 w-full sm:w-auto"
+                >
                     <Link
                         href={dashboard({ query: { month: month.value } })}
                         data-test="back-to-overview"
@@ -672,7 +683,9 @@ function Drilldown({
                         caption="The plan for this category."
                     />
                 ) : null}
-                {drilldown.difference && drilldown.status && drilldown.status_label ? (
+                {drilldown.difference &&
+                drilldown.status &&
+                drilldown.status_label ? (
                     <div
                         className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                         data-test="drilldown-difference"
@@ -755,7 +768,11 @@ function AccountsPanel({ panel }: { panel: OverviewAccounts }) {
         >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="font-medium">Accounts</h2>
-                <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+                <Button
+                    asChild
+                    variant="outline"
+                    className="h-11 w-full sm:w-auto"
+                >
                     <Link href={accounts()} data-test="overview-all-accounts">
                         All accounts
                     </Link>

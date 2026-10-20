@@ -26,7 +26,8 @@ class CreateTransaction
      *     booked_on: CarbonInterface|string,
      *     note?: string|null,
      *     person?: User|null,
-     *     category?: Category|null
+     *     category?: Category|null,
+     *     recurring?: bool
      * }  $attributes
      */
     public function handle(Account $account, User $actor, array $attributes): Transaction
@@ -76,6 +77,7 @@ class CreateTransaction
             'exchange_rate' => $resolved['exchange_rate'],
             'booked_on' => $bookedOn->toDateString(),
             'note' => $note === '' ? null : $note,
+            'repeats' => ($attributes['recurring'] ?? false) === true,
             'created_by' => $actor->id,
             'updated_by' => $actor->id,
         ]);

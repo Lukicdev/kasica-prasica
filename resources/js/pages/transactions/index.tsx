@@ -1,12 +1,14 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { MoneyAmount } from '@/components/money-amount';
+import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/transactions';
 import { create as createTransfer } from '@/routes/transfers';
+import type { PendingRecurrence } from '@/types/recurrence';
 import type {
     TransactionListFilters,
     TransactionListOptions,
@@ -68,6 +70,7 @@ export default function Transactions({
     options,
     transactions,
     total,
+    pending,
 }: {
     month: TransactionMonth;
     filters: TransactionListFilters;
@@ -76,6 +79,7 @@ export default function Transactions({
     options: TransactionListOptions;
     transactions: TransactionRow[];
     total: TransactionTotal;
+    pending: PendingRecurrence[];
 }) {
     return (
         <>
@@ -260,15 +264,14 @@ export default function Transactions({
                             variant="outline"
                             className="h-11 sm:w-auto"
                         >
-                            <Link
-                                href={index()}
-                                data-test="clear-filters"
-                            >
+                            <Link href={index()} data-test="clear-filters">
                                 Clear
                             </Link>
                         </Button>
                     </div>
                 </Form>
+
+                <PendingRecurrences items={pending} />
 
                 <section
                     aria-label={total.caption}
@@ -398,6 +401,11 @@ export default function Transactions({
                                         </th>
                                         <td className="px-3 py-3 whitespace-nowrap">
                                             {transaction.type_label}
+                                            {transaction.repeats ? (
+                                                <span className="block text-xs text-muted-foreground">
+                                                    Monthly
+                                                </span>
+                                            ) : null}
                                         </td>
                                         <td className="px-3 py-3">
                                             {transaction.category ?? '—'}

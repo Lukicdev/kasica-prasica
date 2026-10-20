@@ -5,6 +5,7 @@ use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\ReconciliationController;
+use App\Http\Controllers\RecurrenceController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('categories/{category}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
 
     Route::resource('transactions', TransactionController::class);
+
+    Route::get('recurrences/{transaction}', [RecurrenceController::class, 'edit'])->name('recurrences.edit');
+    Route::post('recurrences/{transaction}', [RecurrenceController::class, 'store'])->name('recurrences.store');
 
     Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
     Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
