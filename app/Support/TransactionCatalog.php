@@ -72,7 +72,6 @@ class TransactionCatalog
             ->get();
         $accounts = Account::query()
             ->whereBelongsTo($workspace)
-            ->listed()
             ->orderBy('name')
             ->get();
         $people = User::query()
@@ -91,6 +90,7 @@ class TransactionCatalog
             ->with([
                 'category:id,name',
                 'account:id,name',
+                'destinationAccount:id,name',
                 'person:id,name',
                 'creator:id,name',
             ]);
@@ -104,7 +104,10 @@ class TransactionCatalog
         }
 
         if ($accountId !== null) {
-            $query->where('account_id', $accountId);
+            $query->where(function (Builder $query) use ($accountId): void {
+                $query->where('account_id', $accountId)
+                    ->orWhere('destination_account_id', $accountId);
+            });
         }
 
         if ($personId !== null) {
@@ -125,6 +128,7 @@ class TransactionCatalog
         $transactions = $query->get([
             'id',
             'account_id',
+            'destination_account_id',
             'category_id',
             'person_id',
             'type',
@@ -195,7 +199,7 @@ class TransactionCatalog
                 'type_label' => $transaction->typeLabel(),
                 'category' => $transaction->category?->name,
                 'note' => $transaction->note,
-                'account' => $transaction->account->name,
+                'account' => $this->accountLabel($transaction),
                 'person' => $transaction->person?->name,
                 'amount' => $this->converter->present(
                     (string) $transaction->amount,
@@ -240,15 +244,8 @@ class TransactionCatalog
 
         $accounts = Account::query()
             ->whereBelongsTo($workspace)
-            ->listed()
             ->orderBy('name')
             ->get();
-
-        $currentAccount = $transaction?->account;
-
-        if ($currentAccount?->is_imported_history === true) {
-            $accounts->push($currentAccount);
-        }
 
         $formAccounts = $accounts
             ->filter(function (Account $account) use ($transaction): bool {
@@ -286,7 +283,7 @@ class TransactionCatalog
             ->get(['id', 'name']);
 
         $selectableAccounts = $formAccounts->filter(
-            fn (Account $account): bool => $account->archived_at === null && ! $account->is_imported_history,
+            fn (Account $account): bool => $account->archived_at === null,
         );
 
         return [
@@ -327,6 +324,10 @@ class TransactionCatalog
      *     category: string|null,
      *     note: string|null,
      *     account: array{id: int, name: string},
+     *     destination: array{id: int, name: string}|null,
+     *     destination_amount: array{amount: string, currency: string, formatted: string, negative: bool}|null,
+     *     destination_balance: array{amount: string, currency: string, formatted: string, negative: bool}|null,
+     *     excluded_from_budget: bool,
      *     person: string|null,
      *     amount: array{
      *         amount: string,
@@ -346,6 +347,7 @@ class TransactionCatalog
     {
         $transaction->loadMissing([
             'account',
+            'destinationAccount',
             'category',
             'person:id,name',
             'creator:id,name',
@@ -365,6 +367,7 @@ class TransactionCatalog
         }
 
         $account = $transaction->account;
+        $destination = $transaction->destinationAccount;
         $balance = $this->balances->of($account);
 
         return [
@@ -380,6 +383,17 @@ class TransactionCatalog
                 'id' => $account->id,
                 'name' => $account->name,
             ],
+            'destination' => $destination === null ? null : [
+                'id' => $destination->id,
+                'name' => $destination->name,
+            ],
+            'destination_amount' => $destination === null || $transaction->destination_amount === null
+                ? null
+                : $this->money((string) $transaction->destination_amount, $destination->currency),
+            'destination_balance' => $destination === null
+                ? null
+                : $this->money($this->balances->of($destination), $destination->currency),
+            'excluded_from_budget' => ! $transaction->type->isIncomeOrExpense(),
             'person' => $transaction->person?->name,
             'amount' => $this->converter->present(
                 (string) $transaction->amount,
@@ -435,6 +449,10 @@ class TransactionCatalog
         $net = Decimal::of('0');
 
         foreach ($transactions as $transaction) {
+            if (! $transaction->type->isIncomeOrExpense()) {
+                continue;
+            }
+
             $base = Decimal::of((string) $transaction->base_amount);
             $net = $transaction->type === TransactionType::Income
                 ? $net->add($base)
@@ -450,6 +468,15 @@ class TransactionCatalog
             'negative' => Decimal::of($amount)->isNegative(),
             'caption' => 'Income minus spending',
         ];
+    }
+
+    private function accountLabel(Transaction $transaction): string
+    {
+        if ($transaction->type === TransactionType::Transfer && $transaction->destinationAccount !== null) {
+            return $transaction->account->name.' → '.$transaction->destinationAccount->name;
+        }
+
+        return $transaction->account->name;
     }
 
     /**
@@ -509,7 +536,11 @@ class TransactionCatalog
      */
     private function defaults(User $user, Collection $accounts, Collection $categories, array $prefill): array
     {
-        $type = TransactionType::tryFrom($prefill['type'] ?? '') ?? TransactionType::Expense;
+        $type = TransactionType::tryFrom($prefill['type'] ?? '');
+
+        if (! $type instanceof TransactionType || ! $type->isIncomeOrExpense()) {
+            $type = TransactionType::Expense;
+        }
         $account = $this->prefilledAccount($user, $accounts, $prefill['account'] ?? null);
         $category = $this->prefilledCategory($categories, $prefill['category'] ?? null);
 

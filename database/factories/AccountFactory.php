@@ -27,7 +27,6 @@ class AccountFactory extends Factory
             'opening_balance_on' => '2026-10-01',
             'note' => null,
             'archived_at' => null,
-            'is_imported_history' => false,
             'created_by' => null,
             'updated_by' => null,
         ];
@@ -37,14 +36,6 @@ class AccountFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'archived_at' => now(),
-        ]);
-    }
-
-    public function importedHistory(): static
-    {
-        return $this->state(fn (array $attributes): array => [
-            'name' => 'Imported history',
-            'is_imported_history' => true,
         ]);
     }
 

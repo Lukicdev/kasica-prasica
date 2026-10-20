@@ -30,7 +30,8 @@ class AccountPolicy
     public function delete(User $user, Account $account): bool
     {
         return $this->sharesWorkspace($user, $account)
-            && ! $account->transactions()->exists();
+            && ! $account->transactions()->exists()
+            && ! $account->incomingTransfers()->exists();
     }
 
     private function sharesWorkspace(User $user, Account $account): bool

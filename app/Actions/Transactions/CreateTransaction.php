@@ -33,7 +33,13 @@ class CreateTransaction
     {
         $this->guardWorkspace($actor, $account->workspace_id);
 
-        if ($account->archived_at !== null || $account->is_imported_history) {
+        if (! $attributes['type']->isIncomeOrExpense()) {
+            throw ValidationException::withMessages([
+                'type' => 'Choose income or expense.',
+            ]);
+        }
+
+        if ($account->archived_at !== null) {
             throw ValidationException::withMessages([
                 'account' => 'This account cannot be used for new transactions.',
             ]);

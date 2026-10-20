@@ -82,6 +82,7 @@ class AccountCatalog
      *     currency_locked: bool,
      *     archived: bool,
      *     can_delete: bool,
+     *     can_transfer: bool,
      *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
      *     created_by: string|null,
      *     updated_by: string|null
@@ -89,7 +90,6 @@ class AccountCatalog
      */
     public function detail(Account $account): array
     {
-        $this->ensureTransactionCount($account);
         $account->loadMissing(['creator:id,name', 'editor:id,name']);
         $editor = $account->editor;
         $updatedBy = null;
@@ -106,6 +106,7 @@ class AccountCatalog
         return [
             ...$this->form($account),
             'type_label' => $account->type->label(),
+            'can_transfer' => $account->archived_at === null,
             'balance' => $this->money($this->balances->of($account), $account->currency),
             'created_by' => $account->creator?->name,
             'updated_by' => $updatedBy,
@@ -128,8 +129,7 @@ class AccountCatalog
      */
     public function form(Account $account): array
     {
-        $this->ensureTransactionCount($account);
-        $transactionCount = (int) $account->transactions_count;
+        $transactionCount = $this->movementCount($account);
 
         return [
             'id' => $account->id,
@@ -206,10 +206,12 @@ class AccountCatalog
         ];
     }
 
-    private function ensureTransactionCount(Account $account): void
+    private function movementCount(Account $account): int
     {
-        if ($account->transactions_count === null) {
-            $account->loadCount('transactions');
+        if ($account->transactions_count === null || $account->incoming_transfers_count === null) {
+            $account->loadCount(['transactions', 'incomingTransfers']);
         }
+
+        return (int) $account->transactions_count + (int) $account->incoming_transfers_count;
     }
 }

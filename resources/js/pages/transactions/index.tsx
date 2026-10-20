@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/transactions';
+import { create as createTransfer } from '@/routes/transfers';
 import type {
     TransactionListFilters,
     TransactionListOptions,
@@ -89,11 +90,25 @@ export default function Transactions({
                             {month.label}. Click a column title to sort.
                         </p>
                     </div>
-                    <Button asChild className="h-11 w-full sm:w-auto">
-                        <Link href={create()} data-test="new-transaction">
-                            Add a transaction
-                        </Link>
-                    </Button>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button asChild className="h-11 w-full sm:w-auto">
+                            <Link href={create()} data-test="new-transaction">
+                                Add a transaction
+                            </Link>
+                        </Button>
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="h-11 w-full sm:w-auto"
+                        >
+                            <Link
+                                href={createTransfer()}
+                                data-test="new-transfer"
+                            >
+                                Transfer
+                            </Link>
+                        </Button>
+                    </div>
                 </section>
 
                 <div className="flex items-center justify-between gap-3">

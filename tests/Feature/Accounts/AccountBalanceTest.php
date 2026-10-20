@@ -253,13 +253,11 @@ test('a different currency does not need a typed account amount', function () {
         ->and(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('1175.00');
 });
 
-test('archived and imported accounts cannot be picked for a new transaction', function () {
+test('an archived account cannot be picked for a new transaction', function () {
     $user = User::factory()->create();
     $archived = Account::factory()->archived()->create();
-    $imported = Account::factory()->importedHistory()->create();
 
-    expect(fn () => recordExpense($archived, $user, '10.00'))->toThrow(ValidationException::class)
-        ->and(fn () => recordExpense($imported, $user, '10.00'))->toThrow(ValidationException::class);
+    expect(fn () => recordExpense($archived, $user, '10.00'))->toThrow(ValidationException::class);
 });
 
 test('a transaction already on an archived account can be corrected but not moved onto one', function () {

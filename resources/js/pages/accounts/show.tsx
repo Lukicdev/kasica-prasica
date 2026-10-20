@@ -3,7 +3,8 @@ import { AccountBalance } from '@/components/account-balance';
 import { MoneyAmount } from '@/components/money-amount';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { edit, index, show } from '@/routes/accounts';
+import { edit, index, reconcile, show } from '@/routes/accounts';
+import { create as createTransfer } from '@/routes/transfers';
 import type { AccountDetail, StatementLine } from '@/types/account';
 
 export default function AccountShow({
@@ -38,13 +39,42 @@ export default function AccountShow({
                             </p>
                         ) : null}
                     </div>
-                    <Button
-                        asChild
-                        variant="outline"
-                        className="h-11 w-full sm:w-auto"
-                    >
-                        <Link href={edit(account.id)}>Edit</Link>
-                    </Button>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        {account.can_transfer ? (
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="h-11 w-full sm:w-auto"
+                            >
+                                <Link
+                                    href={createTransfer({
+                                        query: { from: account.id },
+                                    })}
+                                >
+                                    Transfer
+                                </Link>
+                            </Button>
+                        ) : null}
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="h-11 w-full sm:w-auto"
+                        >
+                            <Link
+                                href={reconcile(account.id)}
+                                data-test="reconcile-account"
+                            >
+                                Reconcile
+                            </Link>
+                        </Button>
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="h-11 w-full sm:w-auto"
+                        >
+                            <Link href={edit(account.id)}>Edit</Link>
+                        </Button>
+                    </div>
                 </section>
 
                 <section

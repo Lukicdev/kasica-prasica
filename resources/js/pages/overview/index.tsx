@@ -102,16 +102,18 @@ export default function Overview({
                             the display currency from the header.
                         </p>
                     </div>
-                    <Button asChild className="h-11 w-full sm:w-auto">
-                        <Link
-                            href={createTransaction({
-                                query: { date: month.entry_date },
-                            })}
-                            data-test="overview-add-transaction"
-                        >
-                            Add a transaction
-                        </Link>
-                    </Button>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button asChild className="h-11 w-full sm:w-auto">
+                            <Link
+                                href={createTransaction({
+                                    query: { date: month.entry_date },
+                                })}
+                                data-test="overview-add-transaction"
+                            >
+                                Add a transaction
+                            </Link>
+                        </Button>
+                    </div>
                 </section>
 
                 <div className="flex items-center justify-between gap-3">
@@ -722,11 +724,13 @@ function Drilldown({
                                         }
                                     />
                                 </span>
-                                <span className="text-sm text-muted-foreground">
-                                    {transaction.account}
-                                    {transaction.person
-                                        ? ` · ${transaction.person}`
-                                        : ''}
+                                <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                                    <span>
+                                        {transaction.account}
+                                        {transaction.person
+                                            ? ` · ${transaction.person}`
+                                            : ''}
+                                    </span>
                                 </span>
                                 {transaction.note ? (
                                     <span className="text-sm">

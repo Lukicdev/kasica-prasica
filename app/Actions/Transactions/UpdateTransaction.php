@@ -35,9 +35,15 @@ class UpdateTransaction
             throw new AuthorizationException('This account is outside your workspace.');
         }
 
+        if (! $transaction->type->isIncomeOrExpense() || ! $attributes['type']->isIncomeOrExpense()) {
+            throw ValidationException::withMessages([
+                'type' => 'Choose income or expense.',
+            ]);
+        }
+
         $moving = $account->id !== $transaction->account_id;
 
-        if ($moving && ($account->archived_at !== null || $account->is_imported_history)) {
+        if ($moving && $account->archived_at !== null) {
             throw ValidationException::withMessages([
                 'account' => 'This account cannot be used for new transactions.',
             ]);

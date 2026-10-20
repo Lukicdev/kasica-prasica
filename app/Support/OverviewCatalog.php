@@ -110,7 +110,7 @@ class OverviewCatalog
 
         $differenceBase = Decimal::of($spentBase)->subtract(Decimal::of($budgetBase))->toString(MoneyConverter::SCALE);
         $difference = $this->standing($differenceBase);
-        $hasAccount = $user->workspace->accounts()->listed()->exists();
+        $hasAccount = $user->workspace->accounts()->exists();
         $firstRun = $transactions->isEmpty()
             && ! Transaction::query()->whereBelongsTo($workspace)->exists();
 
@@ -455,8 +455,8 @@ class OverviewCatalog
      */
     private function accountPanel(User $user, Currency $display): array
     {
-        $listed = $user->workspace->accounts()->listed()->get();
-        $list = $this->accounts->list($listed, $display);
+        $accounts = $user->workspace->accounts()->get();
+        $list = $this->accounts->list($accounts, $display);
         $items = [];
 
         foreach ($list['groups'] as $group) {
