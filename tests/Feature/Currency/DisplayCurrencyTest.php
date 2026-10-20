@@ -4,7 +4,6 @@ use App\Enums\Currency;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
-use Laravel\Fortify\Features;
 
 uses(RefreshDatabase::class);
 
@@ -24,20 +23,6 @@ test('a new user shows figures in dinars', function () {
                 ['code' => 'RSD', 'name' => 'Serbian dinar'],
                 ['code' => 'EUR', 'name' => 'Euro'],
             ]));
-});
-
-test('the first registered user starts in dinars', function () {
-    $this->skipUnlessFortifyHas(Features::registration());
-
-    $this->post(route('register.store'), [
-        'name' => 'Ada Admin',
-        'email' => 'ada@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    expect(User::query()->where('email', 'ada@example.com')->first()?->display_currency)
-        ->toBe(Currency::Rsd);
 });
 
 test('a user can remember euros as the display currency', function () {

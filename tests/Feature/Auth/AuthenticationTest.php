@@ -13,6 +13,20 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('registration is closed', function () {
+    $this->get('/register')->assertNotFound();
+
+    $this->post('/register', [
+        'name' => 'Ada Admin',
+        'email' => 'ada@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertNotFound();
+
+    $this->assertGuest();
+    expect(User::query()->exists())->toBeFalse();
+});
+
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 

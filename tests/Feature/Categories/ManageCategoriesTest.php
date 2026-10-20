@@ -10,7 +10,6 @@ use App\Models\Workspace;
 use App\Support\DefaultCategories;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
-use Laravel\Fortify\Features;
 
 uses(RefreshDatabase::class);
 
@@ -62,22 +61,6 @@ test('a new workspace starts with the spreadsheet categories', function () {
     app(SeedDefaultCategories::class)->handle($workspace);
 
     expect(Category::query()->whereBelongsTo($workspace)->count())->toBe(17);
-});
-
-test('registration gives the new workspace its categories', function () {
-    $this->skipUnlessFortifyHas(Features::registration());
-
-    $this->post(route('register.store'), [
-        'name' => 'Ada Admin',
-        'email' => 'ada@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    $user = User::query()->where('email', 'ada@example.com')->first();
-
-    expect($user)->not->toBeNull()
-        ->and(Category::query()->whereBelongsTo($user->workspace)->count())->toBe(17);
 });
 
 test('the category list shows descriptions and the label used when picking one', function () {

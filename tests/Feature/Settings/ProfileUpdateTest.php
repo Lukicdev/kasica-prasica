@@ -53,6 +53,21 @@ test('email verification status is unchanged when the email address is unchanged
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
+test('profile updates cannot grant admin', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => 'Renamed',
+            'email' => $user->email,
+            'is_admin' => true,
+        ])
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->is_admin)->toBeFalse()
+        ->and($user->name)->toBe('Renamed');
+});
+
 test('user can delete their account', function () {
     $user = User::factory()->create();
 
