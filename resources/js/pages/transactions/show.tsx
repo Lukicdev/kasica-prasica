@@ -3,7 +3,9 @@ import TransactionController from '@/actions/App/Http/Controllers/TransactionCon
 import { AccountBalance } from '@/components/account-balance';
 import { MoneyAmount } from '@/components/money-amount';
 import { Button } from '@/components/ui/button';
+import { edit as editAdjustment } from '@/routes/adjustments';
 import { create, edit, index, show } from '@/routes/transactions';
+import { create as createTransfer, edit as editTransfer } from '@/routes/transfers';
 import type { TransactionDetail } from '@/types/transaction';
 
 export default function TransactionShow({
@@ -11,6 +13,31 @@ export default function TransactionShow({
 }: {
     transaction: TransactionDetail;
 }) {
+    const editHref =
+        transaction.type === 'transfer'
+            ? editTransfer(transaction.id)
+            : transaction.type === 'adjustment'
+              ? editAdjustment(transaction.id)
+              : edit(transaction.id);
+    const anotherHref =
+        transaction.type === 'transfer' && transaction.destination
+            ? createTransfer({
+                  query: {
+                      from: transaction.account.id,
+                      to: transaction.destination.id,
+                      date: transaction.date,
+                  },
+              })
+            : transaction.type === 'income' || transaction.type === 'expense'
+              ? create({
+                    query: {
+                        type: transaction.type,
+                        account: transaction.account.id,
+                        date: transaction.date,
+                    },
+                })
+              : null;
+
     const remove = (): void => {
         if (!confirm('Delete this transaction? This cannot be undone.')) {
             return;
@@ -43,7 +70,7 @@ export default function TransactionShow({
                         variant="outline"
                         className="h-11 w-full sm:w-auto"
                     >
-                        <Link href={edit(transaction.id)}>Edit</Link>
+                        <Link href={editHref}>Edit</Link>
                     </Button>
                 </section>
 
@@ -59,15 +86,36 @@ export default function TransactionShow({
                         <AccountBalance balance={transaction.balance} />
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        This transaction{' '}
-                        {transaction.type === 'income'
-                            ? 'added'
-                            : transaction.refund
-                              ? 'returned'
-                              : 'took'}{' '}
-                        {transaction.account_amount.formatted}.
+                        {transaction.type === 'transfer' &&
+                        transaction.destination &&
+                        transaction.destination_amount
+                            ? `This transfer moved ${transaction.account_amount.formatted} from ${transaction.account.name}. ${transaction.destination.name} received ${transaction.destination_amount.formatted}. It does not count as income or spending.`
+                            : transaction.type === 'adjustment'
+                              ? `This balancing entry changed ${transaction.account.name} by ${transaction.account_amount.formatted}. It is left out of income, spending, and the budget.`
+                              : transaction.type === 'income'
+                                ? `This transaction added ${transaction.account_amount.formatted}.`
+                                : transaction.refund
+                                  ? `This transaction returned ${transaction.account_amount.formatted}.`
+                                  : `This transaction took ${transaction.account_amount.formatted}.`}
                     </p>
                 </section>
+
+                {transaction.destination && transaction.destination_balance ? (
+                    <section
+                        aria-label={`Balance of ${transaction.destination.name}`}
+                        className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+                        data-test="destination-balance"
+                    >
+                        <p className="text-sm text-muted-foreground">
+                            Balance of {transaction.destination.name}
+                        </p>
+                        <p className="text-2xl font-semibold tracking-tight">
+                            <AccountBalance
+                                balance={transaction.destination_balance}
+                            />
+                        </p>
+                    </section>
+                ) : null}
 
                 <dl className="flex flex-col gap-3 text-sm">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -81,10 +129,23 @@ export default function TransactionShow({
                             />
                         </dd>
                     </div>
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <dt className="text-muted-foreground">Account</dt>
-                        <dd>{transaction.account.name}</dd>
-                    </div>
+                    {transaction.destination ? (
+                        <>
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                <dt className="text-muted-foreground">From</dt>
+                                <dd>{transaction.account.name}</dd>
+                            </div>
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                <dt className="text-muted-foreground">To</dt>
+                                <dd>{transaction.destination.name}</dd>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <dt className="text-muted-foreground">Account</dt>
+                            <dd>{transaction.account.name}</dd>
+                        </div>
+                    )}
                     {transaction.person ? (
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                             <dt className="text-muted-foreground">Person</dt>
@@ -108,20 +169,13 @@ export default function TransactionShow({
                 </dl>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
-                    <Button asChild className="h-11 sm:flex-1">
-                        <Link
-                            href={create({
-                                query: {
-                                    type: transaction.type,
-                                    account: transaction.account.id,
-                                    date: transaction.date,
-                                },
-                            })}
-                            data-test="add-another"
-                        >
-                            Add another
-                        </Link>
-                    </Button>
+                    {anotherHref ? (
+                        <Button asChild className="h-11 sm:flex-1">
+                            <Link href={anotherHref} data-test="add-another">
+                                Add another
+                            </Link>
+                        </Button>
+                    ) : null}
                     <Button
                         type="button"
                         variant="destructive"

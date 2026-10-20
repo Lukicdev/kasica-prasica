@@ -35,7 +35,7 @@ trait TransactionValidationRules
     protected function transactionRules(): array
     {
         return [
-            'type' => ['required', Rule::enum(TransactionType::class)],
+            'type' => ['required', Rule::in([TransactionType::Income->value, TransactionType::Expense->value])],
             'amount' => ['required', 'regex:/^-?\d{1,13}(\.\d{1,2})?$/'],
             'refund' => ['sometimes', 'boolean'],
             'currency' => ['required', Rule::enum(Currency::class)],
@@ -55,7 +55,7 @@ trait TransactionValidationRules
     {
         return [
             'type.required' => 'Choose income or expense.',
-            'type.enum' => 'Choose income or expense.',
+            'type.in' => 'Choose income or expense.',
             'amount.required' => 'Enter an amount.',
             'amount.regex' => 'Enter an amount with up to two decimal places.',
             'currency.required' => 'Choose RSD or EUR.',
@@ -164,7 +164,7 @@ trait TransactionValidationRules
 
         $moving = $existing === null || $existing->account_id !== $account->id;
 
-        if ($moving && ($account->archived_at !== null || $account->is_imported_history)) {
+        if ($moving && $account->archived_at !== null) {
             $validator->errors()->add('account_id', 'This account cannot be used for new transactions.');
 
             return;
@@ -180,7 +180,13 @@ trait TransactionValidationRules
             return;
         }
 
-        $type = TransactionType::from($this->string('type')->toString());
+        $type = TransactionType::tryFrom($this->string('type')->toString());
+
+        if (! $type instanceof TransactionType || ! $type->isIncomeOrExpense()) {
+            $validator->errors()->add('type', 'Choose income or expense.');
+
+            return;
+        }
 
         if ($category->kind->value !== $type->value) {
             $validator->errors()->add('category_id', 'Choose a category of the same kind.');

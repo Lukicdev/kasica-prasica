@@ -42,6 +42,7 @@ export type AccountFormValues = {
 
 export type AccountDetail = AccountFormValues & {
     type_label: string;
+    can_transfer: boolean;
     balance: MoneyFigure;
     created_by: string | null;
     updated_by: string | null;

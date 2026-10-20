@@ -21,12 +21,9 @@ return new class extends Migration
             $table->date('opening_balance_on');
             $table->text('note')->nullable();
             $table->timestamp('archived_at')->nullable();
-            $table->boolean('is_imported_history')->default(false);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-
-            $table->index(['workspace_id', 'is_imported_history']);
         });
     }
 

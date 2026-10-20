@@ -121,7 +121,7 @@ export type TransactionFormPage = {
 
 export type TransactionDetail = {
     id: number;
-    type: 'income' | 'expense';
+    type: string;
     type_label: string;
     refund: boolean;
     date: string;
@@ -129,6 +129,20 @@ export type TransactionDetail = {
     category: string | null;
     note: string | null;
     account: { id: number; name: string };
+    destination: { id: number; name: string } | null;
+    destination_amount: {
+        amount: string;
+        currency: string;
+        formatted: string;
+        negative: boolean;
+    } | null;
+    destination_balance: {
+        amount: string;
+        currency: string;
+        formatted: string;
+        negative: boolean;
+    } | null;
+    excluded_from_budget: boolean;
     person: string | null;
     amount: DisplayedMoney;
     account_amount: {

@@ -262,11 +262,10 @@ test('income cannot use an expense category and a negative amount', function () 
     expect(Transaction::query()->count())->toBe(0);
 });
 
-test('archived and imported accounts and archived categories cannot be used for a new transaction', function () {
+test('archived accounts and archived categories cannot be used for a new transaction', function () {
     $user = User::factory()->create();
     $open = Account::factory()->create();
     $archivedAccount = Account::factory()->archived()->create();
-    $imported = Account::factory()->importedHistory()->create();
     $category = Category::factory()->create();
     $archivedCategory = Category::factory()->archived()->create();
 
@@ -276,17 +275,11 @@ test('archived and imported accounts and archived categories cannot be used for 
         ->assertSessionHasErrors('account_id');
 
     $this->actingAs($user)
-        ->from(route('transactions.create'))
-        ->post(route('transactions.store'), transactionPayload($imported, $category, $user))
-        ->assertSessionHasErrors('account_id');
-
-    $this->actingAs($user)
         ->get(route('transactions.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('categories', fn ($categories): bool => collect($categories)->pluck('id')->contains($archivedCategory->id) === false)
             ->where('accounts', fn ($accounts): bool => collect($accounts)->pluck('id')->contains($archivedAccount->id) === false
-                && collect($accounts)->pluck('id')->contains($imported->id) === false
                 && collect($accounts)->pluck('id')->contains($open->id)));
 
     $this->actingAs($user)

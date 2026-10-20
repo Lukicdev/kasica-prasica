@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Opening balance first, then every transaction from oldest to newest.
@@ -54,14 +56,22 @@ class AccountStatement
             'running_balance' => $this->money($running, $account),
         ]];
 
-        $transactions = $account->transactions()
-            ->with('person:id,name')
+        $transactions = Transaction::query()
+            ->where(function (Builder $query) use ($account): void {
+                $query->where('account_id', $account->id)
+                    ->orWhere('destination_account_id', $account->id);
+            })
+            ->with([
+                'person:id,name',
+                'account:id,name',
+                'destinationAccount:id,name',
+            ])
             ->orderBy('booked_on')
             ->orderBy('id')
             ->get();
 
         foreach ($transactions as $transaction) {
-            $running = $this->balances->apply($running, $transaction->type, (string) $transaction->account_amount);
+            $running = $this->balances->applyOnAccount($running, $transaction, $account->id);
 
             $lines[] = [
                 'id' => $transaction->id,
@@ -69,7 +79,7 @@ class AccountStatement
                 'date' => $transaction->booked_on->toDateString(),
                 'date_label' => $transaction->booked_on->format('j M Y'),
                 'type' => $transaction->type->value,
-                'type_label' => $transaction->typeLabel(),
+                'type_label' => $this->typeLabel($transaction, $account),
                 'note' => $transaction->note,
                 'person' => $transaction->person?->name,
                 'amount' => $this->amount($transaction, $account),
@@ -78,6 +88,19 @@ class AccountStatement
         }
 
         return $lines;
+    }
+
+    private function typeLabel(Transaction $transaction, Account $account): string
+    {
+        if ($transaction->type !== TransactionType::Transfer) {
+            return $transaction->typeLabel();
+        }
+
+        if ($transaction->destination_account_id === $account->id) {
+            return 'Transfer from '.$transaction->account->name;
+        }
+
+        return 'Transfer to '.$transaction->destinationAccount->name;
     }
 
     /**
@@ -91,7 +114,12 @@ class AccountStatement
      */
     private function amount(Transaction $transaction, Account $account): array
     {
-        $accountAmount = Decimal::of((string) $transaction->account_amount)->toString(MoneyConverter::SCALE);
+        $incoming = $transaction->type === TransactionType::Transfer
+            && $transaction->destination_account_id === $account->id;
+        $movement = $incoming
+            ? (string) ($transaction->destination_amount ?? '0')
+            : (string) $transaction->account_amount;
+        $accountAmount = Decimal::of($movement)->toString(MoneyConverter::SCALE);
         $originalAmount = Decimal::of((string) $transaction->amount)->toString(MoneyConverter::SCALE);
 
         return [

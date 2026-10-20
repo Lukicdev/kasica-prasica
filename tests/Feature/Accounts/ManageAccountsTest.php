@@ -60,7 +60,6 @@ test('a member can create an account', function () {
         ->and($account->note)->toBe('Wallet in the kitchen')
         ->and($account->created_by)->toBe($user->id)
         ->and($account->workspace_id)->toBe($user->workspace_id)
-        ->and($account->is_imported_history)->toBeFalse()
         ->and($account->archived_at)->toBeNull();
 
     $this->actingAs($user)
@@ -285,10 +284,6 @@ test('the list groups accounts by type and totals them in the display currency',
         'type' => 'bank',
         'opening_balance' => '5.00',
     ]);
-    Account::factory()->importedHistory()->create([
-        'opening_balance' => '99999.00',
-        'currency' => Currency::Eur,
-    ]);
 
     $this->actingAs($user)
         ->get(route('accounts.index'))
@@ -355,45 +350,6 @@ test('another member sees the same accounts and an outsider does not', function 
     $this->actingAs($outsider)
         ->delete(route('accounts.destroy', $account))
         ->assertForbidden();
-});
-
-test('an imported history account can be opened and edited', function () {
-    $user = User::factory()->create();
-    $account = Account::factory()->importedHistory()->create();
-
-    $this->actingAs($user)
-        ->get(route('accounts.show', $account))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('account.name', 'Imported history'));
-
-    $this->actingAs($user)
-        ->get(route('accounts.edit', $account))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('account.name', 'Imported history'));
-
-    $this->actingAs($user)
-        ->patch(route('accounts.update', $account), accountPayload([
-            'name' => 'Old import',
-        ]))
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('accounts.show', $account));
-
-    expect($account->fresh()->name)->toBe('Old import')
-        ->and($account->fresh()->is_imported_history)->toBeTrue();
-
-    $this->actingAs($user)
-        ->patch(route('accounts.archive', $account))
-        ->assertRedirect(route('accounts.show', $account));
-
-    $this->actingAs($user)
-        ->patch(route('accounts.restore', $account))
-        ->assertRedirect(route('accounts.show', $account));
-
-    $this->actingAs($user)
-        ->delete(route('accounts.destroy', $account))
-        ->assertRedirect(route('accounts.index'));
-
-    expect(Account::query()->whereKey($account->id)->exists())->toBeFalse();
 });
 
 /**

@@ -9,7 +9,6 @@ use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Support\CalendarMonth;
 use App\Support\Decimal;
@@ -400,7 +399,7 @@ test('other months, refunds and archived categories stay in the right rows', fun
             }));
 });
 
-test('the accounts panel leaves out imported history and converts the total', function () {
+test('the accounts panel converts the total', function () {
     $user = User::factory()->create();
     Account::factory()->create([
         'name' => 'Wallet',
@@ -408,41 +407,21 @@ test('the accounts panel leaves out imported history and converts the total', fu
         'opening_balance' => '100.00',
         'currency' => Currency::Rsd,
     ]);
-    $imported = Account::factory()->importedHistory()->create([
-        'opening_balance' => '500.00',
-    ]);
     $euro = Account::factory()->inCurrency(Currency::Eur)->create([
         'name' => 'Euro cash',
         'type' => AccountType::Bank,
         'opening_balance' => '10.00',
-    ]);
-    $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
-
-    Transaction::factory()->create([
-        'workspace_id' => $user->workspace_id,
-        'account_id' => $imported->id,
-        'category_id' => $groceries->id,
-        'person_id' => $user->id,
-        'type' => TransactionType::Expense,
-        'amount' => '40.00',
-        'currency' => Currency::Rsd,
-        'account_amount' => '40.00',
-        'base_amount' => '40.00',
-        'exchange_rate' => '1',
-        'booked_on' => '2026-10-04',
     ]);
 
     $this->actingAs($user)
         ->get(route('dashboard', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('totals.spent.base_amount', '40.00')
             ->where('accounts.items', function ($items) use ($euro) {
                 $names = collect($items)->pluck('name');
                 $euroCash = collect($items)->firstWhere('name', 'Euro cash');
 
                 return $names->all() === ['Wallet', 'Euro cash']
-                    && $names->doesntContain('Imported history')
                     && $euroCash['id'] === $euro->id
                     && $euroCash['balance']['formatted'] === '10.00 EUR'
                     && $euroCash['balance']['currency'] === 'EUR';

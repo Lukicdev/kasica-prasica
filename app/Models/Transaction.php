@@ -13,21 +13,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * One income or expense booked to an account.
+ * One income, expense, transfer, or balance adjustment.
  *
- * The original amount keeps its currency. account_amount is that movement in
- * the account's currency, which is what the balance uses. base_amount is the
- * dinar value at the rate stored on the row.
+ * The original amount keeps its currency. account_amount is the movement in
+ * the source account's currency. A transfer also stores destination_amount in
+ * the destination account's currency. base_amount is the dinar value at the
+ * rate stored on the row. Adjustments store a signed account_amount.
  *
  * @property int $id
  * @property int $workspace_id
  * @property int $account_id
+ * @property int|null $destination_account_id
  * @property int|null $category_id
  * @property int|null $person_id
  * @property TransactionType $type
  * @property string $amount
  * @property Currency $currency
  * @property string $account_amount
+ * @property string|null $destination_amount
  * @property string $base_amount
  * @property string $exchange_rate
  * @property Carbon $booked_on
@@ -38,6 +41,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Workspace $workspace
  * @property-read Account $account
+ * @property-read Account|null $destinationAccount
  * @property-read Category|null $category
  * @property-read User|null $person
  * @property-read User|null $creator
@@ -46,12 +50,14 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'workspace_id',
     'account_id',
+    'destination_account_id',
     'category_id',
     'person_id',
     'type',
     'amount',
     'currency',
     'account_amount',
+    'destination_amount',
     'base_amount',
     'exchange_rate',
     'booked_on',
@@ -74,6 +80,7 @@ class Transaction extends Model
             'currency' => Currency::class,
             'amount' => 'decimal:2',
             'account_amount' => 'decimal:2',
+            'destination_amount' => 'decimal:2',
             'base_amount' => 'decimal:2',
             'exchange_rate' => 'decimal:6',
             'booked_on' => 'date',
@@ -94,6 +101,14 @@ class Transaction extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /**
+     * @return BelongsTo<Account, $this>
+     */
+    public function destinationAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'destination_account_id');
     }
 
     /**

@@ -30,7 +30,6 @@ class AccountController extends Controller
         Gate::authorize('viewAny', Account::class);
 
         $accounts = Account::query()
-            ->listed()
             ->whereBelongsTo($user->workspace)
             ->get();
 

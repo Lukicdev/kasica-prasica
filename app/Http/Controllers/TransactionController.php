@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Transactions\CreateTransaction;
 use App\Actions\Transactions\DeleteTransaction;
 use App\Actions\Transactions\UpdateTransaction;
+use App\Enums\TransactionType;
 use App\Http\Requests\Transactions\StoreTransactionRequest;
 use App\Http\Requests\Transactions\UpdateTransactionRequest;
 use App\Models\Account;
@@ -82,9 +83,17 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function edit(Request $request, Transaction $transaction): Response
+    public function edit(Request $request, Transaction $transaction): Response|RedirectResponse
     {
         Gate::authorize('update', $transaction);
+
+        if ($transaction->type === TransactionType::Transfer) {
+            return to_route('transfers.edit', $transaction);
+        }
+
+        if ($transaction->type === TransactionType::Adjustment) {
+            return to_route('adjustments.edit', $transaction);
+        }
 
         return Inertia::render('transactions/edit', [
             ...$this->catalog->form($request->user(), $transaction),

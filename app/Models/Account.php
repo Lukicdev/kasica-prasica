@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * A place money sits. The balance is never stored: it is the opening balance
- * plus income and minus expenses booked to the account.
+ * plus income, minus expenses, plus adjustments, and plus or minus transfers.
  *
  * @property int $id
  * @property int $workspace_id
@@ -26,10 +26,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon $opening_balance_on
  * @property string|null $note
  * @property Carbon|null $archived_at
- * @property bool $is_imported_history
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property int|null $transactions_count
+ * @property int|null $incoming_transfers_count
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Workspace $workspace
@@ -45,7 +45,6 @@ use Illuminate\Support\Carbon;
     'opening_balance_on',
     'note',
     'archived_at',
-    'is_imported_history',
     'created_by',
     'updated_by',
 ])]
@@ -53,13 +52,6 @@ class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
     use HasFactory;
-
-    /**
-     * @var array<string, mixed>
-     */
-    protected $attributes = [
-        'is_imported_history' => false,
-    ];
 
     /**
      * @return array<string, string>
@@ -72,17 +64,7 @@ class Account extends Model
             'opening_balance' => 'decimal:2',
             'opening_balance_on' => 'date',
             'archived_at' => 'datetime',
-            'is_imported_history' => 'boolean',
         ];
-    }
-
-    /**
-     * @param  Builder<Account>  $query
-     * @return Builder<Account>
-     */
-    public function scopeListed(Builder $query): Builder
-    {
-        return $query->where('is_imported_history', false);
     }
 
     /**
@@ -93,7 +75,7 @@ class Account extends Model
      */
     public function scopeSelectable(Builder $query): Builder
     {
-        return $query->listed()->whereNull('archived_at');
+        return $query->whereNull('archived_at');
     }
 
     /**
@@ -110,6 +92,16 @@ class Account extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Transfers that pay into this account.
+     *
+     * @return HasMany<Transaction, $this>
+     */
+    public function incomingTransfers(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'destination_account_id');
     }
 
     /**
