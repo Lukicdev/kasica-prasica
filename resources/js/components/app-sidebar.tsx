@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as accounts } from '@/routes/accounts';
-import { index as budget } from '@/routes/budget';
+import { index as budget } from '@/routes/budgets';
 import { index as categories } from '@/routes/categories';
 import { index as insights } from '@/routes/insights';
 import { index as transactions } from '@/routes/transactions';
@@ -44,7 +44,7 @@ const mainNavItems: NavItem[] = [
         icon: ChartColumn,
     },
     {
-        title: 'Budget',
+        title: 'Budgets',
         href: budget(),
         icon: PiggyBank,
     },

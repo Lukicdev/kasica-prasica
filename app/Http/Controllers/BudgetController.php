@@ -23,7 +23,7 @@ class BudgetController extends Controller
     {
         Gate::authorize('viewAny', BudgetMonth::class);
 
-        return Inertia::render('budget/index', $this->catalog->page(
+        return Inertia::render('budgets/index', $this->catalog->page(
             $request->user(),
             CalendarMonth::fromQuery($request->string('month')->toString()),
         ));
@@ -42,7 +42,7 @@ class BudgetController extends Controller
                 : 'Budget started.',
         ]);
 
-        return to_route('budget.index', ['month' => $month->value()]);
+        return to_route('budgets.index', ['month' => $month->value()]);
     }
 
     public function update(UpdateCategoryBudgetRequest $request, UpdateCategoryBudget $update): RedirectResponse

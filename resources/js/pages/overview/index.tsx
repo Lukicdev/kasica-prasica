@@ -14,7 +14,7 @@ import {
     index as accounts,
     show as showAccount,
 } from '@/routes/accounts';
-import { index as budget } from '@/routes/budget';
+import { index as budget } from '@/routes/budgets';
 import { index as insights } from '@/routes/insights';
 import {
     create as createTransaction,

@@ -13,7 +13,7 @@ import {
     isNegativeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import { index, store, update } from '@/routes/budget';
+import { index, store, update } from '@/routes/budgets';
 import type {
     BudgetCategory,
     BudgetCopyFrom,
@@ -185,11 +185,11 @@ export default function Budget({
 
     return (
         <>
-            <Head title="Budget" />
+            <Head title="Budgets" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <section className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
                     <h1 className="text-lg font-semibold tracking-tight">
-                        Budget
+                        Budgets
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {month.label}. Expense budgets are stored in RSD.
@@ -478,7 +478,7 @@ function BudgetRow({
 Budget.layout = {
     breadcrumbs: [
         {
-            title: 'Budget',
+            title: 'Budgets',
             href: index(),
         },
     ],

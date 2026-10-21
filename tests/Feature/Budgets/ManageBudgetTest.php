@@ -17,9 +17,9 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 test('guests cannot view or change the budget', function () {
-    $this->get(route('budget.index'))->assertRedirect(route('login'));
-    $this->post(route('budget.store'), ['month' => '2026-10', 'copy' => false])->assertRedirect(route('login'));
-    $this->put(route('budget.update'), [
+    $this->get(route('budgets.index'))->assertRedirect(route('login'));
+    $this->post(route('budgets.store'), ['month' => '2026-10', 'copy' => false])->assertRedirect(route('login'));
+    $this->put(route('budgets.update'), [
         'month' => '2026-10',
         'category_id' => 1,
         'amount' => '10',
@@ -30,11 +30,11 @@ test('unverified users cannot view or change the budget', function () {
     $user = User::factory()->unverified()->create();
 
     $this->actingAs($user)
-        ->get(route('budget.index'))
+        ->get(route('budgets.index'))
         ->assertRedirect(route('verification.notice'));
 
     $this->actingAs($user)
-        ->post(route('budget.store'), ['month' => '2026-10', 'copy' => false])
+        ->post(route('budgets.store'), ['month' => '2026-10', 'copy' => false])
         ->assertRedirect(route('verification.notice'));
 });
 
@@ -43,10 +43,10 @@ test('the budget opens on the current month and lists every expense category', f
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => 'nope']))
+        ->get(route('budgets.index', ['month' => 'nope']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('budget/index')
+            ->component('budgets/index')
             ->where('month.value', '2026-10')
             ->where('month.label', 'October 2026')
             ->where('month.previous', '2026-09')
@@ -76,7 +76,7 @@ test('a chosen month is kept in the page address', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-09']))
+        ->get(route('budgets.index', ['month' => '2026-09']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('month.value', '2026-09')
@@ -88,25 +88,25 @@ test('a month can be started empty and each expense budget is edited in dinars',
     $mortgage = Category::query()->where('name', 'Mortgage')->first();
 
     $this->actingAs($user)
-        ->post(route('budget.store'), [
+        ->post(route('budgets.store'), [
             'month' => '2026-10',
             'copy' => false,
         ])
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('budget.index', ['month' => '2026-10']));
+        ->assertRedirect(route('budgets.index', ['month' => '2026-10']));
 
     expect(BudgetMonth::query()->where('month', '2026-10')->where('created_by', $user->id)->exists())->toBeTrue()
         ->and(CategoryBudget::query()->count())->toBe(0);
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $mortgage->id,
             'amount' => '75700.5',
         ])
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('budget.index', ['month' => '2026-10']));
+        ->assertRedirect(route('budgets.index', ['month' => '2026-10']));
 
     $line = CategoryBudget::query()->where('category_id', $mortgage->id)->first();
 
@@ -116,7 +116,7 @@ test('a month can be started empty and each expense budget is edited in dinars',
         ->and($line->updated_by)->toBe($user->id);
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('started', true)
@@ -136,8 +136,8 @@ test('a budget cannot be edited until the month is started or with a bad amount'
     $salary = Category::query()->where('name', 'Salary')->first();
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $mortgage->id,
             'amount' => '10',
@@ -145,7 +145,7 @@ test('a budget cannot be edited until the month is started or with a bad amount'
         ->assertSessionHasErrors('month');
 
     $this->actingAs($user)
-        ->post(route('budget.store'), ['month' => '2026-10', 'copy' => false])
+        ->post(route('budgets.store'), ['month' => '2026-10', 'copy' => false])
         ->assertSessionHasNoErrors();
 
     foreach ([
@@ -155,8 +155,8 @@ test('a budget cannot be edited until the month is started or with a bad amount'
         ['amount' => '10', 'error' => 'category_id', 'category_id' => $salary->id],
     ] as $attempt) {
         $this->actingAs($user)
-            ->from(route('budget.index', ['month' => '2026-10']))
-            ->put(route('budget.update'), [
+            ->from(route('budgets.index', ['month' => '2026-10']))
+            ->put(route('budgets.update'), [
                 'month' => '2026-10',
                 'category_id' => $attempt['category_id'] ?? $mortgage->id,
                 'amount' => $attempt['amount'],
@@ -173,13 +173,13 @@ test('the euro view shows converted budgets and refuses edits', function () {
     $dining = Category::query()->where('name', 'Dining Out')->first();
 
     $this->actingAs($user)
-        ->post(route('budget.store'), ['month' => '2026-10', 'copy' => false]);
+        ->post(route('budgets.store'), ['month' => '2026-10', 'copy' => false]);
 
     app(UpdateCategoryBudget::class)->handle($user, CalendarMonth::fromValue('2026-10'), $groceries, '50');
     app(UpdateCategoryBudget::class)->handle($user, CalendarMonth::fromValue('2026-10'), $dining, '50');
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('editable', false)
@@ -197,8 +197,8 @@ test('the euro view shows converted budgets and refuses edits', function () {
             }));
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $groceries->id,
             'amount' => '80',
@@ -213,28 +213,28 @@ test('opening a month offers a copy of the previous month and can still start em
     $mortgage = Category::query()->where('name', 'Mortgage')->first();
     $groceries = Category::query()->where('name', 'Groceries')->first();
 
-    $this->actingAs($user)->post(route('budget.store'), [
+    $this->actingAs($user)->post(route('budgets.store'), [
         'month' => '2026-09',
         'copy' => false,
     ]);
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-09']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-09']))
+        ->put(route('budgets.update'), [
             'month' => '2026-09',
             'category_id' => $mortgage->id,
             'amount' => '100',
         ]);
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-09']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-09']))
+        ->put(route('budgets.update'), [
             'month' => '2026-09',
             'category_id' => $groceries->id,
             'amount' => '20.5',
         ]);
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('started', false)
@@ -242,7 +242,7 @@ test('opening a month offers a copy of the previous month and can still start em
             ->where('copy_from.label', 'September 2026'));
 
     $this->actingAs($user)
-        ->post(route('budget.store'), [
+        ->post(route('budgets.store'), [
             'month' => '2026-11',
             'copy' => false,
         ])
@@ -252,15 +252,15 @@ test('opening a month offers a copy of the previous month and can still start em
         ->and(CategoryBudget::query()->where('category_id', $mortgage->id)->where('amount', '100.00')->count())->toBe(1);
 
     $this->actingAs($user)
-        ->post(route('budget.store'), [
+        ->post(route('budgets.store'), [
             'month' => '2026-10',
             'copy' => true,
         ])
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('budget.index', ['month' => '2026-10']));
+        ->assertRedirect(route('budgets.index', ['month' => '2026-10']));
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('started', true)
             ->where('copy_from', null)
@@ -270,8 +270,8 @@ test('opening a month offers a copy of the previous month and can still start em
                 && collect($categories)->firstWhere('name', 'Medical')['amount'] === '0.00'));
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $mortgage->id,
             'amount' => '250',
@@ -282,7 +282,7 @@ test('opening a month offers a copy of the previous month and can still start em
         ->toBe(['100.00', '250.00']);
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-09']))
+        ->get(route('budgets.index', ['month' => '2026-09']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('budget.base_amount', '120.50')
             ->where('categories', fn ($categories) => collect($categories)->firstWhere('name', 'Mortgage')['amount'] === '100.00'));
@@ -292,8 +292,8 @@ test('copying is refused when the previous month has no budget and a month canno
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->post(route('budget.store'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->post(route('budgets.store'), [
             'month' => '2026-10',
             'copy' => true,
         ])
@@ -302,12 +302,12 @@ test('copying is refused when the previous month has no budget and a month canno
     expect(BudgetMonth::query()->count())->toBe(0);
 
     $this->actingAs($user)
-        ->post(route('budget.store'), ['month' => '2026-10', 'copy' => false])
+        ->post(route('budgets.store'), ['month' => '2026-10', 'copy' => false])
         ->assertSessionHasNoErrors();
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->post(route('budget.store'), ['month' => '2026-10', 'copy' => false])
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->post(route('budgets.store'), ['month' => '2026-10', 'copy' => false])
         ->assertSessionHasErrors('month');
 
     expect(BudgetMonth::query()->count())->toBe(1);
@@ -351,7 +351,7 @@ test('the planned balance is income so far minus the budget', function () {
         'booked_on' => '2026-09-30',
     ]);
 
-    $this->actingAs($user)->post(route('budget.store'), [
+    $this->actingAs($user)->post(route('budgets.store'), [
         'month' => '2026-10',
         'copy' => false,
     ]);
@@ -383,7 +383,7 @@ test('the planned balance is income so far minus the budget', function () {
     }
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('income.base_amount', '503354.00')
@@ -395,8 +395,8 @@ test('the planned balance is income so far minus the budget', function () {
             ->where('unallocated.negative', false));
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $mortgage->id,
             'amount' => '600000',
@@ -404,7 +404,7 @@ test('the planned balance is income so far minus the budget', function () {
         ->assertSessionHasNoErrors();
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('unallocated.negative', true)
             ->where('unallocated.base_amount', '-476135.00'));
@@ -429,7 +429,7 @@ test('euro totals are converted from the dinar total', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('income.base_amount', '100.00')
@@ -443,14 +443,14 @@ test('an archived category stays on a month that already budgeted it', function 
     $beauty = Category::query()->where('name', 'Beauty')->first();
     $medical = Category::query()->where('name', 'Medical')->first();
 
-    $this->actingAs($user)->post(route('budget.store'), [
+    $this->actingAs($user)->post(route('budgets.store'), [
         'month' => '2026-10',
         'copy' => false,
     ]);
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $beauty->id,
             'amount' => '40',
@@ -460,7 +460,7 @@ test('an archived category stays on a month that already budgeted it', function 
     $this->actingAs($user)->patch(route('categories.archive', $medical));
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('categories', function ($categories) {
                 $names = collect($categories)->pluck('name');
@@ -473,8 +473,8 @@ test('an archived category stays on a month that already budgeted it', function 
             }));
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $medical->id,
             'amount' => '5',
@@ -482,8 +482,8 @@ test('an archived category stays on a month that already budgeted it', function 
         ->assertSessionHasErrors('category_id');
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $beauty->id,
             'amount' => '12',
@@ -500,14 +500,14 @@ test('a category with a budget cannot be deleted or change kind', function () {
         'kind' => CategoryKind::Expense,
     ]);
 
-    $this->actingAs($user)->post(route('budget.store'), [
+    $this->actingAs($user)->post(route('budgets.store'), [
         'month' => '2026-10',
         'copy' => false,
     ]);
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $category->id,
             'amount' => '15',
@@ -541,14 +541,14 @@ test('another member sees the same budget and is recorded when they change it', 
     $bea = User::factory()->create(['name' => 'Bea']);
     $mortgage = Category::query()->where('name', 'Mortgage')->first();
 
-    $this->actingAs($ada)->post(route('budget.store'), [
+    $this->actingAs($ada)->post(route('budgets.store'), [
         'month' => '2026-10',
         'copy' => false,
     ]);
 
     $this->actingAs($ada)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $mortgage->id,
             'amount' => '10',
@@ -557,8 +557,8 @@ test('another member sees the same budget and is recorded when they change it', 
     $this->travel(5)->seconds();
 
     $this->actingAs($bea)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $mortgage->id,
             'amount' => '30',
@@ -571,7 +571,7 @@ test('another member sees the same budget and is recorded when they change it', 
         ->and($line->updated_by)->toBe($bea->id);
 
     $this->actingAs($bea)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('categories', fn ($categories) => collect($categories)->firstWhere('name', 'Mortgage')['amount'] === '30.00'
                 && collect($categories)->firstWhere('name', 'Mortgage')['updated_by'] === 'Bea'));
@@ -583,26 +583,26 @@ test('a budget from another workspace is not visible or editable', function () {
     $other = User::factory()->create(['workspace_id' => $otherWorkspace->id]);
     $otherCategory = Category::query()->whereBelongsTo($otherWorkspace)->where('name', 'Mortgage')->first();
 
-    $this->actingAs($other)->post(route('budget.store'), [
+    $this->actingAs($other)->post(route('budgets.store'), [
         'month' => '2026-10',
         'copy' => false,
     ]);
 
     $this->actingAs($other)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $otherCategory->id,
             'amount' => '80',
         ]);
 
     $this->actingAs($user)
-        ->get(route('budget.index', ['month' => '2026-10']))
+        ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertInertia(fn (Assert $page) => $page->where('started', false));
 
     $this->actingAs($user)
-        ->from(route('budget.index', ['month' => '2026-10']))
-        ->put(route('budget.update'), [
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
             'month' => '2026-10',
             'category_id' => $otherCategory->id,
             'amount' => '5',

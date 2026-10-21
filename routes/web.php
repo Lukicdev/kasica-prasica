@@ -39,9 +39,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('adjustments/{transaction}/edit', [ReconciliationController::class, 'edit'])->name('adjustments.edit');
     Route::put('adjustments/{transaction}', [ReconciliationController::class, 'update'])->name('adjustments.update');
 
-    Route::get('budget', [BudgetController::class, 'index'])->name('budget.index');
-    Route::post('budget', [BudgetController::class, 'store'])->name('budget.store');
-    Route::put('budget', [BudgetController::class, 'update'])->name('budget.update');
+    Route::get('budgets', [BudgetController::class, 'index'])->name('budgets.index');
+    Route::post('budgets', [BudgetController::class, 'store'])->name('budgets.store');
+    Route::put('budgets', [BudgetController::class, 'update'])->name('budgets.update');
 });
 
 require __DIR__.'/settings.php';

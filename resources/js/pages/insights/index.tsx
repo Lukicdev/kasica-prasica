@@ -229,64 +229,6 @@ function Trends({ trends }: { trends: InsightsTrends }) {
                 </p>
             </div>
             <TrendChart months={trends.months} />
-            <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                <table className="w-full min-w-[20rem] border-collapse text-left text-sm">
-                    <caption className="sr-only">
-                        Income and spending for the last 12 months
-                    </caption>
-                    <thead className="border-b border-sidebar-border/70 text-muted-foreground dark:border-sidebar-border">
-                        <tr>
-                            <th scope="col" className="px-3 py-3 font-medium">
-                                Month
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-3 py-3 text-right font-medium"
-                            >
-                                Income
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-3 py-3 text-right font-medium"
-                            >
-                                Spending
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {trends.months.map((month) => (
-                            <tr
-                                key={month.value}
-                                className="border-b border-sidebar-border/70 last:border-b-0 dark:border-sidebar-border"
-                                data-test="trend-month"
-                            >
-                                <th
-                                    scope="row"
-                                    className="px-3 py-3 font-medium"
-                                >
-                                    {month.label}
-                                </th>
-                                <td className="px-3 py-3 text-right whitespace-nowrap">
-                                    <MoneyAmount
-                                        formatted={month.income.formatted}
-                                        originalFormatted={
-                                            month.income.original_formatted
-                                        }
-                                    />
-                                </td>
-                                <td className="px-3 py-3 text-right whitespace-nowrap">
-                                    <MoneyAmount
-                                        formatted={month.spent.formatted}
-                                        originalFormatted={
-                                            month.spent.original_formatted
-                                        }
-                                    />
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
         </section>
     );
 }
