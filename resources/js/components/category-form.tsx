@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import CategoryController from '@/actions/App/Http/Controllers/CategoryController';
+import { FormSelect } from '@/components/form-select';
 import { IconPicker } from '@/components/icon-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ export function CategoryForm({
 }) {
     const editing = category !== undefined;
     const [icon, setIcon] = useState<string | null>(category?.icon ?? null);
+    const [kind, setKind] = useState(category?.kind ?? 'expense');
 
     return (
         <Form
@@ -57,23 +59,19 @@ export function CategoryForm({
                                 value={category.kind}
                             />
                         ) : null}
-                        <select
+                        <FormSelect
                             id="kind"
                             name={category?.kind_locked ? undefined : 'kind'}
                             required
-                            defaultValue={category?.kind ?? 'expense'}
+                            value={kind}
+                            onValueChange={setKind}
                             disabled={category?.kind_locked ?? false}
-                            className={cn(
-                                fieldClassName,
-                                'disabled:cursor-not-allowed disabled:opacity-50',
-                            )}
-                        >
-                            {kinds.map((kind) => (
-                                <option key={kind.value} value={kind.value}>
-                                    {kind.label}
-                                </option>
-                            ))}
-                        </select>
+                            invalid={Boolean(errors.kind)}
+                            options={kinds.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                            }))}
+                        />
                         {category?.kind_locked ? (
                             <p className="text-sm text-muted-foreground">
                                 Kind stays the same once the category has

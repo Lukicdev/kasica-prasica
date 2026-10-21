@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { MoneyAmount } from '@/components/money-amount';
+import { FormSelect } from '@/components/form-select';
 import { MonthPicker } from '@/components/month-picker';
 import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Button } from '@/components/ui/button';
@@ -19,9 +20,6 @@ import type {
     TransactionSortColumn,
     TransactionTotal,
 } from '@/types/transaction';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
 const columns: { column: TransactionSortColumn; label: string }[] = [
     { column: 'date', label: 'Date' },
@@ -161,87 +159,81 @@ export default function Transactions({
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="type">Type</Label>
-                        <select
+                        <FormSelect
                             id="type"
                             name="type"
                             defaultValue={filters.type ?? ''}
-                            className={fieldClassName}
+                            emptyLabel="All"
                             data-test="filter-type"
-                        >
-                            <option value="">All</option>
-                            {options.types.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                    {type.label}
-                                </option>
-                            ))}
-                        </select>
+                            options={options.types.map((type) => ({
+                                value: type.value,
+                                label: type.label,
+                            }))}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="category">Category</Label>
-                        <select
+                        <FormSelect
                             id="category"
                             name="category"
-                            defaultValue={filters.category ?? ''}
-                            className={fieldClassName}
-                        >
-                            <option value="">All</option>
-                            {options.categories.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </select>
+                            defaultValue={
+                                filters.category === null
+                                    ? ''
+                                    : String(filters.category)
+                            }
+                            emptyLabel="All"
+                            options={options.categories.map((category) => ({
+                                value: String(category.id),
+                                label: category.name,
+                            }))}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="account">Account</Label>
-                        <select
+                        <FormSelect
                             id="account"
                             name="account"
-                            defaultValue={filters.account ?? ''}
-                            className={fieldClassName}
-                        >
-                            <option value="">All</option>
-                            {options.accounts.map((account) => (
-                                <option key={account.id} value={account.id}>
-                                    {account.name}
-                                </option>
-                            ))}
-                        </select>
+                            defaultValue={
+                                filters.account === null
+                                    ? ''
+                                    : String(filters.account)
+                            }
+                            emptyLabel="All"
+                            options={options.accounts.map((account) => ({
+                                value: String(account.id),
+                                label: account.name,
+                            }))}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="person">Person</Label>
-                        <select
+                        <FormSelect
                             id="person"
                             name="person"
-                            defaultValue={filters.person ?? ''}
-                            className={fieldClassName}
-                        >
-                            <option value="">All</option>
-                            {options.people.map((person) => (
-                                <option key={person.id} value={person.id}>
-                                    {person.name}
-                                </option>
-                            ))}
-                        </select>
+                            defaultValue={
+                                filters.person === null
+                                    ? ''
+                                    : String(filters.person)
+                            }
+                            emptyLabel="All"
+                            options={options.people.map((person) => ({
+                                value: String(person.id),
+                                label: person.name,
+                            }))}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="currency">Currency</Label>
-                        <select
+                        <FormSelect
                             id="currency"
                             name="currency"
                             defaultValue={filters.currency ?? ''}
-                            className={fieldClassName}
-                        >
-                            <option value="">All</option>
-                            {options.currencies.map((currency) => (
-                                <option
-                                    key={currency.value}
-                                    value={currency.value}
-                                >
-                                    {currency.label}
-                                </option>
-                            ))}
-                        </select>
+                            emptyLabel="All"
+                            options={options.currencies.map((currency) => ({
+                                value: currency.value,
+                                label: currency.label,
+                            }))}
+                        />
                     </div>
                     <div className="grid gap-2 sm:col-span-2">
                         <Label htmlFor="search">Note</Label>

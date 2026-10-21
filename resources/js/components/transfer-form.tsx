@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import TransferController from '@/actions/App/Http/Controllers/TransferController';
 import { DatePicker } from '@/components/date-picker';
+import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -206,41 +207,37 @@ export function TransferForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="from_account_id">From</Label>
-                        <select
+                        <FormSelect
                             id="from_account_id"
                             name="from_account_id"
                             required
                             value={fromId}
-                            onChange={(event) => changeFrom(event.target.value)}
-                            className={fieldClassName}
+                            onValueChange={changeFrom}
+                            invalid={Boolean(errors.from_account_id)}
                             data-test="transfer-from"
-                        >
-                            {accounts.map((account) => (
-                                <option key={account.id} value={account.id}>
-                                    {account.name}
-                                </option>
-                            ))}
-                        </select>
+                            options={accounts.map((account) => ({
+                                value: String(account.id),
+                                label: account.name,
+                            }))}
+                        />
                         <InputError message={errors.from_account_id} />
                     </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="to_account_id">To</Label>
-                        <select
+                        <FormSelect
                             id="to_account_id"
                             name="to_account_id"
                             required
                             value={toId}
-                            onChange={(event) => setToId(event.target.value)}
-                            className={fieldClassName}
+                            onValueChange={setToId}
+                            invalid={Boolean(errors.to_account_id)}
                             data-test="transfer-to"
-                        >
-                            {accounts.map((account) => (
-                                <option key={account.id} value={account.id}>
-                                    {account.name}
-                                </option>
-                            ))}
-                        </select>
+                            options={accounts.map((account) => ({
+                                value: String(account.id),
+                                label: account.name,
+                            }))}
+                        />
                         <InputError message={errors.to_account_id} />
                         {sameAccount ? (
                             <p className="text-sm text-muted-foreground">
@@ -251,24 +248,22 @@ export function TransferForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="currency">Currency</Label>
-                        <select
+                        <FormSelect
                             id="currency"
                             name="currency"
                             required
                             value={currency}
-                            onChange={(event) => {
-                                if (isCurrency(event.target.value)) {
-                                    setCurrency(event.target.value);
+                            onValueChange={(next) => {
+                                if (isCurrency(next)) {
+                                    setCurrency(next);
                                 }
                             }}
-                            className={fieldClassName}
-                        >
-                            {currencies.supported.map((item) => (
-                                <option key={item.code} value={item.code}>
-                                    {item.code} · {item.name}
-                                </option>
-                            ))}
-                        </select>
+                            invalid={Boolean(errors.currency)}
+                            options={currencies.supported.map((item) => ({
+                                value: item.code,
+                                label: `${item.code} · ${item.name}`,
+                            }))}
+                        />
                         <InputError message={errors.currency} />
                     </div>
 
@@ -298,22 +293,18 @@ export function TransferForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="person_id">Person</Label>
-                        <select
+                        <FormSelect
                             id="person_id"
                             name="person_id"
                             required
                             value={personId}
-                            onChange={(event) =>
-                                setPersonId(event.target.value)
-                            }
-                            className={fieldClassName}
-                        >
-                            {people.map((person) => (
-                                <option key={person.id} value={person.id}>
-                                    {person.name}
-                                </option>
-                            ))}
-                        </select>
+                            onValueChange={setPersonId}
+                            invalid={Boolean(errors.person_id)}
+                            options={people.map((person) => ({
+                                value: String(person.id),
+                                label: person.name,
+                            }))}
+                        />
                         <InputError message={errors.person_id} />
                     </div>
 

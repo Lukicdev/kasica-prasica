@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import RecurrenceController from '@/actions/App/Http/Controllers/RecurrenceController';
 import { DatePicker } from '@/components/date-picker';
+import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,9 +18,6 @@ import {
 } from '@/lib/money';
 import type { CurrencyCode } from '@/types/currency';
 import type { RecurrenceFormPage } from '@/types/recurrence';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
 function isCurrency(value: string): value is CurrencyCode {
     return value === 'RSD' || value === 'EUR';
@@ -171,23 +169,19 @@ export function RecurrenceForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="account_id">Account</Label>
-                        <select
+                        <FormSelect
                             id="account_id"
                             name="account_id"
                             required
                             value={accountId}
-                            onChange={(event) =>
-                                changeAccount(event.target.value)
-                            }
-                            className={fieldClassName}
+                            onValueChange={changeAccount}
+                            invalid={Boolean(errors.account_id)}
                             data-test="recurrence-account"
-                        >
-                            {accounts.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.name}
-                                </option>
-                            ))}
-                        </select>
+                            options={accounts.map((item) => ({
+                                value: String(item.id),
+                                label: item.name,
+                            }))}
+                        />
                         <InputError message={errors.account_id} />
                         {account?.archived ? (
                             <p className="text-sm text-muted-foreground">
@@ -199,25 +193,23 @@ export function RecurrenceForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="currency">Currency</Label>
-                        <select
+                        <FormSelect
                             id="currency"
                             name="currency"
                             required
                             value={currency}
-                            onChange={(event) => {
-                                if (isCurrency(event.target.value)) {
-                                    setCurrency(event.target.value);
+                            onValueChange={(next) => {
+                                if (isCurrency(next)) {
+                                    setCurrency(next);
                                 }
                             }}
-                            className={fieldClassName}
+                            invalid={Boolean(errors.currency)}
                             data-test="recurrence-currency"
-                        >
-                            {currencies.supported.map((item) => (
-                                <option key={item.code} value={item.code}>
-                                    {item.code} · {item.name}
-                                </option>
-                            ))}
-                        </select>
+                            options={currencies.supported.map((item) => ({
+                                value: item.code,
+                                label: `${item.code} · ${item.name}`,
+                            }))}
+                        />
                         <InputError message={errors.currency} />
                     </div>
 

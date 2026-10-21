@@ -2,6 +2,7 @@ import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import ReconciliationController from '@/actions/App/Http/Controllers/ReconciliationController';
 import { DatePicker } from '@/components/date-picker';
+import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,22 +91,18 @@ export function AdjustmentForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="account_id">Account</Label>
-                        <select
+                        <FormSelect
                             id="account_id"
                             name="account_id"
                             required
                             value={accountId}
-                            onChange={(event) =>
-                                setAccountId(event.target.value)
-                            }
-                            className={fieldClassName}
-                        >
-                            {accounts.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.name}
-                                </option>
-                            ))}
-                        </select>
+                            onValueChange={setAccountId}
+                            invalid={Boolean(errors.account_id)}
+                            options={accounts.map((item) => ({
+                                value: String(item.id),
+                                label: item.name,
+                            }))}
+                        />
                         <InputError message={errors.account_id} />
                     </div>
 
@@ -123,22 +120,18 @@ export function AdjustmentForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="person_id">Person</Label>
-                        <select
+                        <FormSelect
                             id="person_id"
                             name="person_id"
                             required
                             value={personId}
-                            onChange={(event) =>
-                                setPersonId(event.target.value)
-                            }
-                            className={fieldClassName}
-                        >
-                            {people.map((person) => (
-                                <option key={person.id} value={person.id}>
-                                    {person.name}
-                                </option>
-                            ))}
-                        </select>
+                            onValueChange={setPersonId}
+                            invalid={Boolean(errors.person_id)}
+                            options={people.map((person) => ({
+                                value: String(person.id),
+                                label: person.name,
+                            }))}
+                        />
                         <InputError message={errors.person_id} />
                     </div>
 

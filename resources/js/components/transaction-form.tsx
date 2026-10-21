@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import TransactionController from '@/actions/App/Http/Controllers/TransactionController';
 import { DatePicker } from '@/components/date-picker';
+import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -241,45 +242,39 @@ export function TransactionForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="account_id">Account</Label>
-                        <select
+                        <FormSelect
                             id="account_id"
                             name="account_id"
                             required
                             value={accountId}
-                            onChange={(event) =>
-                                changeAccount(event.target.value)
-                            }
-                            className={fieldClassName}
-                        >
-                            {accounts.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.name}
-                                </option>
-                            ))}
-                        </select>
+                            onValueChange={changeAccount}
+                            invalid={Boolean(errors.account_id)}
+                            options={accounts.map((item) => ({
+                                value: String(item.id),
+                                label: item.name,
+                            }))}
+                        />
                         <InputError message={errors.account_id} />
                     </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="currency">Currency</Label>
-                        <select
+                        <FormSelect
                             id="currency"
                             name="currency"
                             required
                             value={currency}
-                            onChange={(event) => {
-                                if (isCurrency(event.target.value)) {
-                                    setCurrency(event.target.value);
+                            onValueChange={(next) => {
+                                if (isCurrency(next)) {
+                                    setCurrency(next);
                                 }
                             }}
-                            className={fieldClassName}
-                        >
-                            {currencies.supported.map((item) => (
-                                <option key={item.code} value={item.code}>
-                                    {item.code} · {item.name}
-                                </option>
-                            ))}
-                        </select>
+                            invalid={Boolean(errors.currency)}
+                            options={currencies.supported.map((item) => ({
+                                value: item.code,
+                                label: `${item.code} · ${item.name}`,
+                            }))}
+                        />
                         <InputError message={errors.currency} />
                     </div>
 
@@ -302,26 +297,19 @@ export function TransactionForm({
                                 transaction.
                             </p>
                         ) : (
-                            <select
+                            <FormSelect
                                 id="category_id"
                                 name="category_id"
                                 required
                                 value={categoryId}
-                                onChange={(event) =>
-                                    setCategoryId(event.target.value)
-                                }
-                                className={fieldClassName}
-                            >
-                                <option value="">Choose a category</option>
-                                {categoriesForType.map((category) => (
-                                    <option
-                                        key={category.id}
-                                        value={category.id}
-                                    >
-                                        {category.label}
-                                    </option>
-                                ))}
-                            </select>
+                                onValueChange={setCategoryId}
+                                emptyLabel="Choose a category"
+                                invalid={Boolean(errors.category_id)}
+                                options={categoriesForType.map((category) => ({
+                                    value: String(category.id),
+                                    label: category.label,
+                                }))}
+                            />
                         )}
                         <InputError message={errors.category_id} />
                     </div>
@@ -340,22 +328,18 @@ export function TransactionForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="person_id">Person</Label>
-                        <select
+                        <FormSelect
                             id="person_id"
                             name="person_id"
                             required
                             value={personId}
-                            onChange={(event) =>
-                                setPersonId(event.target.value)
-                            }
-                            className={fieldClassName}
-                        >
-                            {people.map((person) => (
-                                <option key={person.id} value={person.id}>
-                                    {person.name}
-                                </option>
-                            ))}
-                        </select>
+                            onValueChange={setPersonId}
+                            invalid={Boolean(errors.person_id)}
+                            options={people.map((person) => ({
+                                value: String(person.id),
+                                label: person.name,
+                            }))}
+                        />
                         <InputError message={errors.person_id} />
                     </div>
 

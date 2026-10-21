@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AccountController from '@/actions/App/Http/Controllers/AccountController';
 import { DatePicker } from '@/components/date-picker';
+import { FormSelect } from '@/components/form-select';
 import { IconPicker } from '@/components/icon-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export function AccountForm({
     const { currencies } = usePage().props;
     const editing = account !== undefined;
     const [type, setType] = useState(account?.type ?? 'cash');
+    const [currency, setCurrency] = useState(account?.currency ?? 'RSD');
     const [icon, setIcon] = useState<string | null>(
         account?.icon ?? accountTypeIcons[account?.type ?? 'cash'] ?? null,
     );
@@ -69,27 +71,24 @@ export function AccountForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="type">Type</Label>
-                        <select
+                        <FormSelect
                             id="type"
                             name="type"
                             required
                             value={type}
-                            className={fieldClassName}
-                            onChange={(event) => {
-                                const next = event.target.value;
+                            invalid={Boolean(errors.type)}
+                            onValueChange={(next) => {
                                 setType(next);
 
                                 if (!iconChosen) {
                                     setIcon(accountTypeIcons[next] ?? null);
                                 }
                             }}
-                        >
-                            {types.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                    {type.label}
-                                </option>
-                            ))}
-                        </select>
+                            options={types.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                            }))}
+                        />
                         <InputError message={errors.type} />
                     </div>
 
@@ -102,7 +101,7 @@ export function AccountForm({
                                 value={account.currency}
                             />
                         ) : null}
-                        <select
+                        <FormSelect
                             id="currency"
                             name={
                                 account?.currency_locked
@@ -110,22 +109,15 @@ export function AccountForm({
                                     : 'currency'
                             }
                             required
-                            defaultValue={account?.currency ?? 'RSD'}
+                            value={currency}
+                            onValueChange={setCurrency}
                             disabled={account?.currency_locked ?? false}
-                            className={cn(
-                                fieldClassName,
-                                'disabled:cursor-not-allowed disabled:opacity-50',
-                            )}
-                        >
-                            {currencies.supported.map((currency) => (
-                                <option
-                                    key={currency.code}
-                                    value={currency.code}
-                                >
-                                    {currency.code} · {currency.name}
-                                </option>
-                            ))}
-                        </select>
+                            invalid={Boolean(errors.currency)}
+                            options={currencies.supported.map((option) => ({
+                                value: option.code,
+                                label: `${option.code} · ${option.name}`,
+                            }))}
+                        />
                         {account?.currency_locked ? (
                             <p className="text-sm text-muted-foreground">
                                 Currency stays the same once the account has

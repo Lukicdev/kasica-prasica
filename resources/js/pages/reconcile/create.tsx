@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ReconciliationController from '@/actions/App/Http/Controllers/ReconciliationController';
 import { AccountBalance } from '@/components/account-balance';
 import { DatePicker } from '@/components/date-picker';
+import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -126,25 +127,18 @@ export default function ReconcileAccount({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="person_id">Person</Label>
-                                <select
+                                <FormSelect
                                     id="person_id"
                                     name="person_id"
                                     required
                                     value={personId}
-                                    onChange={(event) =>
-                                        setPersonId(event.target.value)
-                                    }
-                                    className={fieldClassName}
-                                >
-                                    {people.map((person) => (
-                                        <option
-                                            key={person.id}
-                                            value={person.id}
-                                        >
-                                            {person.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onValueChange={setPersonId}
+                                    invalid={Boolean(errors.person_id)}
+                                    options={people.map((person) => ({
+                                        value: String(person.id),
+                                        label: person.name,
+                                    }))}
+                                />
                                 <InputError message={errors.person_id} />
                             </div>
 
