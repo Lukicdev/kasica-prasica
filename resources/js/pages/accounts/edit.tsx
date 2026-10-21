@@ -53,7 +53,7 @@ export default function EditAccount({
                                     type="submit"
                                     variant="outline"
                                     disabled={processing}
-                                    className="h-11 w-full sm:w-auto"
+                                    className="h-11 w-full sm:w-auto md:h-9"
                                     data-test="restore-account"
                                 >
                                     Restore account
@@ -67,7 +67,7 @@ export default function EditAccount({
                                     type="submit"
                                     variant="outline"
                                     disabled={processing}
-                                    className="h-11 w-full sm:w-auto"
+                                    className="h-11 w-full sm:w-auto md:h-9"
                                     data-test="archive-account"
                                 >
                                     Archive account
@@ -79,7 +79,7 @@ export default function EditAccount({
                         <Button
                             type="button"
                             variant="destructive"
-                            className="h-11 w-full sm:w-auto"
+                            className="h-11 w-full sm:w-auto md:h-9"
                             onClick={remove}
                             data-test="delete-account"
                         >

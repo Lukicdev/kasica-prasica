@@ -98,7 +98,7 @@ export function CategoryForm({
                     <Button
                         type="submit"
                         disabled={processing}
-                        className="h-11 w-full sm:w-auto"
+                        className="h-11 w-full sm:w-auto md:h-9"
                         data-test="save-category"
                     >
                         {editing ? 'Save changes' : 'Create category'}

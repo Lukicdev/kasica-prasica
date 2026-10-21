@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, Plus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
@@ -139,7 +139,7 @@ export default function Overview({
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 w-full sm:w-auto"
+                            className="h-11 w-full sm:w-auto md:h-9"
                         >
                             <Link
                                 href={insights({
@@ -149,13 +149,17 @@ export default function Overview({
                                 Insights
                             </Link>
                         </Button>
-                        <Button asChild className="h-11 w-full sm:w-auto">
+                        <Button
+                            asChild
+                            className="h-11 w-full sm:w-auto md:h-9"
+                        >
                             <Link
                                 href={createTransaction({
                                     query: { date: month.entry_date },
                                 })}
                                 data-test="overview-add-transaction"
                             >
+                                <Plus data-icon="inline-start" />
                                 Add a transaction
                             </Link>
                         </Button>
@@ -310,9 +314,14 @@ function FirstRun({
                             {step.done ? null : (
                                 <Button
                                     asChild
-                                    className="h-11 w-full sm:w-auto"
+                                    className="h-11 w-full sm:w-auto md:h-9"
                                 >
-                                    <Link href={href}>{action}</Link>
+                                    <Link href={href}>
+                                        {step.key === 'budget' ? null : (
+                                            <Plus data-icon="inline-start" />
+                                        )}
+                                        {action}
+                                    </Link>
                                 </Button>
                             )}
                         </li>
@@ -514,7 +523,7 @@ function ExpenseTable({
                     <Button
                         asChild
                         variant={sort === 'category' ? 'default' : 'outline'}
-                        className="h-11"
+                        className="h-11 md:h-9"
                     >
                         <Link
                             href={dashboard({
@@ -535,7 +544,7 @@ function ExpenseTable({
                     <Button
                         asChild
                         variant={sort === 'overspend' ? 'default' : 'outline'}
-                        className="h-11"
+                        className="h-11 md:h-9"
                     >
                         <Link
                             href={dashboard({
@@ -769,7 +778,7 @@ function Drilldown({
                 <Button
                     asChild
                     variant="outline"
-                    className="h-11 w-full sm:w-auto"
+                    className="h-11 w-full sm:w-auto md:h-9"
                 >
                     <Link
                         href={dashboard({
@@ -902,7 +911,7 @@ function AccountsPanel({ panel }: { panel: OverviewAccounts }) {
                 <Button
                     asChild
                     variant="outline"
-                    className="h-11 w-full sm:w-auto"
+                    className="h-11 w-full sm:w-auto md:h-9"
                 >
                     <Link href={accounts()} data-test="overview-all-accounts">
                         All accounts
@@ -1007,10 +1016,11 @@ function AddLink({
     return (
         <Link
             href={addTransactionHref(categoryId, entryDate)}
-            className="inline-flex min-h-11 items-center text-sm font-normal underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center gap-1 text-sm font-normal underline-offset-4 hover:underline"
             aria-label={`Add a ${name} transaction`}
             data-test="add-category-transaction"
         >
+            <Plus className="size-4" />
             Add
         </Link>
     );

@@ -81,7 +81,7 @@ export function PendingRecurrences({ items }: { items: PendingRecurrence[] }) {
                                 />
                                 <Button
                                     type="submit"
-                                    className="h-11 w-full"
+                                    className="h-11 w-full md:h-9"
                                     aria-label={`Confirm ${item.category ?? item.type_label} for ${item.date_label}`}
                                     data-test="confirm-recurrence"
                                 >
@@ -91,7 +91,7 @@ export function PendingRecurrences({ items }: { items: PendingRecurrence[] }) {
                             <Button
                                 asChild
                                 variant="outline"
-                                className="h-11 sm:flex-1"
+                                className="h-11 sm:flex-1 md:h-9"
                             >
                                 <Link
                                     href={edit(item.id, {

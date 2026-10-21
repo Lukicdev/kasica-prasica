@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { TransferForm } from '@/components/transfer-form';
 import { Button } from '@/components/ui/button';
 import { create as createAccount } from '@/routes/accounts';
@@ -39,8 +40,12 @@ export default function CreateTransfer({
                             A transfer needs two accounts, such as a bank
                             account and cash.
                         </p>
-                        <Button asChild className="h-11 w-full sm:w-auto">
+                        <Button
+                            asChild
+                            className="h-11 w-full sm:w-auto md:h-9"
+                        >
                             <Link href={createAccount()}>
+                                <Plus data-icon="inline-start" />
                                 Create an account
                             </Link>
                         </Button>

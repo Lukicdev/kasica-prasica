@@ -164,7 +164,7 @@ export default function ReconcileAccount({
                                         difference === null ||
                                         matches
                                     }
-                                    className="h-11 w-full"
+                                    className="h-11 w-full md:h-9"
                                     data-test="add-balancing-entry"
                                 >
                                     Add balancing entry

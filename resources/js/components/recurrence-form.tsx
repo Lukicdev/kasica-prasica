@@ -273,7 +273,7 @@ export function RecurrenceForm({
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="h-11"
+                            className="h-11 md:h-9"
                             data-test="save-recurrence"
                         >
                             Confirm

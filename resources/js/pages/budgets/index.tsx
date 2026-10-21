@@ -272,7 +272,7 @@ export default function Budget({
                             {copy_from ? (
                                 <Button
                                     type="button"
-                                    className="h-11"
+                                    className="h-11 md:h-9"
                                     disabled={starting}
                                     data-test="copy-budget"
                                     onClick={() => start(true)}
@@ -283,7 +283,7 @@ export default function Budget({
                             <Button
                                 type="button"
                                 variant={copy_from ? 'outline' : 'default'}
-                                className="h-11"
+                                className="h-11 md:h-9"
                                 disabled={starting}
                                 data-test="start-empty-budget"
                                 onClick={() => start(false)}

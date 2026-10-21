@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { EntityIcon } from '@/components/entity-icon';
 import { Badge } from '@/components/ui/badge';
@@ -66,8 +67,9 @@ export default function Categories({ groups }: { groups: CategoryGroup[] }) {
                             description shows here and when you pick a category.
                         </p>
                     </div>
-                    <Button asChild className="h-11 w-full sm:w-auto">
+                    <Button asChild className="h-11 w-full sm:w-auto md:h-9">
                         <Link href={create()} data-test="new-category">
+                            <Plus data-icon="inline-start" />
                             New category
                         </Link>
                     </Button>
@@ -192,7 +194,7 @@ function CategoryRow({
                         <Button
                             type="button"
                             variant="outline"
-                            className="h-11"
+                            className="h-11 md:h-9"
                             disabled={!canMoveUp || moving}
                             aria-label={`Move ${category.name} up`}
                             onClick={() => onMove(-1)}
@@ -202,7 +204,7 @@ function CategoryRow({
                         <Button
                             type="button"
                             variant="outline"
-                            className="h-11"
+                            className="h-11 md:h-9"
                             disabled={!canMoveDown || moving}
                             aria-label={`Move ${category.name} down`}
                             onClick={() => onMove(1)}
@@ -214,7 +216,7 @@ function CategoryRow({
                 <Button
                     asChild
                     variant="outline"
-                    className="h-11 flex-1 sm:flex-none"
+                    className="h-11 flex-1 sm:flex-none md:h-9"
                 >
                     <Link href={edit(category.id)}>Edit</Link>
                 </Button>

@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import TransactionController from '@/actions/App/Http/Controllers/TransactionController';
 import { AccountBalance } from '@/components/account-balance';
 import { MoneyAmount } from '@/components/money-amount';
@@ -79,7 +80,7 @@ export default function TransactionShow({
                     <Button
                         asChild
                         variant="outline"
-                        className="h-11 w-full sm:w-auto"
+                        className="h-11 w-full sm:w-auto md:h-9"
                     >
                         <Link href={editHref}>Edit</Link>
                     </Button>
@@ -175,8 +176,9 @@ export default function TransactionShow({
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                     {anotherHref ? (
-                        <Button asChild className="h-11 sm:flex-1">
+                        <Button asChild className="h-11 sm:flex-1 md:h-9">
                             <Link href={anotherHref} data-test="add-another">
+                                <Plus data-icon="inline-start" />
                                 Add another
                             </Link>
                         </Button>
@@ -184,7 +186,7 @@ export default function TransactionShow({
                     <Button
                         type="button"
                         variant="destructive"
-                        className="h-11 sm:flex-1"
+                        className="h-11 sm:flex-1 md:h-9"
                         onClick={remove}
                         data-test="delete-transaction"
                     >

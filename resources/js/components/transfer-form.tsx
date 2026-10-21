@@ -377,7 +377,7 @@ export function TransferForm({
                         <Button
                             type="submit"
                             disabled={processing || sameAccount}
-                            className="h-11"
+                            className="h-11 md:h-9"
                             data-test="save-transfer"
                         >
                             {editing ? 'Save changes' : 'Save transfer'}

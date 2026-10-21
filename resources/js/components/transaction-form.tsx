@@ -185,14 +185,14 @@ export function TransactionForm({
                         >
                             <ToggleGroupItem
                                 value="expense"
-                                className="h-11 flex-1"
+                                className="h-11 flex-1 md:h-9"
                                 data-test="type-expense"
                             >
                                 Expense
                             </ToggleGroupItem>
                             <ToggleGroupItem
                                 value="income"
-                                className="h-11 flex-1"
+                                className="h-11 flex-1 md:h-9"
                                 data-test="type-income"
                             >
                                 Income
@@ -414,7 +414,7 @@ export function TransactionForm({
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="h-11 sm:flex-1"
+                                className="h-11 sm:flex-1 md:h-9"
                                 data-test="save-transaction"
                             >
                                 {editing ? 'Save changes' : 'Save'}
@@ -426,7 +426,7 @@ export function TransactionForm({
                                     value="1"
                                     variant="outline"
                                     disabled={processing}
-                                    className="h-11 sm:flex-1"
+                                    className="h-11 sm:flex-1 md:h-9"
                                     data-test="save-and-add-another"
                                 >
                                     Save and add another

@@ -58,7 +58,7 @@ export function IconPicker({
                         type="button"
                         id={id}
                         variant="outline"
-                        className="h-11 w-full justify-start sm:w-auto"
+                        className="h-11 w-full justify-start sm:w-auto md:h-9"
                         aria-label={
                             selected ? `Icon, ${selected}` : 'Choose an icon'
                         }
@@ -89,7 +89,7 @@ export function IconPicker({
                             variant="outline"
                             pressed={value === null}
                             data-test="icon-none"
-                            className="h-11 px-4"
+                            className="h-11 px-4 md:h-9"
                             onPressedChange={() => choose(null)}
                         >
                             No icon

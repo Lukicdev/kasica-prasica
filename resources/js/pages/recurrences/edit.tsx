@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { RecurrenceForm } from '@/components/recurrence-form';
 import { Button } from '@/components/ui/button';
 import { create as createAccount } from '@/routes/accounts';
@@ -35,8 +36,12 @@ export default function EditRecurrence({
                             The account on this repeat can no longer be used.
                             Add another, then confirm.
                         </p>
-                        <Button asChild className="h-11 w-full sm:w-auto">
+                        <Button
+                            asChild
+                            className="h-11 w-full sm:w-auto md:h-9"
+                        >
                             <Link href={createAccount()}>
+                                <Plus data-icon="inline-start" />
                                 Create an account
                             </Link>
                         </Button>

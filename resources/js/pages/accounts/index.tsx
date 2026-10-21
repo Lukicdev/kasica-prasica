@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
 import { EntityIcon } from '@/components/entity-icon';
 import { Badge } from '@/components/ui/badge';
@@ -27,8 +28,9 @@ export default function Accounts({
                             total follows the display currency in the header.
                         </p>
                     </div>
-                    <Button asChild className="h-11 w-full sm:w-auto">
+                    <Button asChild className="h-11 w-full sm:w-auto md:h-9">
                         <Link href={create()} data-test="new-account">
+                            <Plus data-icon="inline-start" />
                             New account
                         </Link>
                     </Button>

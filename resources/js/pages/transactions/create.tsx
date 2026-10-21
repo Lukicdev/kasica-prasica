@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { TransactionForm } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
 import { create as createAccount } from '@/routes/accounts';
@@ -51,8 +52,12 @@ export default function CreateTransaction({
                             Every transaction is booked to an account, so the
                             balance can update on its own.
                         </p>
-                        <Button asChild className="h-11 w-full sm:w-auto">
+                        <Button
+                            asChild
+                            className="h-11 w-full sm:w-auto md:h-9"
+                        >
                             <Link href={createAccount()}>
+                                <Plus data-icon="inline-start" />
                                 Create an account
                             </Link>
                         </Button>

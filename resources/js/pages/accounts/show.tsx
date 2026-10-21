@@ -58,7 +58,7 @@ export default function AccountShow({
                             <Button
                                 asChild
                                 variant="outline"
-                                className="h-11 w-full sm:w-auto"
+                                className="h-11 w-full sm:w-auto md:h-9"
                             >
                                 <Link
                                     href={createTransfer({
@@ -72,7 +72,7 @@ export default function AccountShow({
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 w-full sm:w-auto"
+                            className="h-11 w-full sm:w-auto md:h-9"
                         >
                             <Link
                                 href={reconcile(account.id)}
@@ -84,7 +84,7 @@ export default function AccountShow({
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 w-full sm:w-auto"
+                            className="h-11 w-full sm:w-auto md:h-9"
                         >
                             <Link href={edit(account.id)}>Edit</Link>
                         </Button>

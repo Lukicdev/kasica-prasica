@@ -73,7 +73,7 @@ function Comparison({ comparison }: { comparison: InsightsComparison }) {
                         value={comparison.right.value}
                     />
                 </div>
-                <Button type="submit" className="h-11 sm:col-span-2">
+                <Button type="submit" className="h-11 sm:col-span-2 md:h-9">
                     Compare
                 </Button>
             </Form>

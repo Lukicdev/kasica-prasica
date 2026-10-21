@@ -59,7 +59,7 @@ export default function EditCategory({
                                     type="submit"
                                     variant="outline"
                                     disabled={processing}
-                                    className="h-11 w-full sm:w-auto"
+                                    className="h-11 w-full sm:w-auto md:h-9"
                                     data-test="restore-category"
                                 >
                                     Restore category
@@ -73,7 +73,7 @@ export default function EditCategory({
                                     type="submit"
                                     variant="outline"
                                     disabled={processing}
-                                    className="h-11 w-full sm:w-auto"
+                                    className="h-11 w-full sm:w-auto md:h-9"
                                     data-test="archive-category"
                                 >
                                     Archive category
@@ -85,7 +85,7 @@ export default function EditCategory({
                         <Button
                             type="button"
                             variant="destructive"
-                            className="h-11 w-full sm:w-auto"
+                            className="h-11 w-full sm:w-auto md:h-9"
                             onClick={remove}
                             data-test="delete-category"
                         >
