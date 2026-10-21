@@ -1,6 +1,7 @@
 import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AccountController from '@/actions/App/Http/Controllers/AccountController';
+import { DatePicker } from '@/components/date-picker';
 import { IconPicker } from '@/components/icon-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,9 @@ export function AccountForm({
         account?.icon ?? accountTypeIcons[account?.type ?? 'cash'] ?? null,
     );
     const [iconChosen, setIconChosen] = useState(account?.icon != null);
+    const [openingBalanceOn, setOpeningBalanceOn] = useState(
+        account?.opening_balance_on ?? today ?? '',
+    );
 
     return (
         <Form
@@ -149,15 +153,12 @@ export function AccountForm({
                         <Label htmlFor="opening_balance_on">
                             Opening balance date
                         </Label>
-                        <Input
+                        <DatePicker
                             id="opening_balance_on"
                             name="opening_balance_on"
-                            type="date"
                             required
-                            defaultValue={
-                                account?.opening_balance_on ?? today ?? ''
-                            }
-                            className="h-11 md:h-9"
+                            value={openingBalanceOn}
+                            onChange={setOpeningBalanceOn}
                         />
                         <InputError message={errors.opening_balance_on} />
                     </div>

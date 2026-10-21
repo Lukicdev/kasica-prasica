@@ -1,6 +1,7 @@
 import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import TransferController from '@/actions/App/Http/Controllers/TransferController';
+import { DatePicker } from '@/components/date-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -285,14 +286,12 @@ export function TransferForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="booked_on">Date</Label>
-                        <Input
+                        <DatePicker
                             id="booked_on"
                             name="booked_on"
-                            type="date"
                             required
                             value={date}
-                            onChange={(event) => setDate(event.target.value)}
-                            className="h-11 md:h-9"
+                            onChange={setDate}
                         />
                         <InputError message={errors.booked_on} />
                     </div>

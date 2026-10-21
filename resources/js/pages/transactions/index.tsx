@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { MoneyAmount } from '@/components/money-amount';
+import { MonthPicker } from '@/components/month-picker';
 import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -152,12 +153,10 @@ export default function Transactions({
                     />
                     <div className="grid gap-2">
                         <Label htmlFor="month">Month</Label>
-                        <Input
+                        <MonthPicker
                             id="month"
                             name="month"
-                            type="month"
-                            defaultValue={month.value}
-                            className="h-11 md:h-9"
+                            value={month.value}
                         />
                     </div>
                     <div className="grid gap-2">

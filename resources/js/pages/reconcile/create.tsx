@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import { useState } from 'react';
 import ReconciliationController from '@/actions/App/Http/Controllers/ReconciliationController';
 import { AccountBalance } from '@/components/account-balance';
+import { DatePicker } from '@/components/date-picker';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,16 +114,12 @@ export default function ReconcileAccount({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="booked_on">Date</Label>
-                                <Input
+                                <DatePicker
                                     id="booked_on"
                                     name="booked_on"
-                                    type="date"
                                     required
                                     value={date}
-                                    onChange={(event) =>
-                                        setDate(event.target.value)
-                                    }
-                                    className="h-11 md:h-9"
+                                    onChange={setDate}
                                 />
                                 <InputError message={errors.booked_on} />
                             </div>

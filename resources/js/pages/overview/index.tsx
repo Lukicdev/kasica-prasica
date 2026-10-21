@@ -3,10 +3,10 @@ import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
+import { MonthPicker } from '@/components/month-picker';
 import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
 import {
@@ -201,12 +201,10 @@ export default function Overview({
                     ) : null}
                     <div className="grid flex-1 gap-2">
                         <Label htmlFor="month">Month</Label>
-                        <Input
+                        <MonthPicker
                             id="month"
                             name="month"
-                            type="month"
-                            defaultValue={month.value}
-                            className="h-11 md:h-9"
+                            value={month.value}
                         />
                     </div>
                     <Button type="submit" variant="outline" className="h-11">

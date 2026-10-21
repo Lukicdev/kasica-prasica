@@ -2,9 +2,9 @@ import { Form, Head } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
+import { MonthPicker } from '@/components/month-picker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index as insights } from '@/routes/insights';
 import type {
@@ -59,22 +59,18 @@ function Comparison({ comparison }: { comparison: InsightsComparison }) {
             >
                 <div className="grid gap-2">
                     <Label htmlFor="left">First month</Label>
-                    <Input
+                    <MonthPicker
                         id="left"
                         name="left"
-                        type="month"
-                        defaultValue={comparison.left.value}
-                        className="h-11 md:h-9"
+                        value={comparison.left.value}
                     />
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="right">Second month</Label>
-                    <Input
+                    <MonthPicker
                         id="right"
                         name="right"
-                        type="month"
-                        defaultValue={comparison.right.value}
-                        className="h-11 md:h-9"
+                        value={comparison.right.value}
                     />
                 </div>
                 <Button type="submit" className="h-11 sm:col-span-2">
