@@ -8,12 +8,9 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { accountTypeIcons } from '@/lib/icons';
-import { cn } from '@/lib/utils';
 import type { AccountFormValues, AccountTypeOption } from '@/types/account';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:h-9 md:text-sm';
 
 export function AccountForm({
     account,
@@ -157,13 +154,13 @@ export function AccountForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="note">Note</Label>
-                        <textarea
+                        <Textarea
                             id="note"
                             name="note"
                             defaultValue={account?.note ?? ''}
                             rows={3}
                             placeholder="Optional"
-                            className={cn(fieldClassName, 'h-auto py-2')}
+                            aria-invalid={errors.note ? true : undefined}
                         />
                         <InputError message={errors.note} />
                     </div>

@@ -7,11 +7,8 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 import type { CategoryFormValues, CategoryKindOption } from '@/types/category';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:h-9 md:text-sm';
 
 export function CategoryForm({
     category,
@@ -83,13 +80,13 @@ export function CategoryForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="description">Description</Label>
-                        <textarea
+                        <Textarea
                             id="description"
                             name="description"
                             defaultValue={category?.description ?? ''}
                             rows={2}
                             placeholder="A1: mobile provider"
-                            className={cn(fieldClassName, 'h-auto py-2')}
+                            aria-invalid={errors.description ? true : undefined}
                             data-test="category-description-input"
                         />
                         <p className="text-sm text-muted-foreground">

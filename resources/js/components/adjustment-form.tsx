@@ -7,22 +7,19 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     addAmounts,
     formatMoney,
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import { cn } from '@/lib/utils';
 import type { CurrencyCode } from '@/types/currency';
 import type {
     AdjustmentAccountOption,
     AdjustmentValues,
     ReconciliationPerson,
 } from '@/types/reconciliation';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
 function isCurrency(value: string): value is CurrencyCode {
     return value === 'RSD' || value === 'EUR';
@@ -137,13 +134,13 @@ export function AdjustmentForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="note">Note</Label>
-                        <textarea
+                        <Textarea
                             id="note"
                             name="note"
                             value={note}
                             onChange={(event) => setNote(event.target.value)}
                             rows={3}
-                            className={cn(fieldClassName, 'h-auto py-2')}
+                            aria-invalid={errors.note ? true : undefined}
                         />
                         <InputError message={errors.note} />
                     </div>

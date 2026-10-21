@@ -5,6 +5,7 @@ import { DatePicker } from '@/components/date-picker';
 import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -152,19 +153,19 @@ export function RecurrenceForm({
                     </div>
 
                     {recurrence.type === 'expense' ? (
-                        <label className="flex min-h-11 items-center gap-3 text-sm">
-                            <input
-                                type="checkbox"
-                                name="refund"
-                                value="1"
+                        <div className="flex min-h-11 items-center gap-3">
+                            {refund ? (
+                                <input type="hidden" name="refund" value="1" />
+                            ) : null}
+                            <Checkbox
+                                id="refund"
                                 checked={refund}
-                                onChange={(event) =>
-                                    setRefund(event.target.checked)
+                                onCheckedChange={(checked) =>
+                                    setRefund(checked === true)
                                 }
-                                className="size-5"
                             />
-                            This is a refund
-                        </label>
+                            <Label htmlFor="refund">This is a refund</Label>
+                        </div>
                     ) : null}
 
                     <div className="grid gap-2">

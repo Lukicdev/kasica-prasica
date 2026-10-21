@@ -5,8 +5,11 @@ import { DatePicker } from '@/components/date-picker';
 import { FormSelect } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     addAmounts,
     divideAmount,
@@ -16,7 +19,6 @@ import {
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import { cn } from '@/lib/utils';
 import type { CurrencyCode } from '@/types/currency';
 import type {
     TransactionAccountOption,
@@ -25,9 +27,6 @@ import type {
     TransactionFormValues,
     TransactionOption,
 } from '@/types/transaction';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
 function isCurrency(value: string): value is CurrencyCode {
     return value === 'RSD' || value === 'EUR';
@@ -171,37 +170,34 @@ export function TransactionForm({
                     <input type="hidden" name="type" value={type} />
 
                     <div className="grid gap-2">
-                        <span className="text-sm font-medium" id="type-label">
-                            Type
-                        </span>
-                        <div
-                            role="group"
+                        <Label id="type-label">Type</Label>
+                        <ToggleGroup
+                            type="single"
+                            value={type}
+                            variant="outline"
                             aria-labelledby="type-label"
-                            className="grid grid-cols-2 gap-2"
-                        >
-                            <Button
-                                type="button"
-                                variant={
-                                    type === 'expense' ? 'default' : 'outline'
+                            className="w-full"
+                            onValueChange={(next) => {
+                                if (next === 'expense' || next === 'income') {
+                                    changeType(next);
                                 }
-                                className="h-11"
-                                onClick={() => changeType('expense')}
+                            }}
+                        >
+                            <ToggleGroupItem
+                                value="expense"
+                                className="h-11 flex-1"
                                 data-test="type-expense"
                             >
                                 Expense
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={
-                                    type === 'income' ? 'default' : 'outline'
-                                }
-                                className="h-11"
-                                onClick={() => changeType('income')}
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                                value="income"
+                                className="h-11 flex-1"
                                 data-test="type-income"
                             >
                                 Income
-                            </Button>
-                        </div>
+                            </ToggleGroupItem>
+                        </ToggleGroup>
                         <InputError message={errors.type} />
                     </div>
 
@@ -224,20 +220,20 @@ export function TransactionForm({
                     </div>
 
                     {type === 'expense' ? (
-                        <label className="flex min-h-11 items-center gap-3 text-sm">
-                            <input
-                                type="checkbox"
-                                name="refund"
-                                value="1"
+                        <div className="flex min-h-11 items-center gap-3">
+                            {refund ? (
+                                <input type="hidden" name="refund" value="1" />
+                            ) : null}
+                            <Checkbox
+                                id="refund"
                                 checked={refund}
-                                onChange={(event) =>
-                                    setRefund(event.target.checked)
+                                onCheckedChange={(checked) =>
+                                    setRefund(checked === true)
                                 }
-                                className="size-5"
                                 data-test="refund"
                             />
-                            This is a refund
-                        </label>
+                            <Label htmlFor="refund">This is a refund</Label>
+                        </div>
                     ) : null}
 
                     <div className="grid gap-2">
@@ -345,40 +341,41 @@ export function TransactionForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="note">Note</Label>
-                        <textarea
+                        <Textarea
                             id="note"
                             name="note"
                             value={note}
                             onChange={(event) => setNote(event.target.value)}
                             rows={3}
                             placeholder="Optional"
-                            className={cn(fieldClassName, 'h-auto py-2')}
+                            aria-invalid={errors.note ? true : undefined}
                             data-test="transaction-note"
                         />
                         <InputError message={errors.note} />
                     </div>
 
-                    <label className="flex min-h-11 items-start gap-3 text-sm">
-                        <input
-                            type="checkbox"
-                            name="recurring"
-                            value="1"
+                    <div className="flex min-h-11 items-start gap-3">
+                        {recurring ? (
+                            <input type="hidden" name="recurring" value="1" />
+                        ) : null}
+                        <Checkbox
+                            id="recurring"
                             checked={recurring}
-                            onChange={(event) =>
-                                setRecurring(event.target.checked)
+                            onCheckedChange={(checked) =>
+                                setRecurring(checked === true)
                             }
-                            className="mt-0.5 size-5"
+                            className="mt-0.5"
                             data-test="recurring"
                         />
-                        <span>
+                        <Label htmlFor="recurring">
                             Repeat every month
                             <span className="mt-1 block text-muted-foreground">
                                 Later months stay pending until you confirm
                                 them. Pending items are left out of spending and
                                 balances.
                             </span>
-                        </span>
-                    </label>
+                        </Label>
+                    </div>
 
                     <div className="sticky bottom-0 -mx-4 flex flex-col gap-4 border-t bg-background px-4 py-4">
                         <div

@@ -7,6 +7,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     addAmounts,
     divideAmount,
@@ -15,7 +16,6 @@ import {
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import { cn } from '@/lib/utils';
 import type { CurrencyCode } from '@/types/currency';
 import type {
     TransferAccountOption,
@@ -23,9 +23,6 @@ import type {
     TransferPersonOption,
     TransferValues,
 } from '@/types/transfer';
-
-const fieldClassName =
-    'border-input h-11 w-full rounded-md border bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
 function isCurrency(value: string): value is CurrencyCode {
     return value === 'RSD' || value === 'EUR';
@@ -310,14 +307,14 @@ export function TransferForm({
 
                     <div className="grid gap-2">
                         <Label htmlFor="note">Note</Label>
-                        <textarea
+                        <Textarea
                             id="note"
                             name="note"
                             value={note}
                             onChange={(event) => setNote(event.target.value)}
                             rows={3}
                             placeholder="Optional"
-                            className={cn(fieldClassName, 'h-auto py-2')}
+                            aria-invalid={errors.note ? true : undefined}
                             data-test="transfer-note"
                         />
                         <InputError message={errors.note} />
