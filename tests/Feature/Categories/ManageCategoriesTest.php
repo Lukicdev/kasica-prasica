@@ -21,7 +21,6 @@ test('guests cannot view or change categories', function () {
     $this->get(route('categories.edit', $category))->assertRedirect(route('login'));
     $this->post(route('categories.store'), categoryPayload())->assertRedirect(route('login'));
     $this->patch(route('categories.update', $category), categoryPayload())->assertRedirect(route('login'));
-    $this->patch(route('categories.reorder'), ['kind' => 'expense', 'ids' => [$category->id]])->assertRedirect(route('login'));
     $this->delete(route('categories.destroy', $category))->assertRedirect(route('login'));
 });
 
@@ -220,75 +219,6 @@ test('the same name can exist once as income and once as expense', function () {
         ->assertSessionHasNoErrors();
 
     expect(Category::query()->where('name', 'Salary')->count())->toBe(2);
-});
-
-test('categories can be reordered within a kind', function () {
-    $user = User::factory()->create();
-    $ids = Category::query()
-        ->where('kind', CategoryKind::Expense)
-        ->selectable()
-        ->ordered()
-        ->pluck('id')
-        ->map(fn (mixed $id): int => (int) $id)
-        ->all();
-
-    [$ids[0], $ids[1]] = [$ids[1], $ids[0]];
-
-    $this->actingAs($user)
-        ->from(route('categories.index'))
-        ->patch(route('categories.reorder'), [
-            'kind' => 'expense',
-            'ids' => $ids,
-        ])
-        ->assertRedirect(route('categories.index'))
-        ->assertSessionHasNoErrors();
-
-    $names = Category::query()
-        ->where('kind', CategoryKind::Expense)
-        ->selectable()
-        ->ordered()
-        ->pluck('name')
-        ->all();
-
-    expect($names[0])->toBe('Utilities & Property Tax')
-        ->and($names[1])->toBe('Mortgage')
-        ->and(Category::query()->where('kind', CategoryKind::Income)->ordered()->value('name'))->toBe('Salary');
-
-    $this->actingAs($user)
-        ->get(route('categories.index'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('groups.1.categories.0.name', 'Utilities & Property Tax')
-            ->where('groups.1.categories.1.name', 'Mortgage'));
-});
-
-test('a reorder has to include each active category of that kind once', function () {
-    $user = User::factory()->create();
-    $incomeIds = Category::query()
-        ->where('kind', CategoryKind::Income)
-        ->ordered()
-        ->pluck('id')
-        ->all();
-
-    $this->actingAs($user)
-        ->from(route('categories.index'))
-        ->patch(route('categories.reorder'), [
-            'kind' => 'income',
-            'ids' => array_slice($incomeIds, 1),
-        ])
-        ->assertRedirect(route('categories.index'))
-        ->assertSessionHasErrors('ids');
-
-    $this->actingAs($user)
-        ->from(route('categories.index'))
-        ->patch(route('categories.reorder'), [
-            'kind' => 'income',
-            'ids' => [...$incomeIds, 999_999],
-        ])
-        ->assertRedirect(route('categories.index'))
-        ->assertSessionHasErrors('ids');
-
-    expect(Category::query()->where('kind', CategoryKind::Income)->ordered()->value('name'))->toBe('Salary');
 });
 
 test('changing kind moves the category to the end of the other list', function () {

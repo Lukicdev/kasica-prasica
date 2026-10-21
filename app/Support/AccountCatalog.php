@@ -32,6 +32,7 @@ class AccountCatalog
      *             type_label: string,
      *             currency: string,
      *             balance: array{amount: string, currency: string, formatted: string, negative: bool},
+     *             display_balance: array{amount: string, currency: string, formatted: string, negative: bool}|null,
      *             archived: bool,
      *             note: string|null
      *         }>
@@ -61,7 +62,7 @@ class AccountCatalog
                 ];
             }
 
-            $grouped[$type]['accounts'][] = $this->summary($account, $balances[$account->id]);
+            $grouped[$type]['accounts'][] = $this->summary($account, $balances[$account->id], $display);
         }
 
         return [
@@ -176,11 +177,12 @@ class AccountCatalog
      *     type_label: string,
      *     currency: string,
      *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
+     *     display_balance: array{amount: string, currency: string, formatted: string, negative: bool}|null,
      *     archived: bool,
      *     note: string|null
      * }
      */
-    private function summary(Account $account, string $balance): array
+    private function summary(Account $account, string $balance, Currency $display): array
     {
         return [
             'id' => $account->id,
@@ -190,9 +192,28 @@ class AccountCatalog
             'type_label' => $account->type->label(),
             'currency' => $account->currency->value,
             'balance' => $this->money($balance, $account->currency),
+            'display_balance' => $this->displayBalance($account, $balance, $display),
             'archived' => $account->archived_at !== null,
             'note' => $account->note,
         ];
+    }
+
+    /**
+     * The same balance in the display currency, when that currency differs.
+     *
+     * @return array{amount: string, currency: string, formatted: string, negative: bool}|null
+     */
+    private function displayBalance(Account $account, string $balance, Currency $display): ?array
+    {
+        if ($account->currency === $display) {
+            return null;
+        }
+
+        $base = $account->currency->isBase()
+            ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
+            : $this->converter->baseAmount($balance, $account->currency);
+
+        return $this->money($this->converter->displayAmount($base, $display), $display);
     }
 
     /**

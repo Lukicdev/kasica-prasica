@@ -21,7 +21,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('accounts/{account}/archive', [AccountController::class, 'archive'])->name('accounts.archive');
     Route::patch('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
 
-    Route::patch('categories/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder');
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::patch('categories/{category}/archive', [CategoryController::class, 'archive'])->name('categories.archive');
     Route::patch('categories/{category}/restore', [CategoryController::class, 'restore'])->name('categories.restore');

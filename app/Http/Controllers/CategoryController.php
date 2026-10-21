@@ -8,7 +8,6 @@ use App\Actions\Categories\ReorderCategories;
 use App\Actions\Categories\RestoreCategory;
 use App\Actions\Categories\UpdateCategory;
 use App\Enums\CategoryKind;
-use App\Http\Requests\Categories\ReorderCategoriesRequest;
 use App\Http\Requests\Categories\StoreCategoryRequest;
 use App\Http\Requests\Categories\UpdateCategoryRequest;
 use App\Models\Category;
@@ -117,18 +116,5 @@ class CategoryController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category restored.']);
 
         return to_route('categories.edit', $category);
-    }
-
-    public function reorder(ReorderCategoriesRequest $request, ReorderCategories $reorder): RedirectResponse
-    {
-        $user = $request->user();
-
-        $reorder->handle(
-            $user->workspace,
-            $request->kind(),
-            $request->ids(),
-        );
-
-        return back();
     }
 }

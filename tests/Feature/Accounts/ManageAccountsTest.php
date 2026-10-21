@@ -101,6 +101,7 @@ test('an opening balance can be negative and a note can be left blank', function
         ->assertInertia(fn (Assert $page) => $page
             ->where('groups.0.accounts.0.balance.negative', true)
             ->where('groups.0.accounts.0.balance.formatted', '-20.50 RSD')
+            ->where('groups.0.accounts.0.display_balance', null)
             ->where('total.negative', true)
             ->where('total.formatted', '-20.50 RSD'));
 });

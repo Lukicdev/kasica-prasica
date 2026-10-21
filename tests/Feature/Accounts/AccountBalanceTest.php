@@ -263,6 +263,8 @@ test('an euro account balance stays in euros', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('groups.0.accounts.0.balance.amount', '40.00')
             ->where('groups.0.accounts.0.balance.currency', 'EUR')
+            ->where('groups.0.accounts.0.display_balance.amount', '4700.00')
+            ->where('groups.0.accounts.0.display_balance.currency', 'RSD')
             ->where('total.amount', '4700.00')
             ->where('total.currency', 'RSD'));
 });

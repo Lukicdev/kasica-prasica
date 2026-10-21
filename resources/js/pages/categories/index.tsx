@@ -1,58 +1,12 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
 import { EntityIcon } from '@/components/entity-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { create, edit, index, reorder } from '@/routes/categories';
+import { create, edit, index } from '@/routes/categories';
 import type { CategoryGroup, CategorySummary } from '@/types/category';
 
-function reorderError(errors: unknown): string | null {
-    if (typeof errors !== 'object' || errors === null || !('ids' in errors)) {
-        return null;
-    }
-
-    const message = errors.ids;
-
-    return typeof message === 'string' ? message : null;
-}
-
-function move(
-    kind: string,
-    categories: CategorySummary[],
-    index: number,
-    direction: -1 | 1,
-    onStart: () => void,
-    onFinish: () => void,
-): void {
-    const next = index + direction;
-
-    if (next < 0 || next >= categories.length) {
-        return;
-    }
-
-    const ids = categories.map((category) => category.id);
-    const current = ids[index];
-    const target = ids[next];
-
-    if (current === undefined || target === undefined) {
-        return;
-    }
-
-    ids[index] = target;
-    ids[next] = current;
-
-    router.patch(
-        reorder.url(),
-        { kind, ids },
-        { preserveScroll: true, onStart, onFinish },
-    );
-}
-
 export default function Categories({ groups }: { groups: CategoryGroup[] }) {
-    const error = reorderError(usePage().props.errors);
-    const [movingId, setMovingId] = useState<number | null>(null);
-
     return (
         <>
             <Head title="Categories" />
@@ -63,8 +17,8 @@ export default function Categories({ groups }: { groups: CategoryGroup[] }) {
                             Categories
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Income and expenses, in the order you want. A
-                            description shows here and when you pick a category.
+                            Income and expenses. A description shows here and
+                            when you pick a category.
                         </p>
                     </div>
                     <Button asChild className="h-11 w-full sm:w-auto md:h-9">
@@ -75,152 +29,90 @@ export default function Categories({ groups }: { groups: CategoryGroup[] }) {
                     </Button>
                 </section>
 
-                {error ? (
-                    <p className="text-sm text-destructive" role="alert">
-                        {error}
-                    </p>
-                ) : null}
-
-                {groups.map((group) => (
-                    <section
-                        key={group.kind}
-                        className="flex flex-col gap-3"
-                        aria-label={group.label}
-                    >
-                        <h2 className="text-sm font-medium text-muted-foreground">
-                            {group.label}
-                        </h2>
-                        {group.categories.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                {group.kind === 'income'
-                                    ? 'No income categories yet.'
-                                    : 'No expense categories yet.'}
-                            </p>
-                        ) : (
-                            <ul className="flex flex-col gap-3">
-                                {group.categories.map((category, index) => (
-                                    <CategoryRow
-                                        key={category.id}
-                                        category={category}
-                                        canMoveUp={index > 0}
-                                        canMoveDown={
-                                            index < group.categories.length - 1
-                                        }
-                                        moving={movingId !== null}
-                                        onMove={(direction) =>
-                                            move(
-                                                group.kind,
-                                                group.categories,
-                                                index,
-                                                direction,
-                                                () => setMovingId(category.id),
-                                                () => setMovingId(null),
-                                            )
-                                        }
-                                    />
-                                ))}
-                            </ul>
-                        )}
-                        {group.archived.length > 0 ? (
-                            <div className="flex flex-col gap-3">
-                                <h3 className="text-sm font-medium">
-                                    Archived
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Archived categories stay in the history and
-                                    are left out when you pick a category.
-                                </p>
-                                <ul className="flex flex-col gap-3">
-                                    {group.archived.map((category) => (
-                                        <CategoryRow
-                                            key={category.id}
-                                            category={category}
-                                            canMoveUp={false}
-                                            canMoveDown={false}
-                                            moving={false}
-                                            onMove={() => undefined}
-                                        />
-                                    ))}
-                                </ul>
-                            </div>
-                        ) : null}
-                    </section>
-                ))}
+                <section className="overflow-hidden rounded-xl border border-sidebar-border/70 bg-card dark:border-sidebar-border">
+                    {groups.map((group, groupIndex) => (
+                        <CategoryGroupList
+                            key={group.kind}
+                            group={group}
+                            divided={groupIndex > 0}
+                        />
+                    ))}
+                </section>
             </div>
         </>
     );
 }
 
-function CategoryRow({
-    category,
-    canMoveUp,
-    canMoveDown,
-    moving,
-    onMove,
+function CategoryGroupList({
+    group,
+    divided,
 }: {
-    category: CategorySummary;
-    canMoveUp: boolean;
-    canMoveDown: boolean;
-    moving: boolean;
-    onMove: (direction: -1 | 1) => void;
+    group: CategoryGroup;
+    divided: boolean;
 }) {
+    const categories = [...group.categories, ...group.archived];
+
     return (
-        <li
-            className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-            data-test="category"
+        <div
+            className={
+                divided
+                    ? 'border-t border-sidebar-border/70 dark:border-sidebar-border'
+                    : undefined
+            }
+            aria-label={group.label}
         >
-            <div className="flex flex-col gap-1">
-                <span className="flex flex-wrap items-center gap-2">
-                    <EntityIcon name={category.icon} />
-                    <span className="font-medium">{category.name}</span>
-                    {category.archived ? (
-                        <Badge variant="outline" data-test="archived-category">
-                            Archived
-                        </Badge>
+            <h2 className="px-4 py-3 text-sm font-medium text-muted-foreground">
+                {group.label}
+            </h2>
+            {categories.length === 0 ? (
+                <p className="border-t border-sidebar-border/70 px-4 py-6 text-sm text-muted-foreground dark:border-sidebar-border">
+                    {group.kind === 'income'
+                        ? 'No income categories yet.'
+                        : 'No expense categories yet.'}
+                </p>
+            ) : (
+                <ul className="divide-y divide-sidebar-border/70 border-t border-sidebar-border/70 dark:divide-sidebar-border dark:border-sidebar-border">
+                    {categories.map((category) => (
+                        <CategoryRow key={category.id} category={category} />
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
+function CategoryRow({ category }: { category: CategorySummary }) {
+    return (
+        <li data-test="category">
+            <Link
+                href={edit(category.id)}
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+            >
+                <EntityIcon name={category.icon} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate font-medium">
+                            {category.name}
+                        </span>
+                        {category.archived ? (
+                            <Badge
+                                variant="outline"
+                                data-test="archived-category"
+                            >
+                                Archived
+                            </Badge>
+                        ) : null}
+                    </span>
+                    {category.description ? (
+                        <span
+                            className="truncate text-sm text-muted-foreground"
+                            data-test="category-description"
+                        >
+                            {category.description}
+                        </span>
                     ) : null}
                 </span>
-                {category.description ? (
-                    <span
-                        className="text-sm text-muted-foreground"
-                        data-test="category-description"
-                    >
-                        {category.description}
-                    </span>
-                ) : null}
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {category.archived ? null : (
-                    <>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="h-11 md:h-9"
-                            disabled={!canMoveUp || moving}
-                            aria-label={`Move ${category.name} up`}
-                            onClick={() => onMove(-1)}
-                        >
-                            Up
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="h-11 md:h-9"
-                            disabled={!canMoveDown || moving}
-                            aria-label={`Move ${category.name} down`}
-                            onClick={() => onMove(1)}
-                        >
-                            Down
-                        </Button>
-                    </>
-                )}
-                <Button
-                    asChild
-                    variant="outline"
-                    className="h-11 flex-1 sm:flex-none md:h-9"
-                >
-                    <Link href={edit(category.id)}>Edit</Link>
-                </Button>
-            </div>
+            </Link>
         </li>
     );
 }

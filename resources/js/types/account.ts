@@ -13,6 +13,7 @@ export type AccountSummary = {
     type_label: string;
     currency: string;
     balance: MoneyFigure;
+    display_balance: MoneyFigure | null;
     archived: boolean;
     note: string | null;
 };
