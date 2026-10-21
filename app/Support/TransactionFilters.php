@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 /**
- * The transaction table's month, filters and sort.
+ * The transaction table's month, filters, sort, and page.
  *
  * A month is a calendar month. The workspace does not store a start day yet.
  */
@@ -29,6 +29,7 @@ final class TransactionFilters
         public string $search,
         public string $sort,
         public string $direction,
+        public int $page,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -61,6 +62,8 @@ final class TransactionFilters
             $search = mb_substr($search, 0, 100);
         }
 
+        $page = $request->integer('page');
+
         return new self(
             month: $month,
             type: TransactionType::tryFrom($request->string('type')->toString()),
@@ -71,6 +74,7 @@ final class TransactionFilters
             search: $search,
             sort: $sort,
             direction: $direction,
+            page: $page > 0 ? $page : 1,
         );
     }
 

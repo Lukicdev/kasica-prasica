@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Support\Decimal;
+use App\Support\TransactionCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -577,6 +578,9 @@ test('the table lists one month and can be filtered', function () {
             ->where('sort.column', 'date')
             ->where('sort.direction', 'desc')
             ->where('transactions', fn ($rows): bool => count($rows) === 3)
+            ->where('pagination.current_page', 1)
+            ->where('pagination.last_page', 1)
+            ->where('pagination.total', 3)
             ->where('transactions.0.note', 'Airport taxi')
             ->where('transactions.2.note', 'October salary')
             ->where('total.amount', '-1115.00')
@@ -628,6 +632,80 @@ test('the table lists one month and can be filtered', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('transactions.0.note', 'September shop')
             ->where('transactions', fn ($rows): bool => count($rows) === 1));
+});
+
+test('a long month is split into pages and the total still covers every row', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create();
+    $category = Category::factory()->create();
+    $count = TransactionCatalog::PER_PAGE + 1;
+    $total = '-'.($count * 10).'.00';
+
+    foreach (range(1, $count) as $number) {
+        Transaction::factory()->create([
+            'workspace_id' => $user->workspace_id,
+            'account_id' => $account->id,
+            'category_id' => $category->id,
+            'person_id' => $user->id,
+            'booked_on' => '2026-10-02',
+            'note' => 'Row '.$number,
+            'amount' => '10.00',
+            'account_amount' => '10.00',
+            'base_amount' => '10.00',
+        ]);
+    }
+
+    Transaction::factory()->create([
+        'workspace_id' => $user->workspace_id,
+        'account_id' => $account->id,
+        'category_id' => $category->id,
+        'person_id' => $user->id,
+        'booked_on' => '2026-09-02',
+        'note' => 'September',
+        'amount' => '10.00',
+        'account_amount' => '10.00',
+        'base_amount' => '10.00',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('transactions.index', ['month' => '2026-10']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pagination.current_page', 1)
+            ->where('pagination.last_page', 2)
+            ->where('pagination.per_page', TransactionCatalog::PER_PAGE)
+            ->where('pagination.total', $count)
+            ->where('pagination.from', 1)
+            ->where('pagination.to', TransactionCatalog::PER_PAGE)
+            ->where('transactions', fn ($rows): bool => count($rows) === TransactionCatalog::PER_PAGE)
+            ->where('transactions.0.note', 'Row '.$count)
+            ->where('total.amount', $total)
+            ->missing('transactions.'.TransactionCatalog::PER_PAGE));
+
+    $this->actingAs($user)
+        ->get(route('transactions.index', ['month' => '2026-10', 'page' => 2]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pagination.current_page', 2)
+            ->where('pagination.from', $count)
+            ->where('pagination.to', $count)
+            ->where('transactions', fn ($rows): bool => count($rows) === 1)
+            ->where('transactions.0.note', 'Row 1')
+            ->where('total.amount', $total));
+
+    $this->actingAs($user)
+        ->get(route('transactions.index', ['month' => '2026-10', 'page' => 9]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pagination.current_page', 2)
+            ->where('transactions.0.note', 'Row 1'));
+
+    $this->actingAs($user)
+        ->get(route('transactions.index', ['month' => '2026-10', 'page' => 'sideways']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pagination.current_page', 1)
+            ->where('transactions.0.note', 'Row '.$count));
 });
 
 test('clicking a column title sorts that column and clicking again reverses it', function () {

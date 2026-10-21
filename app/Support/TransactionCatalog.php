@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -18,6 +19,26 @@ use Illuminate\Support\Collection;
  */
 class TransactionCatalog
 {
+    public const int PER_PAGE = 25;
+
+    /**
+     * @var list<string>
+     */
+    private const array LIST_COLUMNS = [
+        'id',
+        'account_id',
+        'destination_account_id',
+        'category_id',
+        'person_id',
+        'type',
+        'amount',
+        'currency',
+        'base_amount',
+        'booked_on',
+        'note',
+        'repeats',
+    ];
+
     public function __construct(
         private AccountBalance $balances,
         private MoneyConverter $converter,
@@ -59,6 +80,7 @@ class TransactionCatalog
      *         },
      *         repeats: bool
      *     }>,
+     *     pagination: array{current_page: int, last_page: int, per_page: int, total: int, from: int|null, to: int|null},
      *     total: array{amount: string, currency: string, formatted: string, negative: bool, caption: string},
      *     pending: list<array{
      *         id: int,
@@ -147,21 +169,11 @@ class TransactionCatalog
 
         $this->applySort($query, $filters->sort, $filters->direction);
 
-        $transactions = $query->get([
-            'id',
-            'account_id',
-            'destination_account_id',
-            'category_id',
-            'person_id',
-            'type',
-            'amount',
-            'currency',
-            'base_amount',
-            'booked_on',
-            'note',
-            'repeats',
-        ]);
-
+        $summary = (clone $query)
+            ->setEagerLoads([])
+            ->reorder()
+            ->get(['type', 'base_amount']);
+        $page = $this->page($query, $filters->page);
         $display = $user->display_currency;
 
         return [
@@ -213,7 +225,7 @@ class TransactionCatalog
                     'label' => $currency->value,
                 ], Currency::cases()),
             ],
-            'transactions' => array_values($transactions->map(fn (Transaction $transaction): array => [
+            'transactions' => array_values($page->getCollection()->map(fn (Transaction $transaction): array => [
                 'id' => $transaction->id,
                 'date' => $transaction->booked_on->toDateString(),
                 'date_label' => $transaction->booked_on->format('j M Y'),
@@ -233,7 +245,15 @@ class TransactionCatalog
                 )->toArray(),
                 'repeats' => $transaction->repeats,
             ])->all()),
-            'total' => $this->total($transactions, $display, $start),
+            'pagination' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(),
+                'total' => $page->total(),
+                'from' => $page->firstItem(),
+                'to' => $page->lastItem(),
+            ],
+            'total' => $this->total($summary, $display, $start),
             'pending' => $this->recurrences->pending(
                 $user,
                 CalendarMonth::fromValue($filters->month),
@@ -442,6 +462,21 @@ class TransactionCatalog
             'repeats' => $transaction->repeats,
             'from_recurrence' => $transaction->recurrence_id !== null,
         ];
+    }
+
+    /**
+     * @param  Builder<Transaction>  $query
+     * @return LengthAwarePaginator<int, Transaction>
+     */
+    private function page(Builder $query, int $page): LengthAwarePaginator
+    {
+        $paginator = (clone $query)->paginate(self::PER_PAGE, self::LIST_COLUMNS, 'page', $page);
+
+        if ($page <= $paginator->lastPage()) {
+            return $paginator;
+        }
+
+        return (clone $query)->paginate(self::PER_PAGE, self::LIST_COLUMNS, 'page', $paginator->lastPage());
     }
 
     /**
