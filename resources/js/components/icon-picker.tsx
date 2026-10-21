@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Toggle } from '@/components/ui/toggle';
 import { iconComponent, iconLabel, iconOptions } from '@/lib/icons';
-import { cn } from '@/lib/utils';
 
 export function IconPicker({
     id,
@@ -84,18 +84,16 @@ export function IconPicker({
                         data-test="icon-search"
                     />
                     <div className="flex flex-wrap gap-2">
-                        <button
+                        <Toggle
                             type="button"
-                            aria-pressed={value === null}
+                            variant="outline"
+                            pressed={value === null}
                             data-test="icon-none"
-                            className={cn(
-                                'inline-flex h-11 items-center justify-center rounded-md border border-input px-4 text-sm font-medium text-foreground hover:bg-accent',
-                                value === null && 'border-ring bg-accent',
-                            )}
-                            onClick={() => choose(null)}
+                            className="h-11 px-4"
+                            onPressedChange={() => choose(null)}
                         >
                             No icon
-                        </button>
+                        </Toggle>
                     </div>
                     {options.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
@@ -107,24 +105,21 @@ export function IconPicker({
                                 const Icon = iconComponent(option.name);
 
                                 return (
-                                    <button
+                                    <Toggle
                                         key={option.name}
                                         type="button"
+                                        variant="outline"
+                                        pressed={value === option.name}
                                         aria-label={option.label}
-                                        aria-pressed={value === option.name}
                                         title={option.label}
                                         data-test="icon-option"
-                                        className={cn(
-                                            'flex size-11 items-center justify-center rounded-md border border-input text-foreground hover:bg-accent',
-                                            value === option.name &&
-                                                'border-ring bg-accent',
-                                        )}
-                                        onClick={() => choose(option.name)}
+                                        className="size-11"
+                                        onPressedChange={() =>
+                                            choose(option.name)
+                                        }
                                     >
-                                        {Icon ? (
-                                            <Icon className="size-4" />
-                                        ) : null}
-                                    </button>
+                                        {Icon ? <Icon /> : null}
+                                    </Toggle>
                                 );
                             })}
                         </div>

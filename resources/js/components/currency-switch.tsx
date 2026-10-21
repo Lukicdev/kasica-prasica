@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 import { update } from '@/routes/display-currency';
 import type { CurrencyCode } from '@/types/currency';
@@ -37,39 +38,34 @@ export function CurrencySwitch({ className }: CurrencySwitchProps) {
     };
 
     return (
-        <div
-            role="radiogroup"
+        <ToggleGroup
+            type="single"
+            variant="outline"
+            value={selected}
             aria-label="Display currency"
             data-test="display-currency"
-            className={cn(
-                'inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800',
-                className,
-            )}
-        >
-            {currencies.supported.map((currency) => {
-                const isSelected = selected === currency.code;
-
-                return (
-                    <button
-                        key={currency.code}
-                        type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        aria-label={currency.name}
-                        data-test={`display-currency-${currency.code}`}
-                        disabled={pending !== null}
-                        onClick={() => select(currency.code)}
-                        className={cn(
-                            'rounded-md px-3 py-1.5 text-sm transition-colors',
-                            isSelected
-                                ? 'bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100'
-                                : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-                        )}
-                    >
-                        {currency.code}
-                    </button>
+            className={cn(className)}
+            onValueChange={(next) => {
+                const match = currencies.supported.find(
+                    (currency) => currency.code === next,
                 );
-            })}
-        </div>
+
+                if (match) {
+                    select(match.code);
+                }
+            }}
+        >
+            {currencies.supported.map((currency) => (
+                <ToggleGroupItem
+                    key={currency.code}
+                    value={currency.code}
+                    aria-label={currency.name}
+                    data-test={`display-currency-${currency.code}`}
+                    disabled={pending !== null}
+                >
+                    {currency.code}
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
     );
 }
