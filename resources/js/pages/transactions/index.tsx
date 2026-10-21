@@ -7,6 +7,15 @@ import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/transactions';
 import { create as createTransfer } from '@/routes/transfers';
@@ -277,16 +286,16 @@ export default function Transactions({
                     </p>
                 </section>
 
-                <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <table
-                        className="w-full min-w-[52rem] border-collapse text-left text-sm"
+                <div className="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <Table
+                        className="min-w-[52rem]"
                         data-test="transaction-table"
                     >
-                        <caption className="sr-only">
+                        <TableCaption className="sr-only">
                             Transactions for {month.label}
-                        </caption>
-                        <thead className="border-b border-sidebar-border/70 text-muted-foreground dark:border-sidebar-border">
-                            <tr>
+                        </TableCaption>
+                        <TableHeader>
+                            <TableRow className="group">
                                 {columns.map((column) => {
                                     const active =
                                         sort.column === column.column;
@@ -296,7 +305,7 @@ export default function Transactions({
                                     );
 
                                     return (
-                                        <th
+                                        <TableHead
                                             key={column.column}
                                             scope="col"
                                             aria-sort={
@@ -307,9 +316,8 @@ export default function Transactions({
                                                     : 'none'
                                             }
                                             className={cn(
-                                                'px-3 py-3 font-medium whitespace-nowrap',
                                                 column.column === 'date' &&
-                                                    'sticky left-0 bg-background',
+                                                    'sticky left-0 bg-background group-hover:bg-muted/50',
                                                 column.column === 'amount' &&
                                                     'text-right',
                                             )}
@@ -351,33 +359,33 @@ export default function Transactions({
                                                         : ', sort'}
                                                 </span>
                                             </Link>
-                                        </th>
+                                        </TableHead>
                                     );
                                 })}
-                            </tr>
-                        </thead>
-                        <tbody>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {transactions.length === 0 ? (
-                                <tr>
-                                    <td
+                                <TableRow>
+                                    <TableCell
                                         colSpan={columns.length}
-                                        className="px-3 py-8 text-muted-foreground"
+                                        className="py-8 whitespace-normal text-muted-foreground"
                                     >
                                         {filtered
                                             ? 'No transactions match these filters.'
                                             : `No transactions in ${month.label}.`}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 transactions.map((transaction) => (
-                                    <tr
+                                    <TableRow
                                         key={transaction.id}
-                                        className="border-b border-sidebar-border/70 last:border-b-0 dark:border-sidebar-border"
+                                        className="group"
                                         data-test="transaction-row"
                                     >
-                                        <th
+                                        <TableHead
                                             scope="row"
-                                            className="sticky left-0 bg-background px-3 py-3 font-medium whitespace-nowrap"
+                                            className="sticky left-0 bg-background group-hover:bg-muted/50"
                                         >
                                             <Link
                                                 href={show(transaction.id)}
@@ -389,28 +397,28 @@ export default function Transactions({
                                                     {transaction.date_label}
                                                 </time>
                                             </Link>
-                                        </th>
-                                        <td className="px-3 py-3 whitespace-nowrap">
+                                        </TableHead>
+                                        <TableCell>
                                             {transaction.type_label}
                                             {transaction.repeats ? (
                                                 <span className="block text-xs text-muted-foreground">
                                                     Monthly
                                                 </span>
                                             ) : null}
-                                        </td>
-                                        <td className="px-3 py-3">
+                                        </TableCell>
+                                        <TableCell className="whitespace-normal">
                                             {transaction.category ?? '—'}
-                                        </td>
-                                        <td className="max-w-48 px-3 py-3">
+                                        </TableCell>
+                                        <TableCell className="max-w-48 whitespace-normal">
                                             {transaction.note ?? '—'}
-                                        </td>
-                                        <td className="px-3 py-3 whitespace-nowrap">
+                                        </TableCell>
+                                        <TableCell>
                                             {transaction.account}
-                                        </td>
-                                        <td className="px-3 py-3 whitespace-nowrap">
+                                        </TableCell>
+                                        <TableCell>
                                             {transaction.person ?? '—'}
-                                        </td>
-                                        <td className="px-3 py-3 text-right whitespace-nowrap">
+                                        </TableCell>
+                                        <TableCell className="text-right">
                                             <MoneyAmount
                                                 formatted={
                                                     transaction.amount.formatted
@@ -420,15 +428,15 @@ export default function Transactions({
                                                         .original_formatted
                                                 }
                                             />
-                                        </td>
-                                        <td className="px-3 py-3 whitespace-nowrap">
+                                        </TableCell>
+                                        <TableCell>
                                             {transaction.added_by ?? '—'}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
         </>

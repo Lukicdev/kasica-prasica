@@ -8,6 +8,16 @@ import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { dashboard } from '@/routes';
 import {
     create as createAccount,
@@ -579,53 +589,41 @@ function ExpenseTable({
                 </div>
             </div>
             <Overspends month={month} rows={overspends} sort={sort} />
-            <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                <table
-                    className="w-full min-w-[44rem] border-collapse text-left text-sm"
-                    data-test="expense-table"
-                >
-                    <caption className="sr-only">
+            <div className="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                <Table className="min-w-[44rem]" data-test="expense-table">
+                    <TableCaption className="sr-only">
                         Expenses for {month.label}. Difference is spent minus
                         budget.
-                    </caption>
-                    <thead className="border-b border-sidebar-border/70 text-muted-foreground dark:border-sidebar-border">
-                        <tr>
-                            <th
+                    </TableCaption>
+                    <TableHeader>
+                        <TableRow className="group">
+                            <TableHead
                                 scope="col"
-                                className="sticky left-0 bg-background px-3 py-3 font-medium"
+                                className="sticky left-0 bg-background group-hover:bg-muted/50"
                             >
                                 Category
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-3 py-3 text-right font-medium"
-                            >
+                            </TableHead>
+                            <TableHead scope="col" className="text-right">
                                 Spent
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-3 py-3 text-right font-medium"
-                            >
+                            </TableHead>
+                            <TableHead scope="col" className="text-right">
                                 Budget
-                            </th>
-                            <th
-                                scope="col"
-                                className="px-3 py-3 text-right font-medium"
-                            >
+                            </TableHead>
+                            <TableHead scope="col" className="text-right">
                                 Difference
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {rows.map((row) => (
-                            <tr
+                            <TableRow
                                 key={row.id ?? row.name}
-                                className="border-b border-sidebar-border/70 last:border-b-0 dark:border-sidebar-border"
+                                className="group"
                                 data-test="expense-row"
                             >
-                                <th
+                                <TableHead
                                     scope="row"
-                                    className="sticky left-0 bg-background px-3 py-3 font-medium"
+                                    className="sticky left-0 bg-background whitespace-normal group-hover:bg-muted/50"
                                 >
                                     <div className="flex flex-col items-start gap-1">
                                         <CategoryName
@@ -634,7 +632,7 @@ function ExpenseTable({
                                             sort={sort}
                                         />
                                         {row.description ? (
-                                            <span className="text-sm font-normal text-muted-foreground">
+                                            <span className="font-normal text-muted-foreground">
                                                 {row.description}
                                             </span>
                                         ) : null}
@@ -646,24 +644,24 @@ function ExpenseTable({
                                             />
                                         ) : null}
                                     </div>
-                                </th>
-                                <td className="px-3 py-3 text-right whitespace-nowrap">
+                                </TableHead>
+                                <TableCell className="text-right">
                                     <MoneyAmount
                                         formatted={row.spent.formatted}
                                         originalFormatted={
                                             row.spent.original_formatted
                                         }
                                     />
-                                </td>
-                                <td className="px-3 py-3 text-right whitespace-nowrap">
+                                </TableCell>
+                                <TableCell className="text-right">
                                     <MoneyAmount
                                         formatted={row.budget.formatted}
                                         originalFormatted={
                                             row.budget.original_formatted
                                         }
                                     />
-                                </td>
-                                <td className="px-3 py-3 text-right">
+                                </TableCell>
+                                <TableCell className="text-right whitespace-normal">
                                     <div className="flex flex-col items-end gap-1">
                                         <MoneyAmount
                                             formatted={row.difference.formatted}
@@ -677,35 +675,35 @@ function ExpenseTable({
                                             label={row.status_label}
                                         />
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                    <tfoot className="border-t border-sidebar-border/70 font-medium dark:border-sidebar-border">
-                        <tr data-test="expense-total">
-                            <th
+                    </TableBody>
+                    <TableFooter>
+                        <TableRow data-test="expense-total">
+                            <TableHead
                                 scope="row"
-                                className="sticky left-0 bg-background px-3 py-3"
+                                className="sticky left-0 bg-muted/50"
                             >
                                 Total
-                            </th>
-                            <td className="px-3 py-3 text-right whitespace-nowrap">
+                            </TableHead>
+                            <TableCell className="text-right">
                                 <MoneyAmount
                                     formatted={total.spent.formatted}
                                     originalFormatted={
                                         total.spent.original_formatted
                                     }
                                 />
-                            </td>
-                            <td className="px-3 py-3 text-right whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="text-right">
                                 <MoneyAmount
                                     formatted={total.budget.formatted}
                                     originalFormatted={
                                         total.budget.original_formatted
                                     }
                                 />
-                            </td>
-                            <td className="px-3 py-3 text-right">
+                            </TableCell>
+                            <TableCell className="text-right whitespace-normal">
                                 <div className="flex flex-col items-end gap-1">
                                     <MoneyAmount
                                         formatted={total.difference.formatted}
@@ -718,10 +716,10 @@ function ExpenseTable({
                                         label={total.status_label}
                                     />
                                 </div>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+                            </TableCell>
+                        </TableRow>
+                    </TableFooter>
+                </Table>
             </div>
         </section>
     );
