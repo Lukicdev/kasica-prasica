@@ -9,6 +9,7 @@ use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\AccountBalance;
+use App\Support\AccountStatement;
 use App\Support\Decimal;
 use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,6 +61,76 @@ test('income, expenses, and refunds change the balance immediately', function ()
             ->where('lines.3.amount.negative', true));
 
     expect($income->base_amount)->toBe('50.00');
+});
+
+test('account activity is split into pages and the running balance continues', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create([
+        'opening_balance' => '1000.00',
+        'opening_balance_on' => '2026-10-01',
+    ]);
+    $count = AccountStatement::PER_PAGE + 1;
+
+    foreach (range(1, $count) as $number) {
+        Transaction::factory()->create([
+            'workspace_id' => $user->workspace_id,
+            'account_id' => $account->id,
+            'person_id' => $user->id,
+            'type' => TransactionType::Expense,
+            'amount' => '10.00',
+            'account_amount' => '10.00',
+            'base_amount' => '10.00',
+            'booked_on' => '2026-10-02',
+            'note' => 'Row '.$number,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', $account))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('account.balance.amount', '740.00')
+            ->where('pagination.current_page', 1)
+            ->where('pagination.last_page', 2)
+            ->where('pagination.per_page', AccountStatement::PER_PAGE)
+            ->where('pagination.total', $count)
+            ->where('pagination.from', 1)
+            ->where('pagination.to', AccountStatement::PER_PAGE)
+            ->where('lines.0.kind', 'opening')
+            ->where('lines.0.running_balance.amount', '1000.00')
+            ->where('lines.1.note', 'Row 1')
+            ->where('lines.1.running_balance.amount', '990.00')
+            ->where('lines.'.AccountStatement::PER_PAGE.'.note', 'Row '.AccountStatement::PER_PAGE)
+            ->where('lines.'.AccountStatement::PER_PAGE.'.running_balance.amount', '750.00')
+            ->where('lines', fn ($lines): bool => count($lines) === AccountStatement::PER_PAGE + 1)
+            ->missing('lines.'.(AccountStatement::PER_PAGE + 1)));
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'page' => 2]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('account.balance.amount', '740.00')
+            ->where('pagination.current_page', 2)
+            ->where('pagination.from', $count)
+            ->where('pagination.to', $count)
+            ->where('lines', fn ($lines): bool => count($lines) === 1)
+            ->where('lines.0.kind', 'transaction')
+            ->where('lines.0.note', 'Row '.$count)
+            ->where('lines.0.running_balance.amount', '740.00'));
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'page' => 9]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pagination.current_page', 2)
+            ->where('lines.0.note', 'Row '.$count));
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'page' => 'sideways']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pagination.current_page', 1)
+            ->where('lines.0.kind', 'opening'));
 });
 
 test('transactions on the same day stay in the order they were recorded', function () {

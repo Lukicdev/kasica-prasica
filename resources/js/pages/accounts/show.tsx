@@ -3,6 +3,7 @@ import { AccountBalance } from '@/components/account-balance';
 import { CategoryLabel } from '@/components/category-label';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount, moneyDirection } from '@/components/money-amount';
+import { PaginationNav, type Pagination } from '@/components/pagination-nav';
 import { TableRowLink } from '@/components/table-row-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,9 +24,11 @@ import type { AccountDetail, StatementLine } from '@/types/account';
 export default function AccountShow({
     account,
     lines,
+    pagination,
 }: {
     account: AccountDetail;
     lines: StatementLine[];
+    pagination: Pagination;
 }) {
     const transactions = lines.filter((line) => line.kind === 'transaction');
 
@@ -245,6 +248,14 @@ export default function AccountShow({
                                 })}
                             </TableBody>
                         </Table>
+                        <PaginationNav
+                            pagination={pagination}
+                            hrefFor={(page) =>
+                                show(account.id, {
+                                    query: { page: page > 1 ? page : null },
+                                })
+                            }
+                        />
                     </div>
                 </section>
 

@@ -59,13 +59,15 @@ class AccountController extends Controller
         return to_route('accounts.index');
     }
 
-    public function show(Account $account): Response
+    public function show(Request $request, Account $account): Response
     {
         Gate::authorize('view', $account);
 
+        $page = $request->integer('page');
+
         return Inertia::render('accounts/show', [
             'account' => $this->catalog->detail($account),
-            'lines' => $this->statement->lines($account),
+            ...$this->statement->lines($account, $page > 0 ? $page : 1),
         ]);
     }
 

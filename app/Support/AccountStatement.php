@@ -14,68 +14,98 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class AccountStatement
 {
+    public const int PER_PAGE = 25;
+
+    /**
+     * @var list<string>
+     */
+    private const array LINE_COLUMNS = [
+        'id',
+        'account_id',
+        'destination_account_id',
+        'category_id',
+        'person_id',
+        'type',
+        'amount',
+        'currency',
+        'account_amount',
+        'destination_amount',
+        'booked_on',
+        'note',
+        'repeats',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    private const array BALANCE_COLUMNS = [
+        'account_id',
+        'destination_account_id',
+        'type',
+        'account_amount',
+        'destination_amount',
+    ];
+
     public function __construct(
         private AccountBalance $balances,
         private MoneyFormatter $formatter,
     ) {}
 
     /**
-     * @return list<array{
-     *     id: int|null,
-     *     kind: string,
-     *     date: string,
-     *     date_label: string,
-     *     type: string|null,
-     *     type_label: string,
-     *     category: string|null,
-     *     category_icon: string|null,
-     *     note: string|null,
-     *     person: string|null,
-     *     repeats: bool,
-     *     amount: array{
-     *         amount: string,
-     *         currency: string,
-     *         formatted: string,
-     *         negative: bool,
-     *         original_formatted: string|null
-     *     }|null,
-     *     running_balance: array{amount: string, currency: string, formatted: string, negative: bool}
-     * }>
+     * @return array{
+     *     lines: list<array{
+     *         id: int|null,
+     *         kind: string,
+     *         date: string,
+     *         date_label: string,
+     *         type: string|null,
+     *         type_label: string,
+     *         category: string|null,
+     *         category_icon: string|null,
+     *         note: string|null,
+     *         person: string|null,
+     *         repeats: bool,
+     *         amount: array{
+     *             amount: string,
+     *             currency: string,
+     *             formatted: string,
+     *             negative: bool,
+     *             original_formatted: string|null
+     *         }|null,
+     *         running_balance: array{amount: string, currency: string, formatted: string, negative: bool}
+     *     }>,
+     *     pagination: array{current_page: int, last_page: int, per_page: int, total: int, from: int|null, to: int|null}
+     * }
      */
-    public function lines(Account $account): array
+    public function lines(Account $account, int $page = 1): array
     {
+        $query = $this->transactions($account);
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / self::PER_PAGE));
+        $page = min(max($page, 1), $lastPage);
+        $offset = ($page - 1) * self::PER_PAGE;
         $running = Decimal::of((string) $account->opening_balance)->toString(MoneyConverter::SCALE);
 
-        $lines = [[
-            'id' => null,
-            'kind' => 'opening',
-            'date' => $account->opening_balance_on->toDateString(),
-            'date_label' => $account->opening_balance_on->format('j M Y'),
-            'type' => null,
-            'type_label' => 'Opening balance',
-            'category' => null,
-            'category_icon' => null,
-            'note' => null,
-            'person' => null,
-            'repeats' => false,
-            'amount' => null,
-            'running_balance' => $this->money($running, $account),
-        ]];
+        if ($offset > 0) {
+            $earlier = (clone $query)->limit($offset)->get(self::BALANCE_COLUMNS);
 
-        $transactions = Transaction::query()
-            ->where(function (Builder $query) use ($account): void {
-                $query->where('account_id', $account->id)
-                    ->orWhere('destination_account_id', $account->id);
-            })
+            foreach ($earlier as $transaction) {
+                $running = $this->balances->applyOnAccount($running, $transaction, $account->id);
+            }
+        }
+
+        $transactions = (clone $query)
             ->with([
                 'person:id,name',
                 'account:id,name',
                 'destinationAccount:id,name',
                 'category:id,name,icon',
             ])
-            ->orderBy('booked_on')
-            ->orderBy('id')
-            ->get();
+            ->skip($offset)
+            ->take(self::PER_PAGE)
+            ->get(self::LINE_COLUMNS);
+
+        $lines = $page === 1 ? [$this->openingLine($account, $running)] : [];
 
         foreach ($transactions as $transaction) {
             $running = $this->balances->applyOnAccount($running, $transaction, $account->id);
@@ -97,7 +127,67 @@ class AccountStatement
             ];
         }
 
-        return $lines;
+        return [
+            'lines' => $lines,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => self::PER_PAGE,
+                'total' => $total,
+                'from' => $total === 0 ? null : $offset + 1,
+                'to' => $total === 0 ? null : $offset + $transactions->count(),
+            ],
+        ];
+    }
+
+    /**
+     * @return Builder<Transaction>
+     */
+    private function transactions(Account $account): Builder
+    {
+        return Transaction::query()
+            ->where(function (Builder $query) use ($account): void {
+                $query->where('account_id', $account->id)
+                    ->orWhere('destination_account_id', $account->id);
+            })
+            ->orderBy('booked_on')
+            ->orderBy('id');
+    }
+
+    /**
+     * @return array{
+     *     id: null,
+     *     kind: string,
+     *     date: string,
+     *     date_label: string,
+     *     type: null,
+     *     type_label: string,
+     *     category: null,
+     *     category_icon: null,
+     *     note: null,
+     *     person: null,
+     *     repeats: false,
+     *     amount: null,
+     *     running_balance: array{amount: string, currency: string, formatted: string, negative: bool}
+     * }
+     */
+    private function openingLine(Account $account, string $running): array
+    {
+        return [
+            'id' => null,
+            'kind' => 'opening',
+            'date' => $account->opening_balance_on->toDateString(),
+            'date_label' => $account->opening_balance_on->format('j M Y'),
+            'type' => null,
+            'type_label' => 'Opening balance',
+            'category' => null,
+            'category_icon' => null,
+            'note' => null,
+            'person' => null,
+            'repeats' => false,
+            'amount' => null,
+            'running_balance' => $this->money($running, $account),
+        ];
     }
 
     private function typeLabel(Transaction $transaction, Account $account): string
