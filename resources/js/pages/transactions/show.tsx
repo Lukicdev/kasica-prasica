@@ -163,12 +163,6 @@ export default function TransactionShow({
                             <dd>{transaction.person}</dd>
                         </div>
                     ) : null}
-                    {transaction.added_by ? (
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                            <dt className="text-muted-foreground">Added by</dt>
-                            <dd data-test="added-by">{transaction.added_by}</dd>
-                        </div>
-                    ) : null}
                     {transaction.updated_by ? (
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                             <dt className="text-muted-foreground">

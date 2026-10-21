@@ -52,7 +52,7 @@ test('a member can add an expense and the confirmation shows the new balance', f
     $this->actingAs($user)
         ->post(route('transactions.store'), transactionPayload($account, $category, $user))
         ->assertSessionHasNoErrors()
-        ->assertRedirect();
+        ->assertRedirect(route('transactions.index', ['month' => '2026-10']));
 
     $transaction = Transaction::query()->where('note', 'Weekly shop')->first();
 
@@ -78,7 +78,6 @@ test('a member can add an expense and the confirmation shows the new balance', f
             ->where('transaction.category', 'Corner shop')
             ->where('transaction.note', 'Weekly shop')
             ->where('transaction.person', 'Ada')
-            ->where('transaction.added_by', 'Ada')
             ->where('transaction.amount.formatted', '42.50 RSD')
             ->where('transaction.amount.original_formatted', null)
             ->where('transaction.account_amount.formatted', '42.50 RSD')
@@ -337,8 +336,7 @@ test('another workspace cannot be used and cannot see the transaction', function
         ->get(route('transactions.index', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('transactions.0.note', 'Shared shop')
-            ->where('transactions.0.added_by', 'Ada'));
+            ->where('transactions.0.note', 'Shared shop'));
 });
 
 test('save and add another keeps the date, account and type and confirms the balance', function () {
@@ -485,8 +483,7 @@ test('editing and deleting update the affected balances', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('transaction.balance.amount', '160.00')
-            ->where('transaction.updated_by', 'Bea')
-            ->where('transaction.added_by', 'Ada'));
+            ->where('transaction.updated_by', 'Bea'));
 
     $this->actingAs($editor)
         ->get(route('accounts.show', $cash))
@@ -581,7 +578,6 @@ test('the table lists one month and can be filtered', function () {
             ->where('sort.direction', 'desc')
             ->where('transactions', fn ($rows): bool => count($rows) === 3)
             ->where('transactions.0.note', 'Airport taxi')
-            ->where('transactions.0.added_by', 'Ada')
             ->where('transactions.2.note', 'October salary')
             ->where('total.amount', '-1115.00')
             ->where('total.formatted', '-1,115.00 RSD')
@@ -719,10 +715,6 @@ test('clicking a column title sorts that column and clicking again reverses it',
     $this->actingAs($ada)
         ->get(route('transactions.index', ['month' => '2026-10', 'sort' => 'person', 'direction' => 'asc']))
         ->assertInertia(fn (Assert $page) => $page->where('transactions.0.person', 'Ada'));
-
-    $this->actingAs($ada)
-        ->get(route('transactions.index', ['month' => '2026-10', 'sort' => 'added_by', 'direction' => 'desc']))
-        ->assertInertia(fn (Assert $page) => $page->where('transactions.0.added_by', 'Bea'));
 
     $this->actingAs($ada)
         ->get(route('transactions.index', ['month' => '2026-10', 'sort' => 'type', 'direction' => 'asc']))

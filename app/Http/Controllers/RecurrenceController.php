@@ -70,7 +70,9 @@ class RecurrenceController extends Controller
 
         $this->flashBalance($created->account, 'Saved.');
 
-        return to_route('transactions.show', $created);
+        return to_route('transactions.index', [
+            'month' => $created->booked_on->format('Y-m'),
+        ]);
     }
 
     private function flashBalance(Account $account, string $prefix): void

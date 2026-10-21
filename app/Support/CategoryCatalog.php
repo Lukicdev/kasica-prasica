@@ -73,14 +73,13 @@ class CategoryCatalog
      *     kind_locked: bool,
      *     archived: bool,
      *     can_delete: bool,
-     *     created_by: string|null,
      *     updated_by: string|null
      * }
      */
     public function form(Category $category): array
     {
         $this->ensureHistoryCounts($category);
-        $category->loadMissing(['creator:id,name', 'editor:id,name']);
+        $category->loadMissing(['editor:id,name']);
         $inUse = (int) $category->transactions_count > 0 || (int) $category->budgets_count > 0;
         $editor = $category->editor;
         $updatedBy = null;
@@ -98,7 +97,6 @@ class CategoryCatalog
             ...$this->summary($category),
             'kind_locked' => $inUse,
             'can_delete' => ! $inUse,
-            'created_by' => $category->creator?->name,
             'updated_by' => $updatedBy,
         ];
     }

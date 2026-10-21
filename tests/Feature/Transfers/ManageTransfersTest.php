@@ -36,7 +36,7 @@ test('a transfer moves both balances and is not income or spending', function ()
     $this->actingAs($user)
         ->post(route('transfers.store'), transferPayload($cash, $bank, $user))
         ->assertSessionHasNoErrors()
-        ->assertRedirect();
+        ->assertRedirect(route('transactions.index', ['month' => '2026-10']));
 
     $transfer = Transaction::query()->where('type', TransactionType::Transfer)->first();
     $balances = app(AccountBalance::class);

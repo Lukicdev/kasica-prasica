@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 final class TransactionFilters
 {
     /**
-     * @param  'date'|'type'|'category'|'note'|'account'|'person'|'amount'|'added_by'  $sort
+     * @param  'date'|'type'|'category'|'note'|'account'|'person'|'amount'  $sort
      * @param  'asc'|'desc'  $direction
      */
     public function __construct(
@@ -46,7 +46,6 @@ final class TransactionFilters
             'account' => 'account',
             'person' => 'person',
             'amount' => 'amount',
-            'added_by' => 'added_by',
             default => 'date',
         };
 

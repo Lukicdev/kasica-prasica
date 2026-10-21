@@ -85,7 +85,8 @@ test('a recurring expense stays pending until it is confirmed', function () {
 
     $this->actingAs($user)
         ->post(route('recurrences.store', $template), ['month' => '2026-11'])
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('transactions.index', ['month' => '2026-11']));
 
     $confirmed = Transaction::query()->where('recurrence_id', $template->id)->first();
 

@@ -56,7 +56,6 @@ class TransactionCatalog
      *             original_currency: string|null,
      *             original_formatted: string|null
      *         },
-     *         added_by: string|null,
      *         repeats: bool
      *     }>,
      *     total: array{amount: string, currency: string, formatted: string, negative: bool, caption: string},
@@ -115,7 +114,6 @@ class TransactionCatalog
                 'account:id,name',
                 'destinationAccount:id,name',
                 'person:id,name',
-                'creator:id,name',
             ]);
 
         if ($filters->type !== null) {
@@ -161,7 +159,6 @@ class TransactionCatalog
             'booked_on',
             'note',
             'repeats',
-            'created_by',
         ]);
 
         $display = $user->display_currency;
@@ -232,7 +229,6 @@ class TransactionCatalog
                     $display,
                     $transaction->booked_on,
                 )->toArray(),
-                'added_by' => $transaction->creator?->name,
                 'repeats' => $transaction->repeats,
             ])->all()),
             'total' => $this->total($transactions, $display, $start),
@@ -375,7 +371,6 @@ class TransactionCatalog
      *     },
      *     account_amount: array{amount: string, currency: string, formatted: string, negative: bool},
      *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
-     *     added_by: string|null,
      *     updated_by: string|null,
      *     repeats: bool,
      *     from_recurrence: bool
@@ -388,7 +383,6 @@ class TransactionCatalog
             'destinationAccount',
             'category',
             'person:id,name',
-            'creator:id,name',
             'editor:id,name',
         ]);
 
@@ -442,7 +436,6 @@ class TransactionCatalog
             )->toArray(),
             'account_amount' => $this->money((string) $transaction->account_amount, $account->currency),
             'balance' => $this->money($balance, $account->currency),
-            'added_by' => $transaction->creator?->name,
             'updated_by' => $updatedBy,
             'repeats' => $transaction->repeats,
             'from_recurrence' => $transaction->recurrence_id !== null,
@@ -451,7 +444,7 @@ class TransactionCatalog
 
     /**
      * @param  Builder<Transaction>  $query
-     * @param  'date'|'type'|'category'|'note'|'account'|'person'|'amount'|'added_by'  $sort
+     * @param  'date'|'type'|'category'|'note'|'account'|'person'|'amount'  $sort
      * @param  'asc'|'desc'  $direction
      */
     private function applySort(Builder $query, string $sort, string $direction): void
@@ -472,10 +465,6 @@ class TransactionCatalog
                 $direction,
             )->orderBy('id'),
             'amount' => $query->orderBy('base_amount', $direction)->orderBy('id'),
-            'added_by' => $query->orderBy(
-                User::query()->select('name')->whereColumn('users.id', 'transactions.created_by'),
-                $direction,
-            )->orderBy('id'),
             default => $query->orderBy('booked_on', $direction)->orderBy('id', $direction),
         };
     }

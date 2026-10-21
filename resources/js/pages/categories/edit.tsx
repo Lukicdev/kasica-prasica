@@ -99,14 +99,9 @@ export default function EditCategory({
                     )}
                 </section>
 
-                {category.created_by || category.updated_by ? (
+                {category.updated_by ? (
                     <p className="text-sm text-muted-foreground">
-                        {category.created_by
-                            ? `Added by ${category.created_by}.`
-                            : null}{' '}
-                        {category.updated_by
-                            ? `Last changed by ${category.updated_by}.`
-                            : null}
+                        Last changed by {category.updated_by}.
                     </p>
                 ) : null}
             </div>

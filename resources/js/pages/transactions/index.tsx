@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { MoneyAmount } from '@/components/money-amount';
+import { TableRowLink } from '@/components/table-row-link';
 import { FormSelect } from '@/components/form-select';
 import { MonthPicker } from '@/components/month-picker';
 import { PendingRecurrences } from '@/components/pending-recurrences';
@@ -38,7 +39,6 @@ const columns: { column: TransactionSortColumn; label: string }[] = [
     { column: 'account', label: 'Account' },
     { column: 'person', label: 'Person' },
     { column: 'amount', label: 'Amount' },
-    { column: 'added_by', label: 'Added by' },
 ];
 
 function listQuery(
@@ -377,63 +377,70 @@ export default function Transactions({
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                transactions.map((transaction) => (
-                                    <TableRow
-                                        key={transaction.id}
-                                        className="group"
-                                        data-test="transaction-row"
-                                    >
-                                        <TableHead
-                                            scope="row"
-                                            className="sticky left-0 bg-background group-hover:bg-muted/50"
+                                transactions.map((transaction) => {
+                                    const href = show(transaction.id);
+
+                                    return (
+                                        <TableRow
+                                            key={transaction.id}
+                                            className="group cursor-pointer"
+                                            data-test="transaction-row"
                                         >
-                                            <Link
-                                                href={show(transaction.id)}
-                                                className="underline-offset-4 hover:underline"
+                                            <TableHead
+                                                scope="row"
+                                                className="sticky left-0 bg-background group-hover:bg-muted/50"
                                             >
+                                                <TableRowLink
+                                                    href={href}
+                                                    label={`${transaction.date_label}, ${transaction.type_label}`}
+                                                />
                                                 <time
                                                     dateTime={transaction.date}
                                                 >
                                                     {transaction.date_label}
                                                 </time>
-                                            </Link>
-                                        </TableHead>
-                                        <TableCell>
-                                            {transaction.type_label}
-                                            {transaction.repeats ? (
-                                                <span className="block text-xs text-muted-foreground">
-                                                    Monthly
-                                                </span>
-                                            ) : null}
-                                        </TableCell>
-                                        <TableCell className="whitespace-normal">
-                                            {transaction.category ?? '—'}
-                                        </TableCell>
-                                        <TableCell className="max-w-48 whitespace-normal">
-                                            {transaction.note ?? '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {transaction.account}
-                                        </TableCell>
-                                        <TableCell>
-                                            {transaction.person ?? '—'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <MoneyAmount
-                                                formatted={
-                                                    transaction.amount.formatted
-                                                }
-                                                originalFormatted={
-                                                    transaction.amount
-                                                        .original_formatted
-                                                }
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            {transaction.added_by ?? '—'}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                            </TableHead>
+                                            <TableCell className="relative">
+                                                <TableRowLink href={href} />
+                                                {transaction.type_label}
+                                                {transaction.repeats ? (
+                                                    <span className="block text-xs text-muted-foreground">
+                                                        Monthly
+                                                    </span>
+                                                ) : null}
+                                            </TableCell>
+                                            <TableCell className="relative whitespace-normal">
+                                                <TableRowLink href={href} />
+                                                {transaction.category ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="relative max-w-48 whitespace-normal">
+                                                <TableRowLink href={href} />
+                                                {transaction.note ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="relative">
+                                                <TableRowLink href={href} />
+                                                {transaction.account}
+                                            </TableCell>
+                                            <TableCell className="relative">
+                                                <TableRowLink href={href} />
+                                                {transaction.person ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="relative text-right">
+                                                <TableRowLink href={href} />
+                                                <MoneyAmount
+                                                    formatted={
+                                                        transaction.amount
+                                                            .formatted
+                                                    }
+                                                    originalFormatted={
+                                                        transaction.amount
+                                                            .original_formatted
+                                                    }
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             )}
                         </TableBody>
                     </Table>

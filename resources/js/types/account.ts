@@ -46,7 +46,6 @@ export type AccountDetail = AccountFormValues & {
     type_label: string;
     can_transfer: boolean;
     balance: MoneyFigure;
-    created_by: string | null;
     updated_by: string | null;
 };
 
@@ -57,8 +56,10 @@ export type StatementLine = {
     date_label: string;
     type: string | null;
     type_label: string;
+    category: string | null;
     note: string | null;
     person: string | null;
+    repeats: boolean;
     amount: (MoneyFigure & { original_formatted: string | null }) | null;
     running_balance: MoneyFigure;
 };

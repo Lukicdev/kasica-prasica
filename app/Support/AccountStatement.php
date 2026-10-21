@@ -27,8 +27,10 @@ class AccountStatement
      *     date_label: string,
      *     type: string|null,
      *     type_label: string,
+     *     category: string|null,
      *     note: string|null,
      *     person: string|null,
+     *     repeats: bool,
      *     amount: array{
      *         amount: string,
      *         currency: string,
@@ -50,8 +52,10 @@ class AccountStatement
             'date_label' => $account->opening_balance_on->format('j M Y'),
             'type' => null,
             'type_label' => 'Opening balance',
+            'category' => null,
             'note' => null,
             'person' => null,
+            'repeats' => false,
             'amount' => null,
             'running_balance' => $this->money($running, $account),
         ]];
@@ -65,6 +69,7 @@ class AccountStatement
                 'person:id,name',
                 'account:id,name',
                 'destinationAccount:id,name',
+                'category:id,name',
             ])
             ->orderBy('booked_on')
             ->orderBy('id')
@@ -80,8 +85,10 @@ class AccountStatement
                 'date_label' => $transaction->booked_on->format('j M Y'),
                 'type' => $transaction->type->value,
                 'type_label' => $this->typeLabel($transaction, $account),
+                'category' => $transaction->category?->name,
                 'note' => $transaction->note,
                 'person' => $transaction->person?->name,
+                'repeats' => $transaction->repeats,
                 'amount' => $this->amount($transaction, $account),
                 'running_balance' => $this->money($running, $account),
             ];

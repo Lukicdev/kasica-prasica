@@ -23,6 +23,5 @@ export type CategoryKindOption = {
 export type CategoryFormValues = CategorySummary & {
     kind_locked: boolean;
     can_delete: boolean;
-    created_by: string | null;
     updated_by: string | null;
 };

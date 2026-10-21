@@ -155,7 +155,7 @@ test('a member can add a category at the end of its kind', function () {
     $this->actingAs($user)
         ->post(route('categories.store'), categoryPayload())
         ->assertSessionHasNoErrors()
-        ->assertRedirect();
+        ->assertRedirect(route('categories.index'));
 
     $category = Category::query()->where('name', 'Dog food')->first();
     $lastExpense = Category::query()
@@ -400,7 +400,6 @@ test('a category with transactions cannot be deleted or change kind', function (
             ->where('category.name', 'Used more')
             ->where('category.kind_locked', true)
             ->where('category.can_delete', false)
-            ->where('category.created_by', 'Ada')
             ->where('category.updated_by', 'Bea'));
 
     $this->actingAs($editor)

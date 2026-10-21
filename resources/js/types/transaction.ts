@@ -7,8 +7,7 @@ export type TransactionSortColumn =
     | 'note'
     | 'account'
     | 'person'
-    | 'amount'
-    | 'added_by';
+    | 'amount';
 
 export type TransactionSort = {
     column: TransactionSortColumn;
@@ -59,7 +58,6 @@ export type TransactionRow = {
     account: string;
     person: string | null;
     amount: DisplayedMoney;
-    added_by: string | null;
     repeats: boolean;
 };
 
@@ -163,7 +161,6 @@ export type TransactionDetail = {
         formatted: string;
         negative: boolean;
     };
-    added_by: string | null;
     updated_by: string | null;
     repeats: boolean;
     from_recurrence: boolean;

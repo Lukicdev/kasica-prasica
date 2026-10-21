@@ -47,7 +47,9 @@ class TransferController extends Controller
 
         $this->flashBalances($transfer, 'Saved.');
 
-        return to_route('transactions.show', $transfer);
+        return to_route('transactions.index', [
+            'month' => $transfer->booked_on->format('Y-m'),
+        ]);
     }
 
     public function edit(Request $request, Transaction $transaction): Response

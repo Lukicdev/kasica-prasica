@@ -86,13 +86,12 @@ class AccountCatalog
      *     can_delete: bool,
      *     can_transfer: bool,
      *     balance: array{amount: string, currency: string, formatted: string, negative: bool},
-     *     created_by: string|null,
      *     updated_by: string|null
      * }
      */
     public function detail(Account $account): array
     {
-        $account->loadMissing(['creator:id,name', 'editor:id,name']);
+        $account->loadMissing(['editor:id,name']);
         $editor = $account->editor;
         $updatedBy = null;
 
@@ -110,7 +109,6 @@ class AccountCatalog
             'type_label' => $account->type->label(),
             'can_transfer' => $account->archived_at === null,
             'balance' => $this->money($this->balances->of($account), $account->currency),
-            'created_by' => $account->creator?->name,
             'updated_by' => $updatedBy,
         ];
     }

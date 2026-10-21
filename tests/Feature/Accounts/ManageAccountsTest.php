@@ -48,7 +48,7 @@ test('a member can create an account', function () {
             'currency' => 'EUR',
         ]))
         ->assertSessionHasNoErrors()
-        ->assertRedirect();
+        ->assertRedirect(route('accounts.index'));
 
     $account = Account::query()->where('name', 'Household cash')->first();
 
@@ -71,7 +71,6 @@ test('a member can create an account', function () {
             ->where('account.opening_balance', '17049.79')
             ->where('account.balance.formatted', '17,049.79 EUR')
             ->where('account.balance.negative', false)
-            ->where('account.created_by', 'Ada')
             ->where('account.note', 'Wallet in the kitchen')
             ->where('lines.0.type_label', 'Opening balance')
             ->where('lines.0.date_label', '1 Oct 2026')
@@ -228,7 +227,6 @@ test('currency stays fixed once the account has a transaction', function () {
             ->where('account.name', 'Wallet')
             ->where('account.currency_locked', true)
             ->where('account.balance.amount', '375.00')
-            ->where('account.created_by', 'Ada')
             ->where('account.updated_by', 'Bea'));
 });
 

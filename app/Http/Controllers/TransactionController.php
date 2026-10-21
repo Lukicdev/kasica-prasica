@@ -71,7 +71,9 @@ class TransactionController extends Controller
             ]);
         }
 
-        return to_route('transactions.show', $transaction);
+        return to_route('transactions.index', [
+            'month' => $transaction->booked_on->format('Y-m'),
+        ]);
     }
 
     public function show(Request $request, Transaction $transaction): Response

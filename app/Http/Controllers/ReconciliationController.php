@@ -39,7 +39,9 @@ class ReconciliationController extends Controller
 
         $this->flashBalance($adjustment->account, 'Saved.');
 
-        return to_route('transactions.show', $adjustment);
+        return to_route('transactions.index', [
+            'month' => $adjustment->booked_on->format('Y-m'),
+        ]);
     }
 
     public function edit(Request $request, Transaction $transaction): Response

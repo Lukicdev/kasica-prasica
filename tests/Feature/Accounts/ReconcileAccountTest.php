@@ -51,7 +51,7 @@ test('reconciliation shows the gap and a balancing entry that is left out of the
             'note' => 'Counted the cash',
         ])
         ->assertSessionHasNoErrors()
-        ->assertRedirect();
+        ->assertRedirect(route('transactions.index', ['month' => '2026-10']));
 
     $adjustment = Transaction::query()->where('type', TransactionType::Adjustment)->first();
 

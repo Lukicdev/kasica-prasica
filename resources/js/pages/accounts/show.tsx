@@ -2,9 +2,20 @@ import { Head, Link } from '@inertiajs/react';
 import { AccountBalance } from '@/components/account-balance';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
+import { TableRowLink } from '@/components/table-row-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { edit, index, reconcile, show } from '@/routes/accounts';
+import { show as showTransaction } from '@/routes/transactions';
 import { create as createTransfer } from '@/routes/transfers';
 import type { AccountDetail, StatementLine } from '@/types/account';
 
@@ -99,63 +110,134 @@ export default function AccountShow({
                             balance.
                         </p>
                     ) : null}
-                    <ol className="flex flex-col gap-3">
-                        {lines.map((line) => (
-                            <li
-                                key={line.id ?? 'opening'}
-                                className="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-                            >
-                                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                    <span className="font-medium">
-                                        {line.type_label}
-                                    </span>
-                                    <time
-                                        dateTime={line.date}
-                                        className="text-sm text-muted-foreground"
+                    <div className="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                        <Table
+                            className="min-w-[52rem]"
+                            data-test="account-activity"
+                        >
+                            <TableCaption className="sr-only">
+                                Activity for {account.name}
+                            </TableCaption>
+                            <TableHeader>
+                                <TableRow className="group">
+                                    <TableHead
+                                        scope="col"
+                                        className="sticky left-0 bg-background group-hover:bg-muted/50"
                                     >
-                                        {line.date_label}
-                                    </time>
-                                </div>
-                                {line.note ? <p>{line.note}</p> : null}
-                                {line.person ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        {line.person}
-                                    </p>
-                                ) : null}
-                                {line.amount ? (
-                                    <p className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                                        <span className="text-muted-foreground">
-                                            Amount
-                                        </span>
-                                        <MoneyAmount
-                                            formatted={line.amount.formatted}
-                                            originalFormatted={
-                                                line.amount.original_formatted
-                                            }
-                                        />
-                                    </p>
-                                ) : null}
-                                <p className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                                    <span className="text-muted-foreground">
+                                        Date
+                                    </TableHead>
+                                    <TableHead scope="col">Type</TableHead>
+                                    <TableHead scope="col">Category</TableHead>
+                                    <TableHead scope="col">Note</TableHead>
+                                    <TableHead scope="col">Person</TableHead>
+                                    <TableHead scope="col" className="text-right">
+                                        Amount
+                                    </TableHead>
+                                    <TableHead scope="col" className="text-right">
                                         Balance
-                                    </span>
-                                    <AccountBalance
-                                        balance={line.running_balance}
-                                    />
-                                </p>
-                            </li>
-                        ))}
-                    </ol>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {lines.map((line) => {
+                                    const href =
+                                        line.id === null
+                                            ? null
+                                            : showTransaction(line.id);
+
+                                    return (
+                                        <TableRow
+                                            key={line.id ?? 'opening'}
+                                            className={
+                                                href
+                                                    ? 'group cursor-pointer'
+                                                    : 'group'
+                                            }
+                                            data-test="activity-row"
+                                        >
+                                            <TableHead
+                                                scope="row"
+                                                className="sticky left-0 bg-background group-hover:bg-muted/50"
+                                            >
+                                                {href ? (
+                                                    <TableRowLink
+                                                        href={href}
+                                                        label={`${line.date_label}, ${line.type_label}`}
+                                                    />
+                                                ) : null}
+                                                <time dateTime={line.date}>
+                                                    {line.date_label}
+                                                </time>
+                                            </TableHead>
+                                            <TableCell className="relative">
+                                                {href ? (
+                                                    <TableRowLink href={href} />
+                                                ) : null}
+                                                {line.type_label}
+                                                {line.repeats ? (
+                                                    <span className="block text-xs text-muted-foreground">
+                                                        Monthly
+                                                    </span>
+                                                ) : null}
+                                            </TableCell>
+                                            <TableCell className="relative whitespace-normal">
+                                                {href ? (
+                                                    <TableRowLink href={href} />
+                                                ) : null}
+                                                {line.category ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="relative max-w-48 whitespace-normal">
+                                                {href ? (
+                                                    <TableRowLink href={href} />
+                                                ) : null}
+                                                {line.note ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="relative">
+                                                {href ? (
+                                                    <TableRowLink href={href} />
+                                                ) : null}
+                                                {line.person ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="relative text-right">
+                                                {href ? (
+                                                    <TableRowLink href={href} />
+                                                ) : null}
+                                                {line.amount ? (
+                                                    <MoneyAmount
+                                                        formatted={
+                                                            line.amount
+                                                                .formatted
+                                                        }
+                                                        originalFormatted={
+                                                            line.amount
+                                                                .original_formatted
+                                                        }
+                                                    />
+                                                ) : (
+                                                    '—'
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="relative text-right">
+                                                {href ? (
+                                                    <TableRowLink href={href} />
+                                                ) : null}
+                                                <AccountBalance
+                                                    balance={
+                                                        line.running_balance
+                                                    }
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </section>
 
-                {account.created_by || account.updated_by ? (
+                {account.updated_by ? (
                     <p className="text-sm text-muted-foreground">
-                        {account.created_by
-                            ? `Added by ${account.created_by}.`
-                            : null}{' '}
-                        {account.updated_by
-                            ? `Last changed by ${account.updated_by}.`
-                            : null}
+                        Last changed by {account.updated_by}.
                     </p>
                 ) : null}
             </div>

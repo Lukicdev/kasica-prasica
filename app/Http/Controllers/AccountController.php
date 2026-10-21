@@ -52,11 +52,11 @@ class AccountController extends Controller
     public function store(StoreAccountRequest $request, CreateAccount $create): RedirectResponse
     {
         $user = $request->user();
-        $account = $create->handle($user, $request->accountAttributes());
+        $create->handle($user, $request->accountAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account created.']);
 
-        return to_route('accounts.show', $account);
+        return to_route('accounts.index');
     }
 
     public function show(Account $account): Response

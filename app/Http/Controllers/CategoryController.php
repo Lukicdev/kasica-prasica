@@ -48,11 +48,11 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request, CreateCategory $create): RedirectResponse
     {
         $user = $request->user();
-        $category = $create->handle($user, $request->categoryAttributes());
+        $create->handle($user, $request->categoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category created.']);
 
-        return to_route('categories.edit', $category);
+        return to_route('categories.index');
     }
 
     public function edit(Category $category): Response
