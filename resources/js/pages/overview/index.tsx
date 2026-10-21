@@ -1,13 +1,12 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
-import { MonthPicker } from '@/components/month-picker';
+import { MonthNav } from '@/components/month-nav';
 import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import {
     Table,
     TableBody,
@@ -163,64 +162,32 @@ export default function Overview({
                     </div>
                 </section>
 
-                <div className="flex items-center justify-between gap-3">
-                    <Button asChild variant="outline" className="h-11">
-                        <Link
-                            href={dashboard({
-                                query: monthQuery(
-                                    month.previous,
-                                    drilldown?.id ?? null,
-                                    expenses.sort,
-                                ),
-                            })}
-                            data-test="previous-month"
-                        >
-                            Previous
-                        </Link>
-                    </Button>
-                    <p className="text-sm font-medium">{month.label}</p>
-                    <Button asChild variant="outline" className="h-11">
-                        <Link
-                            href={dashboard({
-                                query: monthQuery(
-                                    month.next,
-                                    drilldown?.id ?? null,
-                                    expenses.sort,
-                                ),
-                            })}
-                            data-test="next-month"
-                        >
-                            Next
-                        </Link>
-                    </Button>
-                </div>
-
-                <Form
-                    {...dashboard.form()}
-                    className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-end dark:border-sidebar-border"
-                >
-                    {drilldown ? (
-                        <input
-                            type="hidden"
-                            name="category"
-                            value={drilldown.id}
-                        />
-                    ) : null}
-                    {expenses.sort === 'overspend' ? (
-                        <input type="hidden" name="sort" value="overspend" />
-                    ) : null}
-                    <div className="grid flex-1 gap-2">
-                        <Label htmlFor="month">Month</Label>
-                        <MonthPicker
-                            id="month"
-                            name="month"
-                            value={month.value}
-                        />
-                    </div>
-                    <Button type="submit" variant="outline" className="h-11">
-                        Show month
-                    </Button>
-                </Form>
+                <MonthNav
+                    value={month.value}
+                    previousHref={dashboard({
+                        query: monthQuery(
+                            month.previous,
+                            drilldown?.id ?? null,
+                            expenses.sort,
+                        ),
+                    })}
+                    nextHref={dashboard({
+                        query: monthQuery(
+                            month.next,
+                            drilldown?.id ?? null,
+                            expenses.sort,
+                        ),
+                    })}
+                    hrefFor={(value) =>
+                        dashboard({
+                            query: monthQuery(
+                                value,
+                                drilldown?.id ?? null,
+                                expenses.sort,
+                            ),
+                        })
+                    }
+                />
 
                 <PendingRecurrences items={pending} />
 

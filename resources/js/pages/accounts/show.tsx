@@ -1,7 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { AccountBalance } from '@/components/account-balance';
+import { CategoryLabel } from '@/components/category-label';
 import { EntityIcon } from '@/components/entity-icon';
-import { MoneyAmount } from '@/components/money-amount';
+import { MoneyAmount, moneyDirection } from '@/components/money-amount';
 import { TableRowLink } from '@/components/table-row-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -130,10 +131,16 @@ export default function AccountShow({
                                     <TableHead scope="col">Category</TableHead>
                                     <TableHead scope="col">Note</TableHead>
                                     <TableHead scope="col">Person</TableHead>
-                                    <TableHead scope="col" className="text-right">
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right"
+                                    >
                                         Amount
                                     </TableHead>
-                                    <TableHead scope="col" className="text-right">
+                                    <TableHead
+                                        scope="col"
+                                        className="text-right"
+                                    >
                                         Balance
                                     </TableHead>
                                 </TableRow>
@@ -184,7 +191,10 @@ export default function AccountShow({
                                                 {href ? (
                                                     <TableRowLink href={href} />
                                                 ) : null}
-                                                {line.category ?? '—'}
+                                                <CategoryLabel
+                                                    name={line.category}
+                                                    icon={line.category_icon}
+                                                />
                                             </TableCell>
                                             <TableCell className="relative max-w-48 whitespace-normal">
                                                 {href ? (
@@ -212,6 +222,9 @@ export default function AccountShow({
                                                             line.amount
                                                                 .original_formatted
                                                         }
+                                                        direction={moneyDirection(
+                                                            line.type,
+                                                        )}
                                                     />
                                                 ) : (
                                                     '—'

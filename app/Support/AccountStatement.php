@@ -28,6 +28,7 @@ class AccountStatement
      *     type: string|null,
      *     type_label: string,
      *     category: string|null,
+     *     category_icon: string|null,
      *     note: string|null,
      *     person: string|null,
      *     repeats: bool,
@@ -53,6 +54,7 @@ class AccountStatement
             'type' => null,
             'type_label' => 'Opening balance',
             'category' => null,
+            'category_icon' => null,
             'note' => null,
             'person' => null,
             'repeats' => false,
@@ -69,7 +71,7 @@ class AccountStatement
                 'person:id,name',
                 'account:id,name',
                 'destinationAccount:id,name',
-                'category:id,name',
+                'category:id,name,icon',
             ])
             ->orderBy('booked_on')
             ->orderBy('id')
@@ -86,6 +88,7 @@ class AccountStatement
                 'type' => $transaction->type->value,
                 'type_label' => $this->typeLabel($transaction, $account),
                 'category' => $transaction->category?->name,
+                'category_icon' => $transaction->category?->icon,
                 'note' => $transaction->note,
                 'person' => $transaction->person?->name,
                 'repeats' => $transaction->repeats,

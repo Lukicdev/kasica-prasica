@@ -1,8 +1,8 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
-import { MonthPicker } from '@/components/month-picker';
+import { MonthNav } from '@/components/month-nav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -200,42 +200,12 @@ export default function Budget({
                     </p>
                 </section>
 
-                <div className="flex items-center justify-between gap-3">
-                    <Button asChild variant="outline" className="h-11">
-                        <Link
-                            href={index({ query: { month: month.previous } })}
-                            data-test="previous-month"
-                        >
-                            Previous
-                        </Link>
-                    </Button>
-                    <p className="text-sm font-medium">{month.label}</p>
-                    <Button asChild variant="outline" className="h-11">
-                        <Link
-                            href={index({ query: { month: month.next } })}
-                            data-test="next-month"
-                        >
-                            Next
-                        </Link>
-                    </Button>
-                </div>
-
-                <Form
-                    {...index.form()}
-                    className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-end dark:border-sidebar-border"
-                >
-                    <div className="grid flex-1 gap-2">
-                        <Label htmlFor="month">Month</Label>
-                        <MonthPicker
-                            id="month"
-                            name="month"
-                            value={month.value}
-                        />
-                    </div>
-                    <Button type="submit" variant="outline" className="h-11">
-                        Show month
-                    </Button>
-                </Form>
+                <MonthNav
+                    value={month.value}
+                    previousHref={index({ query: { month: month.previous } })}
+                    nextHref={index({ query: { month: month.next } })}
+                    hrefFor={(value) => index({ query: { month: value } })}
+                />
 
                 <Summary
                     income={income}

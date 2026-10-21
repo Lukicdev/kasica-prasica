@@ -1,10 +1,11 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import { MoneyAmount } from '@/components/money-amount';
-import { TableRowLink } from '@/components/table-row-link';
+import { CategoryLabel } from '@/components/category-label';
 import { FormSelect } from '@/components/form-select';
-import { MonthPicker } from '@/components/month-picker';
+import { MoneyAmount, moneyDirection } from '@/components/money-amount';
+import { MonthNav } from '@/components/month-nav';
 import { PendingRecurrences } from '@/components/pending-recurrences';
+import { TableRowLink } from '@/components/table-row-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,49 +124,33 @@ export default function Transactions({
                     </div>
                 </section>
 
-                <div className="flex items-center justify-between gap-3">
-                    <Button asChild variant="outline" className="h-11">
-                        <Link
-                            href={index({
-                                query: listQuery(month.previous, filters, sort),
-                            })}
-                            data-test="previous-month"
-                        >
-                            Previous
-                        </Link>
-                    </Button>
-                    <p className="text-sm font-medium">{month.label}</p>
-                    <Button asChild variant="outline" className="h-11">
-                        <Link
-                            href={index({
-                                query: listQuery(month.next, filters, sort),
-                            })}
-                            data-test="next-month"
-                        >
-                            Next
-                        </Link>
-                    </Button>
-                </div>
+                <MonthNav
+                    value={month.value}
+                    previousHref={index({
+                        query: listQuery(month.previous, filters, sort),
+                    })}
+                    nextHref={index({
+                        query: listQuery(month.next, filters, sort),
+                    })}
+                    hrefFor={(value) =>
+                        index({
+                            query: listQuery(value, filters, sort),
+                        })
+                    }
+                />
 
                 <Form
                     key={`${month.value}|${filters.type ?? ''}|${filters.category ?? ''}|${filters.account ?? ''}|${filters.person ?? ''}|${filters.currency ?? ''}|${filters.search}|${sort.column}|${sort.direction}`}
                     {...index.form()}
                     className="grid gap-4 rounded-xl border border-sidebar-border/70 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:border-sidebar-border"
                 >
+                    <input type="hidden" name="month" value={month.value} />
                     <input type="hidden" name="sort" value={sort.column} />
                     <input
                         type="hidden"
                         name="direction"
                         value={sort.direction}
                     />
-                    <div className="grid gap-2">
-                        <Label htmlFor="month">Month</Label>
-                        <MonthPicker
-                            id="month"
-                            name="month"
-                            value={month.value}
-                        />
-                    </div>
                     <div className="grid gap-2">
                         <Label htmlFor="type">Type</Label>
                         <FormSelect
@@ -411,7 +396,12 @@ export default function Transactions({
                                             </TableCell>
                                             <TableCell className="relative whitespace-normal">
                                                 <TableRowLink href={href} />
-                                                {transaction.category ?? '—'}
+                                                <CategoryLabel
+                                                    name={transaction.category}
+                                                    icon={
+                                                        transaction.category_icon
+                                                    }
+                                                />
                                             </TableCell>
                                             <TableCell className="relative max-w-48 whitespace-normal">
                                                 <TableRowLink href={href} />
@@ -436,6 +426,9 @@ export default function Transactions({
                                                         transaction.amount
                                                             .original_formatted
                                                     }
+                                                    direction={moneyDirection(
+                                                        transaction.type,
+                                                    )}
                                                 />
                                             </TableCell>
                                         </TableRow>
