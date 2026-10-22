@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowDownWideNarrow, ArrowUpWideNarrow, Plus } from 'lucide-react';
-import { useId, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { useId, useState, type ComponentProps } from 'react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { MonthNav } from '@/components/month-nav';
@@ -546,6 +546,53 @@ function flowChartData(flow: OverviewFlow): FlowChartRow[] {
     });
 }
 
+function flowSeriesRank(item: { dataKey?: unknown; name?: unknown }): number {
+    return (item.dataKey ?? item.name) === 'balance' ? 0 : 1;
+}
+
+function FlowTooltipContent({
+    payload,
+    ...props
+}: ComponentProps<typeof ChartTooltipContent>) {
+    const ordered = payload
+        ? [...payload].sort(
+              (left, right) => flowSeriesRank(left) - flowSeriesRank(right),
+          )
+        : payload;
+
+    return (
+        <ChartTooltipContent
+            {...props}
+            payload={ordered}
+            labelFormatter={(value) => `Day ${value}`}
+            formatter={(value, name, item) => {
+                const key =
+                    name === 'previous'
+                        ? 'previousFormatted'
+                        : 'balanceFormatted';
+                const formatted = item.payload?.[key];
+
+                return (
+                    <span className="flex flex-1 items-center justify-between gap-2">
+                        <span className="text-muted-foreground">
+                            {
+                                flowChartConfig[
+                                    name === 'previous' ? 'previous' : 'balance'
+                                ].label
+                            }
+                        </span>
+                        <span className="font-medium text-foreground tabular-nums">
+                            {typeof formatted === 'string'
+                                ? formatted
+                                : String(value)}
+                        </span>
+                    </span>
+                );
+            }}
+        />
+    );
+}
+
 function FlowChart({ flow }: { flow: OverviewFlow }) {
     const gradientId = useId().replace(/:/g, '');
     const data = flowChartData(flow);
@@ -554,7 +601,7 @@ function FlowChart({ flow }: { flow: OverviewFlow }) {
     return (
         <ChartContainer
             config={flowChartConfig}
-            className="aspect-auto h-44 w-full"
+            className="aspect-auto h-64 w-full"
             aria-label={
                 flow.from && flow.to
                     ? `Balance from ${flow.from} to ${flow.to}`
@@ -574,40 +621,14 @@ function FlowChart({ flow }: { flow: OverviewFlow }) {
                     tickMargin={8}
                     minTickGap={16}
                 />
-                <ChartTooltip
-                    cursor={false}
-                    content={
-                        <ChartTooltipContent
-                            labelFormatter={(value) => `Day ${value}`}
-                            formatter={(value, name, item) => {
-                                const key =
-                                    name === 'previous'
-                                        ? 'previousFormatted'
-                                        : 'balanceFormatted';
-                                const formatted = item.payload?.[key];
-
-                                return (
-                                    <span className="flex flex-1 items-center justify-between gap-2">
-                                        <span className="text-muted-foreground">
-                                            {
-                                                flowChartConfig[
-                                                    name === 'previous'
-                                                        ? 'previous'
-                                                        : 'balance'
-                                                ].label
-                                            }
-                                        </span>
-                                        <span className="font-medium text-foreground tabular-nums">
-                                            {typeof formatted === 'string'
-                                                ? formatted
-                                                : String(value)}
-                                        </span>
-                                    </span>
-                                );
-                            }}
-                        />
-                    }
+                <YAxis
+                    dataKey="balance"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={16}
                 />
+                <ChartTooltip cursor={false} content={<FlowTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <defs>
                     <linearGradient
