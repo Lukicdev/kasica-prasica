@@ -10,10 +10,6 @@ class RestoreAccount
 {
     public function handle(Account $account, User $actor): Account
     {
-        if ($actor->workspace_id !== $account->workspace_id) {
-            throw new AuthorizationException('This account is outside your workspace.');
-        }
-
         if ($account->archived_at === null) {
             return $account;
         }
