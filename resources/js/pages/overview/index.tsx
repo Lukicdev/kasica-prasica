@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import {
     create as createAccount,
@@ -42,6 +43,7 @@ import type {
     OverviewMonth,
     OverviewStanding,
     OverviewStep,
+    OverviewSummary,
     OverviewTotals,
 } from '@/types/overview';
 
@@ -96,6 +98,7 @@ export default function Overview({
     income,
     expenses,
     totals,
+    summary,
     accounts: accountPanel,
     drilldown,
     pending,
@@ -113,6 +116,7 @@ export default function Overview({
         overspends: OverviewExpenseRow[];
     };
     totals: OverviewTotals;
+    summary: OverviewSummary;
     accounts: OverviewAccounts;
     drilldown: OverviewDrilldown | null;
     pending: PendingRecurrence[];
@@ -167,31 +171,13 @@ export default function Overview({
                     </div>
                 </section>
 
-                <MonthNav
-                    value={month.value}
-                    previousHref={dashboard({
-                        query: monthQuery(
-                            month.previous,
-                            drilldown?.id ?? null,
-                            expenses.sort,
-                        ),
-                    })}
-                    nextHref={dashboard({
-                        query: monthQuery(
-                            month.next,
-                            drilldown?.id ?? null,
-                            expenses.sort,
-                        ),
-                    })}
-                    hrefFor={(value) =>
-                        dashboard({
-                            query: monthQuery(
-                                value,
-                                drilldown?.id ?? null,
-                                expenses.sort,
-                            ),
-                        })
-                    }
+                <MonthSummary
+                    month={month}
+                    totals={totals}
+                    summary={summary}
+                    balance={accountPanel.total}
+                    sort={expenses.sort}
+                    categoryId={drilldown?.id ?? null}
                 />
 
                 <PendingRecurrences items={pending} />
@@ -329,6 +315,155 @@ function FirstRun({
                     );
                 })}
             </ol>
+        </section>
+    );
+}
+
+function flowDirection(
+    figure: OverviewFigure,
+    direction: 'income' | 'expense',
+): 'income' | 'expense' | null {
+    return figure.base_amount === '0.00' ? null : direction;
+}
+
+function savingsRateClass(rate: number | null): string {
+    if (rate === null) {
+        return 'text-muted-foreground';
+    }
+
+    if (rate > 0) {
+        return 'text-success';
+    }
+
+    if (rate < 0) {
+        return 'text-destructive';
+    }
+
+    return 'text-foreground';
+}
+
+function MonthSummary({
+    month,
+    totals,
+    summary,
+    balance,
+    sort,
+    categoryId,
+}: {
+    month: OverviewMonth;
+    totals: OverviewTotals;
+    summary: OverviewSummary;
+    balance: OverviewAccounts['total'];
+    sort: OverviewExpenseSort;
+    categoryId: number | null;
+}) {
+    return (
+        <section
+            aria-label="Month summary"
+            data-test="overview-summary"
+            className="grid overflow-hidden rounded-xl border border-sidebar-border/70 bg-card lg:grid-cols-[minmax(0,1fr)_20rem] dark:border-sidebar-border"
+        >
+            <div className="flex flex-col gap-5 p-4 sm:p-5">
+                <div className="flex flex-col gap-1">
+                    <span className="text-sm text-muted-foreground">
+                        Savings rate
+                    </span>
+                    <span
+                        className={cn(
+                            'text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl',
+                            savingsRateClass(summary.savings_rate),
+                        )}
+                        data-test="overview-savings-rate"
+                    >
+                        {summary.savings_rate === null
+                            ? '—'
+                            : `${summary.savings_rate}%`}
+                    </span>
+                </div>
+                <dl className="grid gap-4 sm:grid-cols-3">
+                    <div
+                        className="flex flex-col gap-1"
+                        data-test="overview-summary-balance"
+                    >
+                        <dt className="text-sm text-muted-foreground">
+                            Total balance
+                        </dt>
+                        <dd className="text-base font-medium tabular-nums">
+                            <MoneyAmount formatted={balance.formatted} />
+                        </dd>
+                    </div>
+                    <div
+                        className="flex flex-col gap-1"
+                        data-test="overview-summary-income"
+                    >
+                        <dt className="text-sm text-muted-foreground">
+                            Monthly income
+                        </dt>
+                        <dd className="text-base font-medium tabular-nums">
+                            <MoneyAmount
+                                formatted={totals.income.formatted}
+                                originalFormatted={
+                                    totals.income.original_formatted
+                                }
+                                direction={flowDirection(
+                                    totals.income,
+                                    'income',
+                                )}
+                            />
+                        </dd>
+                    </div>
+                    <div
+                        className="flex flex-col gap-1"
+                        data-test="overview-summary-expenses"
+                    >
+                        <dt className="text-sm text-muted-foreground">
+                            Monthly expenses
+                        </dt>
+                        <dd className="text-base font-medium tabular-nums">
+                            <MoneyAmount
+                                formatted={totals.spent.formatted}
+                                originalFormatted={
+                                    totals.spent.original_formatted
+                                }
+                                direction={flowDirection(
+                                    totals.spent,
+                                    'expense',
+                                )}
+                            />
+                        </dd>
+                    </div>
+                </dl>
+                {summary.pace ? (
+                    <p
+                        className="text-sm text-muted-foreground"
+                        data-test="overview-pace"
+                    >
+                        At this pace, you'll spend{' '}
+                        <MoneyAmount
+                            formatted={summary.pace.formatted}
+                            originalFormatted={summary.pace.original_formatted}
+                            className="font-medium text-foreground"
+                        />{' '}
+                        by month end.
+                    </p>
+                ) : null}
+            </div>
+            <div className="flex items-center justify-center border-t border-sidebar-border/70 p-4 lg:border-t-0 lg:border-l dark:border-sidebar-border">
+                <MonthNav
+                    value={month.value}
+                    previousHref={dashboard({
+                        query: monthQuery(month.previous, categoryId, sort),
+                    })}
+                    nextHref={dashboard({
+                        query: monthQuery(month.next, categoryId, sort),
+                    })}
+                    hrefFor={(value) =>
+                        dashboard({
+                            query: monthQuery(value, categoryId, sort),
+                        })
+                    }
+                />
+            </div>
         </section>
     );
 }

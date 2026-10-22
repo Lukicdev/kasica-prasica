@@ -69,6 +69,11 @@ export type OverviewTotals = {
     unallocated: OverviewFigure;
 };
 
+export type OverviewSummary = {
+    savings_rate: number | null;
+    pace: OverviewFigure | null;
+};
+
 export type OverviewDrilldownTransaction = {
     id: number;
     date: string;

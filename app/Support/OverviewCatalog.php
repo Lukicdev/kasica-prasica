@@ -17,7 +17,8 @@ use Illuminate\Support\Collection;
  *
  * Spent and income are sums of transactions in the base currency. Difference
  * is spent minus budget. Leftover is income minus spent. Unallocated is
- * income minus the budget.
+ * income minus the budget. The savings rate is leftover as a percent of
+ * income. Pace projects spending through the last day of the current month.
  */
 class OverviewCatalog
 {
@@ -37,6 +38,7 @@ class OverviewCatalog
      *     income: array{rows: list<array<string, mixed>>, total: array<string, mixed>},
      *     expenses: array{rows: list<array<string, mixed>>, total: array<string, mixed>, sort: string, overspends: list<array<string, mixed>>},
      *     totals: array<string, array<string, mixed>>,
+     *     summary: array{savings_rate: int|null, pace: array<string, mixed>|null},
      *     accounts: array{items: list<array<string, mixed>>, total: array<string, mixed>},
      *     drilldown: array<string, mixed>|null,
      *     pending: list<array<string, mixed>>
@@ -175,6 +177,7 @@ class OverviewCatalog
                     $display,
                 ),
             ],
+            'summary' => $this->summary($incomeBase, $spentBase, $month, $display),
             'accounts' => $this->accountPanel($user, $display),
             'drilldown' => $this->drilldown($user, $month, $categories, $categoryId, $spentByCategory, $incomeByCategory, $lines, $display),
             'pending' => $this->recurrences->pending($user, $month),
@@ -469,6 +472,50 @@ class OverviewCatalog
         }
 
         return $difference->isNegative() ? -1 : 1;
+    }
+
+    /**
+     * Savings rate is omitted when the month has no income. Pace is only
+     * meaningful while the month is still in progress.
+     *
+     * @return array{savings_rate: int|null, pace: array<string, mixed>|null}
+     */
+    private function summary(string $incomeBase, string $spentBase, CalendarMonth $month, Currency $display): array
+    {
+        $current = $month->value() === CalendarMonth::current()->value();
+
+        return [
+            'savings_rate' => $this->savingsRate($incomeBase, $spentBase),
+            'pace' => $current ? $this->figure($this->projectedSpend($spentBase, $month), $display) : null,
+        ];
+    }
+
+    private function savingsRate(string $incomeBase, string $spentBase): ?int
+    {
+        $income = Decimal::of($incomeBase);
+
+        if ($income->isZero()) {
+            return null;
+        }
+
+        $saved = $income->subtract(Decimal::of($spentBase));
+        $percent = $saved->multiply(Decimal::of('100'))->divide($income, 0);
+
+        return (int) $percent->toString(0);
+    }
+
+    /**
+     * Spent so far, scaled from today's day of the month to the last day.
+     */
+    private function projectedSpend(string $spentBase, CalendarMonth $month): string
+    {
+        $days = $month->start()->daysInMonth;
+        $elapsed = min(max(now()->day, 1), $days);
+
+        return Decimal::of($spentBase)
+            ->multiply(Decimal::of((string) $days))
+            ->divide(Decimal::of((string) $elapsed), MoneyConverter::SCALE)
+            ->toString(MoneyConverter::SCALE);
     }
 
     /**

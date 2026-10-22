@@ -82,6 +82,9 @@ test('a new workspace opens on the current month with first-run guidance', funct
             ->where('totals.difference.base_amount', '0.00')
             ->where('totals.leftover.base_amount', '0.00')
             ->where('totals.unallocated.base_amount', '0.00')
+            ->where('summary.savings_rate', null)
+            ->where('summary.pace.base_amount', '0.00')
+            ->where('summary.pace.formatted', '0.00 RSD')
             ->where('income.rows', fn ($rows) => count($rows) === 3 && collect($rows)->pluck('name')->all() === ['Salary', 'Bonus', 'Gifts and other income'])
             ->where('expenses.rows', fn ($rows) => count($rows) === 14)
             ->where('accounts.items', []));
@@ -163,6 +166,7 @@ test('the spreadsheet month matches the expected overview', function () {
             ->where('totals.leftover.formatted', '15,277.46 RSD')
             ->where('totals.unallocated.base_amount', SpreadsheetReference::UNALLOCATED)
             ->where('totals.unallocated.formatted', '48,165.00 RSD')
+            ->where('summary.savings_rate', 3)
             ->where('expenses.total.status', 'over')
             ->where('expenses.total.status_label', 'Over budget')
             ->where('income.total.base_amount', SpreadsheetReference::INCOME)
@@ -193,6 +197,59 @@ test('the spreadsheet month matches the expected overview', function () {
             ->where('accounts.total.amount', SpreadsheetReference::LEFTOVER));
 });
 
+test('the overview summary reports the savings rate and the month-end pace', function () {
+    $this->travelTo('2026-10-20');
+    $user = User::factory()->create();
+    $account = Account::factory()->create();
+    $salary = Category::query()->where('name', 'Salary')->firstOrFail();
+    $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
+
+    app(CreateTransaction::class)->handle($account, $user, [
+        'type' => TransactionType::Income,
+        'amount' => '100.00',
+        'currency' => Currency::Rsd,
+        'booked_on' => '2026-10-10',
+        'category' => $salary,
+    ]);
+    app(CreateTransaction::class)->handle($account, $user, [
+        'type' => TransactionType::Expense,
+        'amount' => '26.00',
+        'currency' => Currency::Rsd,
+        'booked_on' => '2026-10-12',
+        'category' => $groceries,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.savings_rate', 74)
+            ->where('summary.pace.base_amount', '40.30')
+            ->where('summary.pace.formatted', '40.30 RSD'));
+
+    $this->actingAs($user)
+        ->get(route('dashboard', ['month' => '2026-09']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.savings_rate', null)
+            ->where('summary.pace', null));
+
+    app(CreateTransaction::class)->handle($account, $user, [
+        'type' => TransactionType::Expense,
+        'amount' => '124.00',
+        'currency' => Currency::Rsd,
+        'booked_on' => '2026-10-13',
+        'category' => $groceries,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.savings_rate', -50)
+            ->where('summary.pace.base_amount', '232.50'));
+});
+
 test('the euro view converts overview totals from the dinar total', function () {
     [$first] = seedSpreadsheetMonth();
     $first->update(['display_currency' => Currency::Eur]);
@@ -213,6 +270,7 @@ test('the euro view converts overview totals from the dinar total', function () 
             ->where('totals.difference.amount', '279.89')
             ->where('totals.leftover.amount', '130.02')
             ->where('totals.unallocated.amount', '409.91')
+            ->where('summary.savings_rate', 3)
             ->where('accounts.total.amount', '130.02')
             ->where('accounts.total.formatted', '130.02 EUR')
             ->where('expenses.rows', function ($rows) {
