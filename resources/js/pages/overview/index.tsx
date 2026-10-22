@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Minus, Plus } from 'lucide-react';
 import { AccountBalance } from '@/components/account-balance';
+import { AccountLabel } from '@/components/account-label';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { MonthNav } from '@/components/month-nav';
@@ -881,18 +882,14 @@ function Drilldown({
                                     />
                                 </span>
                                 <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <span>
-                                        {transaction.account}
-                                        {transaction.person
-                                            ? ` · ${transaction.person}`
-                                            : ''}
-                                    </span>
+                                    <AccountLabel
+                                        name={transaction.account}
+                                        icon={transaction.account_icon}
+                                    />
+                                    {transaction.person ? (
+                                        <span>· {transaction.person}</span>
+                                    ) : null}
                                 </span>
-                                {transaction.note ? (
-                                    <span className="text-sm">
-                                        {transaction.note}
-                                    </span>
-                                ) : null}
                             </Link>
                         </li>
                     ))}

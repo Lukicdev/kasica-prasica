@@ -24,10 +24,12 @@ test('a transfer moves both balances and is not income or spending', function ()
     $user = User::factory()->create(['name' => 'Ada']);
     $cash = Account::factory()->create([
         'name' => 'Cash',
+        'icon' => 'banknote',
         'opening_balance' => '1000.00',
     ]);
     $bank = Account::factory()->create([
         'name' => 'Bank',
+        'icon' => 'landmark',
         'type' => 'bank',
         'opening_balance' => '500.00',
     ]);
@@ -62,7 +64,9 @@ test('a transfer moves both balances and is not income or spending', function ()
             ->where('transaction.type_label', 'Transfer')
             ->where('transaction.excluded_from_budget', true)
             ->where('transaction.account.name', 'Cash')
+            ->where('transaction.account.icon', 'banknote')
             ->where('transaction.destination.name', 'Bank')
+            ->where('transaction.destination.icon', 'landmark')
             ->where('transaction.balance.amount', '710.00')
             ->where('transaction.destination_balance.amount', '750.00')
             ->where('transaction.category', null));
@@ -82,7 +86,11 @@ test('a transfer moves both balances and is not income or spending', function ()
             ->where('transactions', function ($rows) use ($transfer) {
                 $row = collect($rows)->firstWhere('id', $transfer->id);
 
-                return $row !== null && $row['account'] === 'Cash → Bank';
+                return $row !== null
+                    && $row['account'] === 'Cash'
+                    && $row['account_icon'] === 'banknote'
+                    && $row['destination'] === 'Bank'
+                    && $row['destination_icon'] === 'landmark';
             }));
 
     $this->actingAs($user)
@@ -90,6 +98,9 @@ test('a transfer moves both balances and is not income or spending', function ()
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('lines.1.type_label', 'Transfer from Cash')
+            ->where('lines.1.counterparty.name', 'Cash')
+            ->where('lines.1.counterparty.icon', 'banknote')
+            ->where('lines.1.counterparty.direction', 'from')
             ->where('lines.1.amount.formatted', '250.00 RSD')
             ->where('lines.1.running_balance.amount', '750.00'));
 
@@ -98,6 +109,9 @@ test('a transfer moves both balances and is not income or spending', function ()
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('lines.2.type_label', 'Transfer to Bank')
+            ->where('lines.2.counterparty.name', 'Bank')
+            ->where('lines.2.counterparty.icon', 'landmark')
+            ->where('lines.2.counterparty.direction', 'to')
             ->where('lines.2.running_balance.amount', '710.00'));
 });
 

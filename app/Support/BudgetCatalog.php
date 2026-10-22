@@ -85,7 +85,7 @@ class BudgetCatalog
             ],
             'started' => $budgetMonth instanceof BudgetMonth,
             'editable' => $display->isBase(),
-            'copy_from' => $budgetMonth instanceof BudgetMonth ? null : $this->copyFrom($user, $month),
+            'copy_from' => $this->copyFrom($user, $month),
             'categories' => array_values($this->visible($categories, $lines)->map(
                 fn (Category $category): array => $this->row($category, $lines->get($category->id), $display),
             )->all()),

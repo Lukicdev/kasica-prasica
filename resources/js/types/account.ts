@@ -61,6 +61,11 @@ export type StatementLine = {
     category_icon: string | null;
     category_color: string | null;
     note: string | null;
+    counterparty: {
+        name: string;
+        icon: string | null;
+        direction: 'from' | 'to';
+    } | null;
     person: string | null;
     repeats: boolean;
     amount: (MoneyFigure & { original_formatted: string | null }) | null;

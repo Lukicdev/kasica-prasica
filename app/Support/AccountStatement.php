@@ -62,8 +62,9 @@ class AccountStatement
      *         type_label: string,
      *         category: string|null,
      *         category_icon: string|null,
-         category_color: string|null,
+     *         category_color: string|null,
      *         note: string|null,
+     *         counterparty: array{name: string, icon: string|null, direction: 'from'|'to'}|null,
      *         person: string|null,
      *         repeats: bool,
      *         amount: array{
@@ -98,8 +99,8 @@ class AccountStatement
         $transactions = (clone $query)
             ->with([
                 'person:id,name',
-                'account:id,name',
-                'destinationAccount:id,name',
+                'account:id,name,icon',
+                'destinationAccount:id,name,icon',
                 'category:id,name,icon,color',
             ])
             ->skip($offset)
@@ -122,6 +123,7 @@ class AccountStatement
                 'category_icon' => $transaction->category?->icon,
                 'category_color' => $transaction->category?->color,
                 'note' => $transaction->note,
+                'counterparty' => $this->counterparty($transaction, $account),
                 'person' => $transaction->person?->name,
                 'repeats' => $transaction->repeats,
                 'amount' => $this->amount($transaction, $account),
@@ -168,6 +170,7 @@ class AccountStatement
      *     category_icon: null,
      *     category_color: null,
      *     note: null,
+     *     counterparty: null,
      *     person: null,
      *     repeats: false,
      *     amount: null,
@@ -187,10 +190,41 @@ class AccountStatement
             'category_icon' => null,
             'category_color' => null,
             'note' => null,
+            'counterparty' => null,
             'person' => null,
             'repeats' => false,
             'amount' => null,
             'running_balance' => $this->money($running, $account),
+        ];
+    }
+
+    /**
+     * The other account in a transfer, named from this account's point of view.
+     *
+     * @return array{name: string, icon: string|null, direction: 'from'|'to'}|null
+     */
+    private function counterparty(Transaction $transaction, Account $account): ?array
+    {
+        if ($transaction->type !== TransactionType::Transfer) {
+            return null;
+        }
+
+        if ($transaction->destination_account_id === $account->id) {
+            return [
+                'name' => $transaction->account->name,
+                'icon' => $transaction->account->icon,
+                'direction' => 'from',
+            ];
+        }
+
+        if ($transaction->destinationAccount === null) {
+            return null;
+        }
+
+        return [
+            'name' => $transaction->destinationAccount->name,
+            'icon' => $transaction->destinationAccount->icon,
+            'direction' => 'to',
         ];
     }
 

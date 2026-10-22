@@ -263,7 +263,8 @@ test('opening a month offers a copy of the previous month and can still start em
         ->get(route('budgets.index', ['month' => '2026-10']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('started', true)
-            ->where('copy_from', null)
+            ->where('copy_from.value', '2026-09')
+            ->where('copy_from.label', 'September 2026')
             ->where('budget.base_amount', '120.50')
             ->where('categories', fn ($categories) => collect($categories)->firstWhere('name', 'Mortgage')['amount'] === '100.00'
                 && collect($categories)->firstWhere('name', 'Groceries')['amount'] === '20.50'
@@ -286,6 +287,99 @@ test('opening a month offers a copy of the previous month and can still start em
         ->assertInertia(fn (Assert $page) => $page
             ->where('budget.base_amount', '120.50')
             ->where('categories', fn ($categories) => collect($categories)->firstWhere('name', 'Mortgage')['amount'] === '100.00'));
+});
+
+test('copying onto a started month replaces its amounts', function () {
+    $user = User::factory()->create();
+    $mortgage = Category::query()->where('name', 'Mortgage')->first();
+    $groceries = Category::query()->where('name', 'Groceries')->first();
+    $medical = Category::query()->where('name', 'Medical')->first();
+
+    $this->actingAs($user)->post(route('budgets.store'), [
+        'month' => '2026-09',
+        'copy' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('budgets.index', ['month' => '2026-09']))
+        ->put(route('budgets.update'), [
+            'month' => '2026-09',
+            'category_id' => $mortgage->id,
+            'amount' => '100',
+        ]);
+    $this->actingAs($user)
+        ->from(route('budgets.index', ['month' => '2026-09']))
+        ->put(route('budgets.update'), [
+            'month' => '2026-09',
+            'category_id' => $groceries->id,
+            'amount' => '20.5',
+        ]);
+
+    $this->actingAs($user)->post(route('budgets.store'), [
+        'month' => '2026-10',
+        'copy' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
+            'month' => '2026-10',
+            'category_id' => $mortgage->id,
+            'amount' => '250',
+        ]);
+    $this->actingAs($user)
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->put(route('budgets.update'), [
+            'month' => '2026-10',
+            'category_id' => $medical->id,
+            'amount' => '5',
+        ]);
+
+    $october = BudgetMonth::query()->where('month', '2026-10')->first();
+
+    $this->actingAs($user)
+        ->get(route('budgets.index', ['month' => '2026-10']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('started', true)
+            ->where('copy_from.value', '2026-09')
+            ->where('copy_from.label', 'September 2026'));
+
+    $this->actingAs($user)
+        ->from(route('budgets.index', ['month' => '2026-10']))
+        ->post(route('budgets.store'), [
+            'month' => '2026-10',
+            'copy' => false,
+        ])
+        ->assertSessionHasErrors('month');
+
+    expect(BudgetMonth::query()->where('month', '2026-10')->count())->toBe(1)
+        ->and(CategoryBudget::query()->where('category_id', $mortgage->id)->where('budget_month_id', $october->id)->first()->amount)->toBe('250.00');
+
+    $this->actingAs($user)
+        ->post(route('budgets.store'), [
+            'month' => '2026-10',
+            'copy' => true,
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('budgets.index', ['month' => '2026-10']));
+
+    expect(BudgetMonth::query()->where('month', '2026-10')->count())->toBe(1)
+        ->and(BudgetMonth::query()->where('month', '2026-10')->first()->id)->toBe($october->id)
+        ->and(CategoryBudget::query()->where('budget_month_id', $october->id)->count())->toBe(2);
+
+    $this->actingAs($user)
+        ->get(route('budgets.index', ['month' => '2026-10']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('budget.base_amount', '120.50')
+            ->where('categories', fn ($categories) => collect($categories)->firstWhere('name', 'Mortgage')['amount'] === '100.00'
+                && collect($categories)->firstWhere('name', 'Groceries')['amount'] === '20.50'
+                && collect($categories)->firstWhere('name', 'Medical')['amount'] === '0.00'));
+
+    $this->actingAs($user)
+        ->get(route('budgets.index', ['month' => '2026-09']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('budget.base_amount', '120.50'));
 });
 
 test('copying is refused when the previous month has no budget and a month cannot be started twice', function () {

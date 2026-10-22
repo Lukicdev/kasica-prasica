@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { AccountBalance } from '@/components/account-balance';
+import { AccountLabel } from '@/components/account-label';
 import { CategoryLabel } from '@/components/category-label';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount, moneyDirection } from '@/components/money-amount';
@@ -132,7 +133,6 @@ export default function AccountShow({
                                     </TableHead>
                                     <TableHead scope="col">Type</TableHead>
                                     <TableHead scope="col">Category</TableHead>
-                                    <TableHead scope="col">Note</TableHead>
                                     <TableHead scope="col">Person</TableHead>
                                     <TableHead
                                         scope="col"
@@ -179,11 +179,35 @@ export default function AccountShow({
                                                     {line.date_label}
                                                 </time>
                                             </TableHead>
-                                            <TableCell className="relative">
+                                            <TableCell className="relative whitespace-normal">
                                                 {href ? (
                                                     <TableRowLink href={href} />
                                                 ) : null}
-                                                {line.type_label}
+                                                {line.counterparty ? (
+                                                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                                                        <span>
+                                                            {line.counterparty
+                                                                .direction ===
+                                                            'from'
+                                                                ? 'Transfer from'
+                                                                : 'Transfer to'}
+                                                        </span>
+                                                        <AccountLabel
+                                                            name={
+                                                                line
+                                                                    .counterparty
+                                                                    .name
+                                                            }
+                                                            icon={
+                                                                line
+                                                                    .counterparty
+                                                                    .icon
+                                                            }
+                                                        />
+                                                    </span>
+                                                ) : (
+                                                    line.type_label
+                                                )}
                                                 {line.repeats ? (
                                                     <span className="block text-xs text-muted-foreground">
                                                         Monthly
@@ -199,12 +223,6 @@ export default function AccountShow({
                                                     icon={line.category_icon}
                                                     color={line.category_color}
                                                 />
-                                            </TableCell>
-                                            <TableCell className="relative max-w-48 whitespace-normal">
-                                                {href ? (
-                                                    <TableRowLink href={href} />
-                                                ) : null}
-                                                {line.note ?? '—'}
                                             </TableCell>
                                             <TableCell className="relative">
                                                 {href ? (

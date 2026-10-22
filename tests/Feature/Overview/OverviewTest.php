@@ -281,7 +281,10 @@ test('a category shows the transactions behind its spent figure', function () {
 test('a euro transaction keeps its original amount on the drilldown', function () {
     $this->travelTo('2026-10-20');
     $user = User::factory()->create();
-    $account = Account::factory()->create();
+    $account = Account::factory()->create([
+        'name' => 'Euro cash',
+        'icon' => 'wallet',
+    ]);
     $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
 
     app(CreateTransaction::class)->handle($account, $user, [
@@ -299,6 +302,8 @@ test('a euro transaction keeps its original amount on the drilldown', function (
         ->assertInertia(fn (Assert $page) => $page
             ->where('drilldown.total.base_amount', '1175.00')
             ->where('drilldown.transactions.0.note', 'Train ticket')
+            ->where('drilldown.transactions.0.account', 'Euro cash')
+            ->where('drilldown.transactions.0.account_icon', 'wallet')
             ->where('drilldown.transactions.0.amount.formatted', '1,175.00 RSD')
             ->where('drilldown.transactions.0.amount.original_formatted', '10.00 EUR')
             ->where('drilldown.transactions.0.amount.original_currency', 'EUR'));

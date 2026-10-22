@@ -75,6 +75,7 @@ export type OverviewDrilldownTransaction = {
     date_label: string;
     note: string | null;
     account: string;
+    account_icon: string | null;
     person: string | null;
     amount: OverviewFigure;
 };

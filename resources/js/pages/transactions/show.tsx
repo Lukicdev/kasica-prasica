@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import TransactionController from '@/actions/App/Http/Controllers/TransactionController';
 import { AccountBalance } from '@/components/account-balance';
+import { AccountLabel } from '@/components/account-label';
 import { MoneyAmount } from '@/components/money-amount';
 import { Button } from '@/components/ui/button';
 import { edit as editAdjustment } from '@/routes/adjustments';
@@ -143,19 +144,34 @@ export default function TransactionShow({
                     </div>
                     {transaction.destination ? (
                         <>
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <dt className="text-muted-foreground">From</dt>
-                                <dd>{transaction.account.name}</dd>
+                                <dd>
+                                    <AccountLabel
+                                        name={transaction.account.name}
+                                        icon={transaction.account.icon}
+                                    />
+                                </dd>
                             </div>
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <dt className="text-muted-foreground">To</dt>
-                                <dd>{transaction.destination.name}</dd>
+                                <dd>
+                                    <AccountLabel
+                                        name={transaction.destination.name}
+                                        icon={transaction.destination.icon}
+                                    />
+                                </dd>
                             </div>
                         </>
                     ) : (
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                             <dt className="text-muted-foreground">Account</dt>
-                            <dd>{transaction.account.name}</dd>
+                            <dd>
+                                <AccountLabel
+                                    name={transaction.account.name}
+                                    icon={transaction.account.icon}
+                                />
+                            </dd>
                         </div>
                     )}
                     {transaction.person ? (

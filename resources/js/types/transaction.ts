@@ -58,6 +58,9 @@ export type TransactionRow = {
     category_color: string | null;
     note: string | null;
     account: string;
+    account_icon: string | null;
+    destination: string | null;
+    destination_icon: string | null;
     person: string | null;
     amount: DisplayedMoney;
     repeats: boolean;
@@ -143,8 +146,8 @@ export type TransactionDetail = {
     date_label: string;
     category: string | null;
     note: string | null;
-    account: { id: number; name: string };
-    destination: { id: number; name: string } | null;
+    account: { id: number; name: string; icon: string | null };
+    destination: { id: number; name: string; icon: string | null } | null;
     destination_amount: {
         amount: string;
         currency: string;

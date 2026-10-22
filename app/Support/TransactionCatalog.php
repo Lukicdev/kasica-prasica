@@ -67,9 +67,12 @@ class TransactionCatalog
      *         type_label: string,
      *         category: string|null,
      *         category_icon: string|null,
-         category_color: string|null,
+     *         category_color: string|null,
      *         note: string|null,
      *         account: string,
+     *         account_icon: string|null,
+     *         destination: string|null,
+     *         destination_icon: string|null,
      *         person: string|null,
      *         amount: array{
      *             amount: string,
@@ -135,8 +138,8 @@ class TransactionCatalog
             ->where('booked_on', '<', $nextMonth->toDateString())
             ->with([
                 'category:id,name,icon,color',
-                'account:id,name',
-                'destinationAccount:id,name',
+                'account:id,name,icon',
+                'destinationAccount:id,name,icon',
                 'person:id,name',
             ]);
 
@@ -226,27 +229,36 @@ class TransactionCatalog
                     'label' => $currency->value,
                 ], Currency::cases()),
             ],
-            'transactions' => array_values($page->getCollection()->map(fn (Transaction $transaction): array => [
-                'id' => $transaction->id,
-                'date' => $transaction->booked_on->toDateString(),
-                'date_label' => $transaction->booked_on->format('j M Y'),
-                'type' => $transaction->type->value,
-                'type_label' => $transaction->typeLabel(),
-                'category' => $transaction->category?->name,
-                'category_icon' => $transaction->category?->icon,
-                'category_color' => $transaction->category?->color,
-                'note' => $transaction->note,
-                'account' => $this->accountLabel($transaction),
-                'person' => $transaction->person?->name,
-                'amount' => $this->converter->present(
-                    (string) $transaction->amount,
-                    $transaction->currency,
-                    (string) $transaction->base_amount,
-                    $display,
-                    $transaction->booked_on,
-                )->toArray(),
-                'repeats' => $transaction->repeats,
-            ])->all()),
+            'transactions' => array_values($page->getCollection()->map(function (Transaction $transaction) use ($display): array {
+                $destination = $transaction->type === TransactionType::Transfer
+                    ? $transaction->destinationAccount
+                    : null;
+
+                return [
+                    'id' => $transaction->id,
+                    'date' => $transaction->booked_on->toDateString(),
+                    'date_label' => $transaction->booked_on->format('j M Y'),
+                    'type' => $transaction->type->value,
+                    'type_label' => $transaction->typeLabel(),
+                    'category' => $transaction->category?->name,
+                    'category_icon' => $transaction->category?->icon,
+                    'category_color' => $transaction->category?->color,
+                    'note' => $transaction->note,
+                    'account' => $transaction->account->name,
+                    'account_icon' => $transaction->account->icon,
+                    'destination' => $destination?->name,
+                    'destination_icon' => $destination?->icon,
+                    'person' => $transaction->person?->name,
+                    'amount' => $this->converter->present(
+                        (string) $transaction->amount,
+                        $transaction->currency,
+                        (string) $transaction->base_amount,
+                        $display,
+                        $transaction->booked_on,
+                    )->toArray(),
+                    'repeats' => $transaction->repeats,
+                ];
+            })->all()),
             'pagination' => [
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
@@ -379,8 +391,8 @@ class TransactionCatalog
      *     date_label: string,
      *     category: string|null,
      *     note: string|null,
-     *     account: array{id: int, name: string},
-     *     destination: array{id: int, name: string}|null,
+     *     account: array{id: int, name: string, icon: string|null},
+     *     destination: array{id: int, name: string, icon: string|null}|null,
      *     destination_amount: array{amount: string, currency: string, formatted: string, negative: bool}|null,
      *     destination_balance: array{amount: string, currency: string, formatted: string, negative: bool}|null,
      *     excluded_from_budget: bool,
@@ -438,10 +450,12 @@ class TransactionCatalog
             'account' => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'icon' => $account->icon,
             ],
             'destination' => $destination === null ? null : [
                 'id' => $destination->id,
                 'name' => $destination->name,
+                'icon' => $destination->icon,
             ],
             'destination_amount' => $destination === null || $transaction->destination_amount === null
                 ? null
@@ -536,15 +550,6 @@ class TransactionCatalog
             'negative' => Decimal::of($amount)->isNegative(),
             'caption' => 'Income minus spending',
         ];
-    }
-
-    private function accountLabel(Transaction $transaction): string
-    {
-        if ($transaction->type === TransactionType::Transfer && $transaction->destinationAccount !== null) {
-            return $transaction->account->name.' → '.$transaction->destinationAccount->name;
-        }
-
-        return $transaction->account->name;
     }
 
     /**

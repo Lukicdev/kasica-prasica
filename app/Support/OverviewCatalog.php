@@ -574,7 +574,7 @@ class OverviewCatalog
             ->where('type', $type)
             ->where('booked_on', '>=', $month->start()->toDateString())
             ->where('booked_on', '<', $month->endExclusive()->toDateString())
-            ->with(['account:id,name', 'person:id,name'])
+            ->with(['account:id,name,icon', 'person:id,name'])
             ->orderBy('booked_on')
             ->orderBy('id')
             ->get([
@@ -630,6 +630,7 @@ class OverviewCatalog
                     'date_label' => $transaction->booked_on->format('j M Y'),
                     'note' => $transaction->note,
                     'account' => $transaction->account->name,
+                    'account_icon' => $transaction->account->icon,
                     'person' => $transaction->person?->name,
                     'amount' => [
                         ...$presented->toArray(),

@@ -11,6 +11,7 @@ import {
     XIcon,
 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
+import { AccountLabel } from '@/components/account-label';
 import { CategoryLabel } from '@/components/category-label';
 import { FormSelect } from '@/components/form-select';
 import { MoneyAmount, moneyDirection } from '@/components/money-amount';
@@ -65,7 +66,6 @@ const columns: { column: TransactionSortColumn; label: string }[] = [
     { column: 'date', label: 'Date' },
     { column: 'type', label: 'Type' },
     { column: 'category', label: 'Category' },
-    { column: 'note', label: 'Note' },
     { column: 'account', label: 'Account' },
     { column: 'person', label: 'Person' },
     { column: 'amount', label: 'Amount' },
@@ -724,13 +724,20 @@ export default function Transactions({
                                                     }
                                                 />
                                             </TableCell>
-                                            <TableCell className="relative max-w-48 whitespace-normal">
+                                            <TableCell className="relative whitespace-normal">
                                                 <TableRowLink href={href} />
-                                                {transaction.note ?? '—'}
-                                            </TableCell>
-                                            <TableCell className="relative">
-                                                <TableRowLink href={href} />
-                                                {transaction.account}
+                                                <AccountLabel
+                                                    name={transaction.account}
+                                                    icon={
+                                                        transaction.account_icon
+                                                    }
+                                                    destination={
+                                                        transaction.destination
+                                                    }
+                                                    destinationIcon={
+                                                        transaction.destination_icon
+                                                    }
+                                                />
                                             </TableCell>
                                             <TableCell className="relative">
                                                 <TableRowLink href={href} />
