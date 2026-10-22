@@ -28,6 +28,17 @@ composer setup
 
 That installs PHP and Node dependencies, copies `.env.example` to `.env`, generates the app key, runs migrations, and builds the frontend.
 
+Registration is off, so seed the demo household to sign in:
+
+```bash
+php artisan db:seed
+```
+
+That creates two people in one workspace, both with the password `password`:
+
+- `test@example.com`
+- `partner@example.com`
+
 ## Development
 
 ```bash
