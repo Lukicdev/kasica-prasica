@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Categories\ArchiveCategory;
 use App\Actions\Categories\CreateCategory;
-use App\Actions\Categories\ReorderCategories;
+use App\Actions\Categories\DeleteCategory;
 use App\Actions\Categories\RestoreCategory;
 use App\Actions\Categories\UpdateCategory;
 use App\Enums\CategoryKind;
@@ -75,17 +75,11 @@ class CategoryController extends Controller
         return to_route('categories.edit', $category);
     }
 
-    public function destroy(Request $request, Category $category, ReorderCategories $reorder): RedirectResponse
+    public function destroy(Request $request, Category $category, DeleteCategory $delete): RedirectResponse
     {
         Gate::authorize('delete', $category);
 
-        $user = $request->user();
-        $workspace = $user->workspace;
-        $kind = $category->kind;
-
-        $category->delete();
-
-        $reorder->handle($workspace, $kind, $reorder->activeIds($workspace, $kind));
+        $delete->handle($category, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Category deleted.']);
 

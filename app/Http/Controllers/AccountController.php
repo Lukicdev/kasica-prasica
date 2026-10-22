@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Accounts\ArchiveAccount;
 use App\Actions\Accounts\CreateAccount;
+use App\Actions\Accounts\DeleteAccount;
+use App\Actions\Accounts\RestoreAccount;
 use App\Actions\Accounts\UpdateAccount;
 use App\Enums\AccountType;
 use App\Http\Requests\Accounts\StoreAccountRequest;
@@ -93,47 +96,33 @@ class AccountController extends Controller
         return to_route('accounts.show', $account);
     }
 
-    public function destroy(Account $account): RedirectResponse
+    public function destroy(Request $request, Account $account, DeleteAccount $delete): RedirectResponse
     {
         Gate::authorize('delete', $account);
 
-        $account->delete();
+        $delete->handle($account, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account deleted.']);
 
         return to_route('accounts.index');
     }
 
-    public function archive(Request $request, Account $account): RedirectResponse
+    public function archive(Request $request, Account $account, ArchiveAccount $archive): RedirectResponse
     {
         Gate::authorize('update', $account);
 
-        $user = $request->user();
-
-        if ($account->archived_at === null) {
-            $account->update([
-                'archived_at' => now(),
-                'updated_by' => $user->id,
-            ]);
-        }
+        $archive->handle($account, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account archived.']);
 
         return to_route('accounts.show', $account);
     }
 
-    public function restore(Request $request, Account $account): RedirectResponse
+    public function restore(Request $request, Account $account, RestoreAccount $restore): RedirectResponse
     {
         Gate::authorize('update', $account);
 
-        $user = $request->user();
-
-        if ($account->archived_at !== null) {
-            $account->update([
-                'archived_at' => null,
-                'updated_by' => $user->id,
-            ]);
-        }
+        $restore->handle($account, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Account restored.']);
 

@@ -32,10 +32,6 @@ class CreateAdjustment
      */
     public function handle(Account $account, User $actor, array $attributes): Transaction
     {
-        if ($actor->workspace_id !== $account->workspace_id) {
-            throw new AuthorizationException('This account is outside your workspace.');
-        }
-
         $person = $attributes['person'] ?? $actor;
 
         if ($person->workspace_id !== $account->workspace_id) {
