@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
@@ -27,7 +26,7 @@ class TransactionFactory extends Factory
             'person_id' => User::factory(),
             'type' => TransactionType::Expense,
             'amount' => '10.00',
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'account_amount' => '10.00',
             'base_amount' => '10.00',
             'exchange_rate' => '1',

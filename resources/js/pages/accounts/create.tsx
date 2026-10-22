@@ -20,7 +20,7 @@ export default function CreateAccount({
                             New account
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Name it, choose RSD or EUR, and enter the balance
+                            Name it, choose a currency, and enter the balance
                             you are starting from.
                         </p>
                     </div>

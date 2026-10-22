@@ -1,21 +1,19 @@
-export type CurrencyCode = 'RSD' | 'EUR';
-
 export type SupportedCurrency = {
-    code: CurrencyCode;
+    code: string;
     name: string;
+    rateToBase: string | null;
 };
 
 export type Currencies = {
-    base: CurrencyCode;
+    base: string;
     supported: SupportedCurrency[];
-    eurToRsd: string;
 };
 
 export type DisplayedMoney = {
     amount: string;
-    currency: CurrencyCode;
+    currency: string;
     formatted: string;
     original_amount: string | null;
-    original_currency: CurrencyCode | null;
+    original_currency: string | null;
     original_formatted: string | null;
 };

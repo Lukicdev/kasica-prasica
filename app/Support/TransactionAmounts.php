@@ -3,14 +3,14 @@
 namespace App\Support;
 
 use App\Contracts\ExchangeRate;
-use App\Enums\Currency;
+use App\Exceptions\MissingExchangeRate;
 use App\Models\Account;
 use Carbon\CarbonInterface;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Splits a transaction into the original amount, the movement in the account's
- * currency, and the dinar value at the rate for that date.
+ * currency, and the base-currency value at the rate for that date.
  */
 class TransactionAmounts
 {
@@ -25,7 +25,7 @@ class TransactionAmounts
     public function resolve(
         Account $account,
         string $amount,
-        Currency $currency,
+        string $currency,
         CarbonInterface $on,
     ): array {
         $normalized = Decimal::of($amount)->toString(MoneyConverter::SCALE);
@@ -36,15 +36,24 @@ class TransactionAmounts
             ]);
         }
 
-        $base = $this->converter->baseAmount($normalized, $currency, $on);
+        $workspace = $account->workspace;
+
+        try {
+            $base = $this->converter->baseAmount($normalized, $currency, $workspace, $on);
+            $rate = $this->exchangeRate->basePerUnit($workspace, $currency, $on);
+        } catch (MissingExchangeRate) {
+            throw ValidationException::withMessages([
+                'currency' => "Enter a rate for {$currency} before using it.",
+            ]);
+        }
 
         return [
             'amount' => $normalized,
             'account_amount' => $currency === $account->currency
                 ? $normalized
-                : $this->converter->displayAmount($base, $account->currency, $on),
+                : $this->converter->displayAmount($base, $account->currency, $workspace, $on),
             'base_amount' => $base,
-            'exchange_rate' => $this->exchangeRate->rsdPerUnit($currency, $on),
+            'exchange_rate' => $rate,
         ];
     }
 }

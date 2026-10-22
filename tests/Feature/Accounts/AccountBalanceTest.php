@@ -3,11 +3,11 @@
 use App\Actions\Transactions\DeleteTransaction;
 use App\Actions\Transactions\UpdateTransaction;
 use App\Contracts\ExchangeRate;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Support\AccountBalance;
 use App\Support\AccountStatement;
 use App\Support\Decimal;
@@ -22,7 +22,7 @@ test('income, expenses, and refunds change the balance immediately', function ()
     $user = User::factory()->create();
     $account = Account::factory()->create([
         'opening_balance' => '1000.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
     ]);
 
     $this->actingAs($user)
@@ -161,7 +161,7 @@ test('editing a transaction updates the balance', function () {
     app(UpdateTransaction::class)->handle($transaction, $account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '40.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-02',
         'note' => 'Corrected',
     ]);
@@ -187,7 +187,7 @@ test('moving a transaction updates both accounts', function () {
     app(UpdateTransaction::class)->handle($transaction, $card, $user, [
         'type' => TransactionType::Expense,
         'amount' => '100.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-03',
         'note' => 'Taxi',
     ]);
@@ -226,13 +226,13 @@ test('a transaction in another currency moves the account at the exchange rate',
     $user = User::factory()->create();
     $account = Account::factory()->create([
         'opening_balance' => '2000.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
     ]);
 
     $transaction = recordTransaction($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '10.00',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
         'booked_on' => '2026-10-05',
         'note' => 'Train ticket',
     ]);
@@ -252,11 +252,11 @@ test('a transaction in another currency moves the account at the exchange rate',
 
 test('an euro account balance stays in euros', function () {
     $user = User::factory()->create();
-    $account = Account::factory()->inCurrency(Currency::Eur)->create([
+    $account = Account::factory()->inCurrency('EUR')->create([
         'opening_balance' => '50.00',
     ]);
 
-    recordExpense($account, $user, '10.00', '2026-10-02', 'Coffee', Currency::Eur);
+    recordExpense($account, $user, '10.00', '2026-10-02', 'Coffee', 'EUR');
 
     $this->actingAs($user)
         ->get(route('accounts.index'))
@@ -271,27 +271,27 @@ test('an euro account balance stays in euros', function () {
 
 test('a later exchange rate does not change a saved transaction', function () {
     $user = User::factory()->create();
-    $account = Account::factory()->create(['currency' => Currency::Rsd]);
+    $account = Account::factory()->create(['currency' => 'RSD']);
 
     $saved = recordTransaction($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '10.00',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
         'account_amount' => '1175.00',
     ]);
 
     app()->instance(ExchangeRate::class, new class implements ExchangeRate
     {
-        public function rsdPerUnit(Currency $currency, ?CarbonInterface $on = null): string
+        public function basePerUnit(Workspace $workspace, string $currency, ?CarbonInterface $on = null): string
         {
-            return $currency->isBase() ? '1' : '100';
+            return $currency === $workspace->base_currency ? '1' : '100';
         }
     });
 
     $later = recordTransaction($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '10.00',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
     ]);
 
     expect(Decimal::of((string) $saved->refresh()->base_amount)->toString(2))->toBe('1175.00')
@@ -300,12 +300,12 @@ test('a later exchange rate does not change a saved transaction', function () {
 
 test('matching currencies ignore a different account amount', function () {
     $user = User::factory()->create();
-    $account = Account::factory()->create(['currency' => Currency::Rsd, 'opening_balance' => '0.00']);
+    $account = Account::factory()->create(['currency' => 'RSD', 'opening_balance' => '0.00']);
 
     $transaction = recordTransaction($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '15.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'account_amount' => '99.00',
     ]);
 
@@ -314,12 +314,12 @@ test('matching currencies ignore a different account amount', function () {
 
 test('a different currency does not need a typed account amount', function () {
     $user = User::factory()->create();
-    $account = Account::factory()->create(['currency' => Currency::Rsd]);
+    $account = Account::factory()->create(['currency' => 'RSD']);
 
     $transaction = recordTransaction($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '10.00',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
     ]);
 
     expect(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('1175.00')
@@ -345,7 +345,7 @@ test('a transaction already on an archived account can be corrected but not move
     app(UpdateTransaction::class)->handle($transaction, $account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '20.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-02',
     ]);
 
@@ -354,7 +354,7 @@ test('a transaction already on an archived account can be corrected but not move
     expect(fn () => app(UpdateTransaction::class)->handle($transaction->refresh(), $other, $user, [
         'type' => TransactionType::Expense,
         'amount' => '20.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-02',
     ]))->toThrow(ValidationException::class);
 });

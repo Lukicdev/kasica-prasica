@@ -186,6 +186,36 @@ export function divideAmount(amount: string, rate: string): string | null {
     });
 }
 
+export function convertAmount(
+    amount: string,
+    from: string,
+    to: string,
+    rates: Record<string, string>,
+): string | null {
+    if (from === to) {
+        return normalizeAmount(amount);
+    }
+
+    const fromRate = rates[from];
+    const toRate = rates[to];
+
+    if (!fromRate || !toRate) {
+        return null;
+    }
+
+    const inBase = multiplyAmount(amount, fromRate);
+
+    if (!inBase) {
+        return null;
+    }
+
+    if (toRate === '1') {
+        return inBase;
+    }
+
+    return divideAmount(inBase, toRate);
+}
+
 export function formatMoney(amount: string, currency: string): string | null {
     const normalized = parse(amount);
 

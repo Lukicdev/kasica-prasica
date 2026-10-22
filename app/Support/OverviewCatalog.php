@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Enums\CategoryKind;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\BudgetMonth;
@@ -11,6 +10,7 @@ use App\Models\Category;
 use App\Models\CategoryBudget;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
@@ -90,11 +90,12 @@ class OverviewCatalog
             $spentByCategory,
             $lines,
             $display,
+            $workspace,
         );
 
         $uncategorisedSpent = $spentByCategory['none'] ?? null;
         if ($uncategorisedSpent !== null) {
-            $expenseRows[] = $this->expenseRow(null, 'Uncategorised', null, null, null, false, $uncategorisedSpent, '0.00', $display);
+            $expenseRows[] = $this->expenseRow(null, 'Uncategorised', null, null, null, false, $uncategorisedSpent, '0.00', $display, $workspace);
         }
 
         return [
@@ -111,10 +112,10 @@ class OverviewCatalog
                 'rows' => $expenseRows,
             ],
             'totals' => [
-                'income' => $this->figure($incomeBase, $display),
-                'spent' => $this->figure($spentBase, $display),
+                'income' => $this->figure($incomeBase, $display, $workspace),
+                'spent' => $this->figure($spentBase, $display, $workspace),
             ],
-            'summary' => $this->summary($incomeBase, $spentBase, $month, $display),
+            'summary' => $this->summary($incomeBase, $spentBase, $month, $display, $workspace),
             'flow' => $this->flow($user, $month, $display),
             'balance' => $this->balance($user, $display),
         ];
@@ -177,7 +178,7 @@ class OverviewCatalog
      * @param  Collection<int, CategoryBudget>  $lines
      * @return list<array<string, mixed>>
      */
-    private function expenseRows(Collection $categories, array $spentByCategory, Collection $lines, Currency $display): array
+    private function expenseRows(Collection $categories, array $spentByCategory, Collection $lines, string $display, Workspace $workspace): array
     {
         $rows = [];
 
@@ -192,6 +193,7 @@ class OverviewCatalog
                 $spentByCategory[$category->id] ?? '0.00',
                 $this->budgetAmount($lines, $category->id),
                 $display,
+                $workspace,
             );
         }
 
@@ -210,7 +212,8 @@ class OverviewCatalog
         bool $archived,
         string $spent,
         string $budget,
-        Currency $display,
+        string $display,
+        Workspace $workspace,
     ): array {
         $differenceBase = Decimal::of($spent)->subtract(Decimal::of($budget))->toString(MoneyConverter::SCALE);
         $standing = $this->standing($differenceBase);
@@ -222,9 +225,9 @@ class OverviewCatalog
             'color' => $color,
             'description' => $description,
             'archived' => $archived,
-            'spent' => $this->figure($spent, $display),
-            'budget' => $this->figure($budget, $display),
-            'difference' => $this->figure($differenceBase, $display),
+            'spent' => $this->figure($spent, $display, $workspace),
+            'budget' => $this->figure($budget, $display, $workspace),
+            'difference' => $this->figure($differenceBase, $display, $workspace),
             'status' => $standing['status'],
             'status_label' => $standing['label'],
             'budget_percent' => $this->budgetPercent($spent, $budget),
@@ -282,13 +285,13 @@ class OverviewCatalog
      *
      * @return array{savings_rate: int|null, pace: array<string, mixed>|null}
      */
-    private function summary(string $incomeBase, string $spentBase, CalendarMonth $month, Currency $display): array
+    private function summary(string $incomeBase, string $spentBase, CalendarMonth $month, string $display, Workspace $workspace): array
     {
         $current = $month->value() === CalendarMonth::current()->value();
 
         return [
             'savings_rate' => $this->savingsRate($incomeBase, $spentBase),
-            'pace' => $current ? $this->figure($this->projectedSpend($spentBase, $month), $display) : null,
+            'pace' => $current ? $this->figure($this->projectedSpend($spentBase, $month), $display, $workspace) : null,
         ];
     }
 
@@ -337,7 +340,7 @@ class OverviewCatalog
      *     previous_points: list<array{day: int, amount: string, formatted: string}>
      * }
      */
-    private function flow(User $user, CalendarMonth $month, Currency $display): array
+    private function flow(User $user, CalendarMonth $month, string $display): array
     {
         $accounts = $user->workspace->accounts()->get(['id', 'currency', 'opening_balance']);
         $through = $this->throughDay($month);
@@ -354,9 +357,9 @@ class OverviewCatalog
         }
 
         $byDate = $this->movementsByDate($user, $accounts, $native, $previous->start(), $month->endExclusive());
-        $previousSeries = $this->flowSeries($accounts, $native, $byDate, $previous->start(), $previous->start()->daysInMonth, $display);
+        $previousSeries = $this->flowSeries($accounts, $native, $byDate, $previous->start(), $previous->start()->daysInMonth, $display, $user->workspace);
         $openingBase = $this->householdBase($accounts, $native);
-        $series = $this->flowSeries($accounts, $native, $byDate, $month->start(), $through, $display);
+        $series = $this->flowSeries($accounts, $native, $byDate, $month->start(), $through, $display, $user->workspace);
         $closingBase = $this->householdBase($accounts, $native);
         $day = min($through, $previous->start()->daysInMonth);
         $previousBase = $previousSeries['bases'][$day] ?? $openingBase;
@@ -369,11 +372,12 @@ class OverviewCatalog
             'change' => $this->figure(
                 Decimal::of($closingBase)->subtract(Decimal::of($openingBase))->toString(MoneyConverter::SCALE),
                 $display,
+                $user->workspace,
             ),
             'previous' => [
                 'month' => $previous->label(),
                 'day' => $day,
-                'balance' => $this->figure($previousBase, $display),
+                'balance' => $this->figure($previousBase, $display, $user->workspace),
                 'percent' => $this->changePercent($closingBase, $previousBase),
             ],
             'points' => $series['points'],
@@ -455,7 +459,8 @@ class OverviewCatalog
         array $byDate,
         CarbonImmutable $start,
         int $days,
-        Currency $display,
+        string $display,
+        Workspace $workspace,
     ): array {
         $points = [];
         $bases = [];
@@ -468,7 +473,7 @@ class OverviewCatalog
             }
 
             $base = $this->householdBase($accounts, $native);
-            $presented = $this->figure($base, $display);
+            $presented = $this->figure($base, $display, $workspace);
             $points[] = [
                 'day' => $cursor->day,
                 'amount' => $presented['amount'],
@@ -507,12 +512,13 @@ class OverviewCatalog
     private function householdBase(Collection $accounts, array $native): string
     {
         $total = Decimal::of('0');
+        $workspace = $accounts->first()?->workspace;
 
         foreach ($accounts as $account) {
             $balance = $native[$account->id];
-            $base = $account->currency->isBase()
+            $base = ! $workspace instanceof Workspace || $account->currency === $workspace->base_currency
                 ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
-                : $this->converter->baseAmount($balance, $account->currency);
+                : $this->converter->baseAmount($balance, $account->currency, $workspace);
             $total = $total->add(Decimal::of($base));
         }
 
@@ -590,10 +596,10 @@ class OverviewCatalog
      *     base_amount: string
      * }
      */
-    private function figure(string $baseAmount, Currency $display): array
+    private function figure(string $baseAmount, string $display, Workspace $workspace): array
     {
         $normalized = Decimal::of($baseAmount)->toString(MoneyConverter::SCALE);
-        $presented = $this->converter->present($normalized, Currency::base(), $normalized, $display);
+        $presented = $this->converter->present($normalized, $workspace->base_currency, $normalized, $display, $workspace);
 
         return [
             ...$presented->toArray(),
@@ -605,10 +611,10 @@ class OverviewCatalog
     /**
      * @return array{amount: string, currency: string, formatted: string, negative: bool}
      */
-    private function balance(User $user, Currency $display): array
+    private function balance(User $user, string $display): array
     {
         $accounts = $user->workspace->accounts()->get();
 
-        return $this->accounts->list($accounts, $display)['total'];
+        return $this->accounts->list($accounts, $display, $user->workspace)['total'];
     }
 }

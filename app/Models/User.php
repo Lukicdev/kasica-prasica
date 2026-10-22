@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Currency;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -24,7 +23,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property bool $is_admin
- * @property Currency $display_currency
+ * @property string $display_currency
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -40,12 +39,22 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            $currency = $user->getAttributes()['display_currency'] ?? null;
+
+            if (! is_string($currency) || $currency === '') {
+                $user->display_currency = $user->workspace->base_currency;
+            }
+        });
+    }
+
     /**
      * @var array<string, mixed>
      */
     protected $attributes = [
         'is_admin' => false,
-        'display_currency' => Currency::Rsd->value,
     ];
 
     /**
@@ -59,7 +68,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
-            'display_currency' => Currency::class,
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

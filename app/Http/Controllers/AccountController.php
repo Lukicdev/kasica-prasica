@@ -36,6 +36,7 @@ class AccountController extends Controller
         return Inertia::render('accounts/index', $this->catalog->list(
             $accounts,
             $user->display_currency,
+            $user->workspace,
         ));
     }
 

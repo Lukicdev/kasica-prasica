@@ -12,7 +12,7 @@ A shared household budget. Everyone in the household sees the same accounts, tra
 - Expense categories with a monthly budget, copied forward from the previous month
 - Monthly overview of income, spending, budget, and leftover
 - Insights: month-over-month comparison and spending trends
-- RSD and EUR, with a switch to show figures in either currency
+- Any currency from Frankfurter, with a daily rate and a switch for how figures are shown
 
 ## Stack
 
@@ -46,6 +46,14 @@ composer dev
 ```
 
 The app is served at the URL in `APP_URL` (see `.env`).
+
+Exchange rates are fetched from Frankfurter once a day. Run the scheduler so that happens locally:
+
+```bash
+php artisan schedule:work
+```
+
+Or fetch them immediately with `php artisan exchange-rates:fetch`. The demo household uses RSD as its base currency and also enables EUR. Add or replace currencies in Settings.
 
 ## Tests
 

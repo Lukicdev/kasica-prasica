@@ -16,10 +16,11 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property string $name
+ * @property string $base_currency
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name'])]
+#[Fillable(['name', 'base_currency'])]
 #[ObservedBy(WorkspaceObserver::class)]
 class Workspace extends Model
 {
@@ -39,14 +40,37 @@ class Workspace extends Model
             return $workspace;
         }
 
-        $workspace = static::query()->create([
+        $workspace = static::factory()->household()->create([
             'name' => self::DEFAULT_NAME,
         ]);
 
         // Model events are off while seeding, so the observer does not run then.
-        app(SeedDefaultCategories::class)->handle($workspace);
+        if ($workspace->categories()->doesntExist()) {
+            app(SeedDefaultCategories::class)->handle($workspace);
+        }
+
+        $workspace->ensureBaseCurrency();
 
         return $workspace;
+    }
+
+    public function isBase(string $currency): bool
+    {
+        return $this->base_currency === strtoupper($currency);
+    }
+
+    public function ensureBaseCurrency(): void
+    {
+        $this->currencies()->firstOrCreate(
+            ['code' => $this->base_currency],
+            ['manual_rate' => null],
+        );
+    }
+
+    public function hasLedger(): bool
+    {
+        return $this->transactions()->exists()
+            || $this->budgetMonths()->whereHas('lines')->exists();
     }
 
     /**
@@ -71,6 +95,30 @@ class Workspace extends Model
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
+    }
+
+    /**
+     * @return HasMany<WorkspaceCurrency, $this>
+     */
+    public function currencies(): HasMany
+    {
+        return $this->hasMany(WorkspaceCurrency::class);
+    }
+
+    /**
+     * @return HasMany<Transaction, $this>
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * @return HasMany<BudgetMonth, $this>
+     */
+    public function budgetMonths(): HasMany
+    {
+        return $this->hasMany(BudgetMonth::class);
     }
 
     /**

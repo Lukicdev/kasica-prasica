@@ -3,7 +3,7 @@
 namespace App\Concerns;
 
 use App\Enums\AccountType;
-use App\Enums\Currency;
+use App\Rules\EnabledCurrency;
 use App\Support\Decimal;
 use App\Support\Icons;
 use App\Support\MoneyConverter;
@@ -35,7 +35,7 @@ trait AccountValidationRules
             'name' => ['required', 'string', 'max:100'],
             'icon' => ['nullable', 'string', Rule::in(Icons::names())],
             'type' => ['required', Rule::enum(AccountType::class)],
-            'currency' => ['required', Rule::enum(Currency::class)],
+            'currency' => ['required', 'string', 'size:3', new EnabledCurrency($this->user())],
             'opening_balance' => ['required', 'regex:/^-?\d{1,13}(\.\d{1,2})?$/'],
             'opening_balance_on' => ['required', 'date'],
             'note' => ['nullable', 'string', 'max:1000'],
@@ -53,8 +53,8 @@ trait AccountValidationRules
             'icon.in' => 'Choose an icon from the list.',
             'type.required' => 'Choose a type.',
             'type.enum' => 'Choose a type.',
-            'currency.required' => 'Choose RSD or EUR.',
-            'currency.enum' => 'Choose RSD or EUR.',
+            'currency.required' => 'Choose a currency.',
+            'currency.size' => 'Choose a currency.',
             'opening_balance.required' => 'Enter an opening balance.',
             'opening_balance.regex' => 'Enter an amount with up to two decimal places.',
             'opening_balance_on.required' => 'Enter the date of the opening balance.',
@@ -68,7 +68,7 @@ trait AccountValidationRules
      *     name: string,
      *     icon: string|null,
      *     type: AccountType,
-     *     currency: Currency,
+     *     currency: string,
      *     opening_balance: string,
      *     opening_balance_on: string,
      *     note: string|null
@@ -90,7 +90,7 @@ trait AccountValidationRules
             'name' => trim($this->string('name')->toString()),
             'icon' => $icon === '' ? null : $icon,
             'type' => AccountType::from($this->string('type')->toString()),
-            'currency' => Currency::from($this->string('currency')->toString()),
+            'currency' => strtoupper($this->string('currency')->toString()),
             'opening_balance' => Decimal::of($this->string('opening_balance')->toString())->toString(MoneyConverter::SCALE),
             'opening_balance_on' => $openingBalanceOn,
             'note' => $note === '' ? null : $note,

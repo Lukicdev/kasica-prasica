@@ -262,7 +262,7 @@ class AccountStatement
 
         return [
             'amount' => $accountAmount,
-            'currency' => $account->currency->value,
+            'currency' => $account->currency,
             'formatted' => $this->formatter->format($accountAmount, $account->currency),
             'negative' => Decimal::of($accountAmount)->isNegative(),
             'original_formatted' => $transaction->currency === $account->currency
@@ -280,7 +280,7 @@ class AccountStatement
 
         return [
             'amount' => $normalized,
-            'currency' => $account->currency->value,
+            'currency' => $account->currency,
             'formatted' => $this->formatter->format($normalized, $account->currency),
             'negative' => Decimal::of($normalized)->isNegative(),
         ];

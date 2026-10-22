@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Enums\AccountType;
-use App\Enums\Currency;
 use App\Models\Account;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +21,7 @@ class AccountFactory extends Factory
             'workspace_id' => fn (): int => Workspace::shared()->id,
             'name' => fake()->words(2, true),
             'type' => AccountType::Cash,
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'opening_balance' => '0.00',
             'opening_balance_on' => '2026-10-01',
             'note' => null,
@@ -39,7 +38,7 @@ class AccountFactory extends Factory
         ]);
     }
 
-    public function inCurrency(Currency $currency): static
+    public function inCurrency(string $currency): static
     {
         return $this->state(fn (array $attributes): array => [
             'currency' => $currency,

@@ -2,12 +2,12 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -163,7 +163,7 @@ class TransactionCatalog
         }
 
         if ($filters->currency !== null) {
-            $query->where('currency', $filters->currency->value);
+            $query->where('currency', $filters->currency);
         }
 
         if ($filters->search !== '') {
@@ -192,7 +192,7 @@ class TransactionCatalog
                 'category' => $categoryId,
                 'account' => $accountId,
                 'person' => $personId,
-                'currency' => $filters->currency?->value,
+                'currency' => $filters->currency,
                 'search' => $filters->search,
             ],
             'sort' => [
@@ -224,12 +224,16 @@ class TransactionCatalog
                     'id' => $person->id,
                     'name' => $person->name,
                 ])->all()),
-                'currencies' => array_map(fn (Currency $currency): array => [
-                    'value' => $currency->value,
-                    'label' => $currency->value,
-                ], Currency::cases()),
+                'currencies' => array_values($user->workspace->currencies()
+                    ->orderBy('code')
+                    ->pluck('code')
+                    ->map(fn (string $code): array => [
+                        'value' => $code,
+                        'label' => $code,
+                    ])
+                    ->all()),
             ],
-            'transactions' => array_values($page->getCollection()->map(function (Transaction $transaction) use ($display): array {
+            'transactions' => array_values($page->getCollection()->map(function (Transaction $transaction) use ($display, $user): array {
                 $destination = $transaction->type === TransactionType::Transfer
                     ? $transaction->destinationAccount
                     : null;
@@ -254,6 +258,7 @@ class TransactionCatalog
                         $transaction->currency,
                         (string) $transaction->base_amount,
                         $display,
+                        $user->workspace,
                         $transaction->booked_on,
                     )->toArray(),
                     'repeats' => $transaction->repeats,
@@ -267,7 +272,7 @@ class TransactionCatalog
                 'from' => $page->firstItem(),
                 'to' => $page->lastItem(),
             ],
-            'total' => $this->total($summary, $display, $start),
+            'total' => $this->total($summary, $display, $user->workspace, $start),
             'pending' => $this->recurrences->pending(
                 $user,
                 CalendarMonth::fromValue($filters->month),
@@ -359,7 +364,7 @@ class TransactionCatalog
             'accounts' => array_values($formAccounts->map(fn (Account $account): array => [
                 'id' => $account->id,
                 'name' => $account->archived_at === null ? $account->name : $account->name.' (archived)',
-                'currency' => $account->currency->value,
+                'currency' => $account->currency,
                 'balance' => $balances[$account->id],
                 'archived' => $account->archived_at !== null,
             ])->all()),
@@ -470,6 +475,7 @@ class TransactionCatalog
                 $transaction->currency,
                 (string) $transaction->base_amount,
                 $user->display_currency,
+                $user->workspace,
                 $transaction->booked_on,
             )->toArray(),
             'account_amount' => $this->money((string) $transaction->account_amount, $account->currency),
@@ -526,7 +532,7 @@ class TransactionCatalog
      * @param  Collection<int, Transaction>  $transactions
      * @return array{amount: string, currency: string, formatted: string, negative: bool, caption: string}
      */
-    private function total(Collection $transactions, Currency $display, CarbonInterface $on): array
+    private function total(Collection $transactions, string $display, Workspace $workspace, CarbonInterface $on): array
     {
         $net = Decimal::of('0');
 
@@ -541,11 +547,11 @@ class TransactionCatalog
                 : $net->subtract($base);
         }
 
-        $amount = $this->converter->displayAmount($net->toString(MoneyConverter::SCALE), $display, $on);
+        $amount = $this->converter->displayAmount($net->toString(MoneyConverter::SCALE), $display, $workspace, $on);
 
         return [
             'amount' => $amount,
-            'currency' => $display->value,
+            'currency' => $display,
             'formatted' => $this->formatter->format($amount, $display),
             'negative' => Decimal::of($amount)->isNegative(),
             'caption' => 'Income minus spending',
@@ -571,6 +577,7 @@ class TransactionCatalog
      *     amount: string,
      *     refund: bool,
      *     currency: string,
+     *     exchange_rate: string,
      *     account_id: int,
      *     account_amount: string,
      *     category_id: int|null,
@@ -592,7 +599,8 @@ class TransactionCatalog
             'type' => $transaction->type->value,
             'amount' => $absolute,
             'refund' => $transaction->isRefund(),
-            'currency' => $transaction->currency->value,
+            'currency' => $transaction->currency,
+            'exchange_rate' => Rate::trim((string) $transaction->exchange_rate),
             'account_id' => $transaction->account_id,
             'account_amount' => Decimal::of((string) $transaction->account_amount)->toString(MoneyConverter::SCALE),
             'category_id' => $transaction->category_id,
@@ -629,7 +637,7 @@ class TransactionCatalog
             'category_id' => $category?->id,
             'person_id' => $user->id,
             'date' => $this->prefilledDate($prefill['date'] ?? null),
-            'currency' => $account?->currency->value ?? Currency::base()->value,
+            'currency' => $account instanceof Account ? $account->currency : $user->workspace->base_currency,
         ];
     }
 
@@ -699,13 +707,13 @@ class TransactionCatalog
     /**
      * @return array{amount: string, currency: string, formatted: string, negative: bool}
      */
-    private function money(string $amount, Currency $currency): array
+    private function money(string $amount, string $currency): array
     {
         $normalized = Decimal::of($amount)->toString(MoneyConverter::SCALE);
 
         return [
             'amount' => $normalized,
-            'currency' => $currency->value,
+            'currency' => $currency,
             'formatted' => $this->formatter->format($normalized, $currency),
             'negative' => Decimal::of($normalized)->isNegative(),
         ];

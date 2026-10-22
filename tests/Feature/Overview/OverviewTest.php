@@ -5,7 +5,6 @@ use App\Actions\Budgets\UpdateCategoryBudget;
 use App\Actions\Demo\SeedSpreadsheetMonth;
 use App\Actions\Transactions\CreateTransaction;
 use App\Enums\AccountType;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -94,7 +93,7 @@ test('a recorded expense shows up in the month total', function () {
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '12.50',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-20',
         'category' => $groceries,
         'note' => 'Market',
@@ -160,14 +159,14 @@ test('the overview summary reports the savings rate and the month-end pace', fun
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Income,
         'amount' => '100.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-10',
         'category' => $salary,
     ]);
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '26.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-12',
         'category' => $groceries,
     ]);
@@ -190,7 +189,7 @@ test('the overview summary reports the savings rate and the month-end pace', fun
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '124.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-13',
         'category' => $groceries,
     ]);
@@ -216,21 +215,21 @@ test('the balance flow follows the household total through today and the same da
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '200.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-09-22',
         'category' => $groceries,
     ]);
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '100.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-10',
         'category' => $groceries,
     ]);
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Income,
         'amount' => '50.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-20',
         'category' => $salary,
     ]);
@@ -281,7 +280,7 @@ test('the balance flow follows the household total through today and the same da
 
 test('the euro view converts overview totals from the dinar total', function () {
     [$first] = seedSpreadsheetMonth();
-    $first->update(['display_currency' => Currency::Eur]);
+    $first->update(['display_currency' => 'EUR']);
 
     $this->actingAs($first)
         ->get(route('dashboard', ['month' => SpreadsheetReference::MONTH]))
@@ -330,14 +329,14 @@ test('other months, refunds and archived categories stay in the right rows', fun
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '80.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-02',
         'category' => $groceries,
     ]);
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '-30.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-18',
         'category' => $groceries,
         'note' => 'Returned',
@@ -345,7 +344,7 @@ test('other months, refunds and archived categories stay in the right rows', fun
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '999.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-09-02',
         'category' => $groceries,
     ]);
@@ -356,7 +355,7 @@ test('other months, refunds and archived categories stay in the right rows', fun
     app(CreateTransaction::class)->handle($account, $user, [
         'type' => TransactionType::Expense,
         'amount' => '15.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'booked_on' => '2026-10-09',
         'category' => $clinic,
     ]);
@@ -405,9 +404,9 @@ test('the overview balance converts every account into the display currency', fu
         'name' => 'Wallet',
         'type' => AccountType::Cash,
         'opening_balance' => '100.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
     ]);
-    Account::factory()->inCurrency(Currency::Eur)->create([
+    Account::factory()->inCurrency('EUR')->create([
         'name' => 'Euro cash',
         'type' => AccountType::Bank,
         'opening_balance' => '10.00',

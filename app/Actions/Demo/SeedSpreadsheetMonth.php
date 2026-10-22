@@ -8,7 +8,6 @@ use App\Actions\Budgets\UpdateCategoryBudget;
 use App\Actions\Transactions\CreateTransaction;
 use App\Enums\AccountType;
 use App\Enums\CategoryKind;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -47,7 +46,7 @@ class SeedSpreadsheetMonth
             'name' => 'Cash',
             'icon' => 'banknote',
             'type' => AccountType::Cash,
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'opening_balance' => '0.00',
             'opening_balance_on' => $month->date(),
             'note' => null,
@@ -56,7 +55,7 @@ class SeedSpreadsheetMonth
             'name' => 'Bank',
             'icon' => 'landmark',
             'type' => AccountType::Bank,
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'opening_balance' => '0.00',
             'opening_balance_on' => $month->date(),
             'note' => null,
@@ -119,7 +118,7 @@ class SeedSpreadsheetMonth
             $this->transactions->handle($accounts[$index % 2], $actor, [
                 'type' => $type,
                 'amount' => $part,
-                'currency' => Currency::Rsd,
+                'currency' => 'RSD',
                 'booked_on' => $month->start()->day($day)->toDateString(),
                 'note' => $category->name,
                 'person' => $person,

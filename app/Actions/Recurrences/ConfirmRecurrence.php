@@ -2,7 +2,6 @@
 
 namespace App\Actions\Recurrences;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -29,7 +28,7 @@ class ConfirmRecurrence
      * Turn one pending month into a real transaction. Omitted fields keep the
      * repeating transaction's amount, currency, account and day.
      *
-     * @param  array{amount?: string, refund?: bool, currency?: Currency, account_id?: int, booked_on?: string}  $changes
+     * @param  array{amount?: string, refund?: bool, currency?: string, account_id?: int, booked_on?: string}  $changes
      */
     public function handle(Transaction $template, User $actor, CalendarMonth $month, array $changes = []): Transaction
     {
@@ -108,7 +107,7 @@ class ConfirmRecurrence
     }
 
     /**
-     * @param  array{amount?: string, refund?: bool, currency?: Currency, account_id?: int, booked_on?: string}  $changes
+     * @param  array{amount?: string, refund?: bool, currency?: string, account_id?: int, booked_on?: string}  $changes
      */
     private function account(Transaction $template, User $actor, array $changes): Account
     {
@@ -136,7 +135,7 @@ class ConfirmRecurrence
     }
 
     /**
-     * @param  array{amount?: string, refund?: bool, currency?: Currency, account_id?: int, booked_on?: string}  $changes
+     * @param  array{amount?: string, refund?: bool, currency?: string, account_id?: int, booked_on?: string}  $changes
      */
     private function amount(Transaction $template, array $changes): string
     {
@@ -167,7 +166,7 @@ class ConfirmRecurrence
     }
 
     /**
-     * @param  array{amount?: string, refund?: bool, currency?: Currency, account_id?: int, booked_on?: string}  $changes
+     * @param  array{amount?: string, refund?: bool, currency?: string, account_id?: int, booked_on?: string}  $changes
      */
     private function bookedOn(Transaction $template, CalendarMonth $month, array $changes): Carbon
     {

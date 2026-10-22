@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -117,7 +116,7 @@ test('a transfer moves both balances and is not income or spending', function ()
 
 test('a transfer between currencies uses the fixed rate and leaves the combined total unchanged', function () {
     $user = User::factory()->create();
-    $euros = Account::factory()->inCurrency(Currency::Eur)->create([
+    $euros = Account::factory()->inCurrency('EUR')->create([
         'name' => 'Euro cash',
         'opening_balance' => '100.00',
     ]);

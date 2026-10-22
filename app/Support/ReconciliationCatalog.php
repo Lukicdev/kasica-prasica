@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
@@ -35,7 +34,7 @@ class ReconciliationCatalog
             'account' => [
                 'id' => $account->id,
                 'name' => $account->name,
-                'currency' => $account->currency->value,
+                'currency' => $account->currency,
                 'balance' => $this->money($this->balances->of($account), $account->currency),
             ],
             'people' => $this->people($user),
@@ -98,7 +97,7 @@ class ReconciliationCatalog
             'accounts' => array_values($formAccounts->map(fn (Account $account): array => [
                 'id' => $account->id,
                 'name' => $account->archived_at === null ? $account->name : $account->name.' (archived)',
-                'currency' => $account->currency->value,
+                'currency' => $account->currency,
                 'balance' => $balances[$account->id],
                 'archived' => $account->archived_at !== null,
             ])->all()),
@@ -125,13 +124,13 @@ class ReconciliationCatalog
     /**
      * @return array{amount: string, currency: string, formatted: string, negative: bool}
      */
-    private function money(string $amount, Currency $currency): array
+    private function money(string $amount, string $currency): array
     {
         $normalized = Decimal::of($amount)->toString(MoneyConverter::SCALE);
 
         return [
             'amount' => $normalized,
-            'currency' => $currency->value,
+            'currency' => $currency,
             'formatted' => $this->formatter->format($normalized, $currency),
             'negative' => Decimal::of($normalized)->isNegative(),
         ];

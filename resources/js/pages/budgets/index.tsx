@@ -80,7 +80,7 @@ export default function Budget({
     budget: BudgetFigure;
     unallocated: BudgetFigure;
 }) {
-    const errors = usePage().props.errors;
+    const { currencies, errors } = usePage().props;
     const [savingId, setSavingId] = useState<number | null>(null);
     const [starting, setStarting] = useState(false);
 
@@ -127,8 +127,8 @@ export default function Budget({
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             {editable
-                                ? 'Expense budgets for the month. Click a category to set its amount in dinars.'
-                                : 'Expense budgets for the month. Switch the display currency to RSD to change them.'}
+                                ? `Expense budgets for the month. Click a category to set its amount in ${currencies.base}.`
+                                : `Expense budgets for the month. Switch the display currency to ${currencies.base} to change them.`}
                         </p>
                     </div>
                     <MonthNav
@@ -380,6 +380,7 @@ function BudgetRow({
     saving: boolean;
     onSave: (amount: string) => void;
 }) {
+    const { currencies } = usePage().props;
     const inputRef = useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(category.amount);
@@ -490,7 +491,7 @@ function BudgetRow({
                         <PopoverHeader>
                             <PopoverTitle>{category.name}</PopoverTitle>
                             <PopoverDescription>
-                                Stored in RSD.
+                                Stored in {currencies.base}.
                                 {category.updated_by
                                     ? ` Last changed by ${category.updated_by}.`
                                     : ''}
@@ -515,7 +516,7 @@ function BudgetRow({
                                         inputMode="decimal"
                                         autoComplete="off"
                                         value={value}
-                                        aria-label={`${category.name} budget in RSD`}
+                                        aria-label={`${category.name} budget in ${currencies.base}`}
                                         aria-invalid={error !== null}
                                         data-test="budget-amount"
                                         onChange={(event) => {
@@ -524,7 +525,7 @@ function BudgetRow({
                                         }}
                                     />
                                     <InputGroupAddon align="inline-end">
-                                        <InputGroupText>RSD</InputGroupText>
+                                        <InputGroupText>{currencies.base}</InputGroupText>
                                     </InputGroupAddon>
                                 </InputGroup>
                                 {error ? (

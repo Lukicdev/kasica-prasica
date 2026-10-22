@@ -24,7 +24,9 @@ export function AccountForm({
     const { currencies } = usePage().props;
     const editing = account !== undefined;
     const [type, setType] = useState(account?.type ?? 'cash');
-    const [currency, setCurrency] = useState(account?.currency ?? 'RSD');
+    const [currency, setCurrency] = useState(
+        account?.currency ?? currencies.base,
+    );
     const [icon, setIcon] = useState<string | null>(
         account?.icon ?? accountTypeIcons[account?.type ?? 'cash'] ?? null,
     );

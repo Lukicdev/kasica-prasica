@@ -1,9 +1,8 @@
-import type { CurrencyCode } from '@/types/currency';
 
 export type TransferAccountOption = {
     id: number;
     name: string;
-    currency: CurrencyCode;
+    currency: string;
     balance: string;
     archived: boolean;
 };
@@ -16,7 +15,8 @@ export type TransferPersonOption = {
 export type TransferValues = {
     id: number;
     amount: string;
-    currency: CurrencyCode;
+    currency: string;
+    exchange_rate: string;
     from_account_id: number;
     to_account_id: number | null;
     account_amount: string;
@@ -31,7 +31,7 @@ export type TransferDefaults = {
     to_account_id: number | null;
     person_id: number;
     date: string;
-    currency: CurrencyCode;
+    currency: string;
 };
 
 export type TransferFormPage = {

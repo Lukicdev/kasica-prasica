@@ -12,5 +12,6 @@ class WorkspaceObserver
     public function created(Workspace $workspace): void
     {
         $this->seed->handle($workspace);
+        $workspace->ensureBaseCurrency();
     }
 }

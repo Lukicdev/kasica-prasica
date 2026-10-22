@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Support\Decimal;
 use Database\Factories\TransactionFactory;
@@ -20,8 +19,8 @@ use Illuminate\Support\Carbon;
  *
  * The original amount keeps its currency. account_amount is the movement in
  * the source account's currency. A transfer also stores destination_amount in
- * the destination account's currency. base_amount is the dinar value at the
- * rate stored on the row. Adjustments store a signed account_amount.
+ * the destination account's currency. base_amount is the workspace base value
+ * at the rate stored on the row. Adjustments store a signed account_amount.
  *
  * @property int $id
  * @property int $workspace_id
@@ -31,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $person_id
  * @property TransactionType $type
  * @property string $amount
- * @property Currency $currency
+ * @property string $currency
  * @property string $account_amount
  * @property string|null $destination_amount
  * @property string $base_amount
@@ -93,12 +92,11 @@ class Transaction extends Model
     {
         return [
             'type' => TransactionType::class,
-            'currency' => Currency::class,
             'amount' => 'decimal:2',
             'account_amount' => 'decimal:2',
             'destination_amount' => 'decimal:2',
             'base_amount' => 'decimal:2',
-            'exchange_rate' => 'decimal:6',
+            'exchange_rate' => 'decimal:8',
             'booked_on' => 'date',
             'repeats' => 'boolean',
         ];

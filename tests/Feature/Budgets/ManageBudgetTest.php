@@ -2,7 +2,6 @@
 
 use App\Actions\Budgets\UpdateCategoryBudget;
 use App\Enums\CategoryKind;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\BudgetMonth;
@@ -168,7 +167,7 @@ test('a budget cannot be edited until the month is started or with a bad amount'
 });
 
 test('the euro view shows converted budgets and refuses edits', function () {
-    $user = User::factory()->displaysIn(Currency::Eur)->create();
+    $user = User::factory()->displaysIn('EUR')->create();
     $groceries = Category::query()->where('name', 'Groceries')->first();
     $dining = Category::query()->where('name', 'Dining Out')->first();
 
@@ -505,7 +504,7 @@ test('the planned balance is income so far minus the budget', function () {
 });
 
 test('euro totals are converted from the dinar total', function () {
-    $user = User::factory()->displaysIn(Currency::Eur)->create();
+    $user = User::factory()->displaysIn('EUR')->create();
     $account = Account::factory()->create();
     $salary = Category::query()->where('name', 'Salary')->first();
 

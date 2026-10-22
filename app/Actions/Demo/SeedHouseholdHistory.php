@@ -8,7 +8,6 @@ use App\Actions\Budgets\UpdateCategoryBudget;
 use App\Actions\Transactions\CreateTransaction;
 use App\Enums\AccountType;
 use App\Enums\CategoryKind;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -64,7 +63,7 @@ class SeedHouseholdHistory
             'name' => 'Cash',
             'icon' => 'banknote',
             'type' => AccountType::Cash,
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'opening_balance' => '0.00',
             'opening_balance_on' => $oldest->date(),
             'note' => null,
@@ -77,7 +76,7 @@ class SeedHouseholdHistory
             'name' => 'Bank',
             'icon' => 'landmark',
             'type' => AccountType::Bank,
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'opening_balance' => '0.00',
             'opening_balance_on' => $oldest->date(),
             'note' => null,
@@ -197,7 +196,7 @@ class SeedHouseholdHistory
         $this->transactions->handle($account, $person, [
             'type' => $type,
             'amount' => $amount,
-            'currency' => Currency::Rsd,
+            'currency' => 'RSD',
             'booked_on' => $this->bookedOn($month, $day),
             'note' => $note,
             'person' => $person,

@@ -1,4 +1,4 @@
-import type { CurrencyCode, DisplayedMoney } from '@/types/currency';
+import type { DisplayedMoney } from '@/types/currency';
 
 export type BudgetMonth = {
     value: string;
@@ -14,7 +14,7 @@ export type BudgetCopyFrom = {
 
 export type BudgetFigure = {
     amount: string;
-    currency: CurrencyCode;
+    currency: string;
     formatted: string;
     negative: boolean;
     base_amount: string;

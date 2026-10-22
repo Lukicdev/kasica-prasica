@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests\Settings;
 
-use App\Enums\Currency;
+use App\Rules\EnabledCurrency;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateDisplayCurrencyRequest extends FormRequest
 {
@@ -25,7 +24,7 @@ class UpdateDisplayCurrencyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'currency' => ['required', Rule::enum(Currency::class)],
+            'currency' => ['required', 'string', 'size:3', new EnabledCurrency($this->user())],
         ];
     }
 
@@ -35,13 +34,13 @@ class UpdateDisplayCurrencyRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'currency.required' => 'Choose RSD or EUR.',
-            'currency.enum' => 'Choose RSD or EUR.',
+            'currency.required' => 'Choose a currency.',
+            'currency.size' => 'Choose a currency.',
         ];
     }
 
-    public function currency(): Currency
+    public function currency(): string
     {
-        return Currency::from($this->string('currency')->toString());
+        return strtoupper($this->string('currency')->toString());
     }
 }

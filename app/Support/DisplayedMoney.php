@@ -2,16 +2,14 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
-
 final readonly class DisplayedMoney
 {
     public function __construct(
         public string $amount,
-        public Currency $currency,
+        public string $currency,
         public string $formatted,
         public ?string $originalAmount = null,
-        public ?Currency $originalCurrency = null,
+        public ?string $originalCurrency = null,
         public ?string $originalFormatted = null,
     ) {}
 
@@ -29,10 +27,10 @@ final readonly class DisplayedMoney
     {
         return [
             'amount' => $this->amount,
-            'currency' => $this->currency->value,
+            'currency' => $this->currency,
             'formatted' => $this->formatted,
             'original_amount' => $this->originalAmount,
-            'original_currency' => $this->originalCurrency?->value,
+            'original_currency' => $this->originalCurrency,
             'original_formatted' => $this->originalFormatted,
         ];
     }

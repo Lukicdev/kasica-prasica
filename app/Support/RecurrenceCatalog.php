@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
@@ -61,7 +60,7 @@ class RecurrenceCatalog
         ?int $categoryId = null,
         ?int $accountId = null,
         ?int $personId = null,
-        ?Currency $currency = null,
+        ?string $currency = null,
         string $search = '',
     ): array {
         if ($type instanceof TransactionType && ! $type->isIncomeOrExpense()) {
@@ -92,8 +91,8 @@ class RecurrenceCatalog
             $query->where('person_id', $personId);
         }
 
-        if ($currency instanceof Currency) {
-            $query->where('currency', $currency->value);
+        if (is_string($currency)) {
+            $query->where('currency', $currency);
         }
 
         if ($search !== '') {
@@ -145,6 +144,7 @@ class RecurrenceCatalog
      *         amount: string,
      *         refund: bool,
      *         currency: string,
+     *         exchange_rate: string,
      *         account_id: int,
      *         booked_on: string,
      *         min_date: string,
@@ -190,7 +190,8 @@ class RecurrenceCatalog
                 'note' => $template->note,
                 'amount' => $absolute,
                 'refund' => $template->isRefund(),
-                'currency' => $template->currency->value,
+                'currency' => $template->currency,
+                'exchange_rate' => Rate::trim((string) $template->exchange_rate),
                 'account_id' => $template->account_id,
                 'booked_on' => $date->toDateString(),
                 'min_date' => $month->start()->toDateString(),
@@ -199,7 +200,7 @@ class RecurrenceCatalog
             'accounts' => array_values($accounts->map(fn (Account $account): array => [
                 'id' => $account->id,
                 'name' => $account->archived_at === null ? $account->name : $account->name.' (archived)',
-                'currency' => $account->currency->value,
+                'currency' => $account->currency,
                 'balance' => $balances[$account->id],
                 'archived' => $account->archived_at !== null,
             ])->all()),
@@ -235,7 +236,7 @@ class RecurrenceCatalog
     private function present(Transaction $template, CalendarMonth $month, User $user): array
     {
         $date = $this->schedule->date($template, $month);
-        $base = $this->converter->baseAmount((string) $template->amount, $template->currency, $date);
+        $base = $this->converter->baseAmount((string) $template->amount, $template->currency, $user->workspace, $date);
         $account = $template->account;
         $name = $account->name;
 
@@ -259,6 +260,7 @@ class RecurrenceCatalog
                 $template->currency,
                 $base,
                 $user->display_currency,
+                $user->workspace,
                 $date,
             )->toArray(),
             'status_label' => 'Pending',

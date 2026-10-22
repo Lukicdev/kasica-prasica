@@ -1,7 +1,6 @@
 <?php
 
 use App\Actions\Transactions\CreateTransaction;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
@@ -72,7 +71,7 @@ function recordExpense(
     string $amount,
     string $bookedOn = '2026-10-02',
     ?string $note = null,
-    Currency $currency = Currency::Rsd,
+    string $currency = 'RSD',
 ): Transaction {
     return recordTransaction($account, $user, [
         'type' => TransactionType::Expense,

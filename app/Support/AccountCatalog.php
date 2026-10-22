@@ -2,13 +2,13 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
 use App\Models\Account;
+use App\Models\Workspace;
 use Illuminate\Support\Collection;
 
 /**
  * The account page: balances in each account's currency, and one total in the
- * display currency. The total is converted from the dinar sum.
+ * display currency. The total is converted from the base-currency sum.
  */
 class AccountCatalog
 {
@@ -40,7 +40,7 @@ class AccountCatalog
      *     total: array{amount: string, currency: string, formatted: string, negative: bool}
      * }
      */
-    public function list(Collection $accounts, Currency $display): array
+    public function list(Collection $accounts, string $display, Workspace $workspace): array
     {
         $balances = $this->balances->forAccounts($accounts);
         $grouped = [];
@@ -62,12 +62,12 @@ class AccountCatalog
                 ];
             }
 
-            $grouped[$type]['accounts'][] = $this->summary($account, $balances[$account->id], $display);
+            $grouped[$type]['accounts'][] = $this->summary($account, $balances[$account->id], $display, $workspace);
         }
 
         return [
             'groups' => array_values($grouped),
-            'total' => $this->money($this->displayTotal($accounts, $balances, $display), $display),
+            'total' => $this->money($this->displayTotal($accounts, $balances, $display, $workspace), $display),
         ];
     }
 
@@ -138,7 +138,7 @@ class AccountCatalog
             'name' => $account->name,
             'icon' => $account->icon,
             'type' => $account->type->value,
-            'currency' => $account->currency->value,
+            'currency' => $account->currency,
             'opening_balance' => Decimal::of((string) $account->opening_balance)->toString(MoneyConverter::SCALE),
             'opening_balance_on' => $account->opening_balance_on->toDateString(),
             'note' => $account->note,
@@ -152,20 +152,20 @@ class AccountCatalog
      * @param  Collection<int, Account>  $accounts
      * @param  array<int, string>  $balances
      */
-    public function displayTotal(Collection $accounts, array $balances, Currency $display): string
+    public function displayTotal(Collection $accounts, array $balances, string $display, Workspace $workspace): string
     {
         $total = Decimal::of('0');
 
         foreach ($accounts as $account) {
             $balance = $balances[$account->id];
-            $base = $account->currency->isBase()
+            $base = $account->currency === $workspace->base_currency
                 ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
-                : $this->converter->baseAmount($balance, $account->currency);
+                : $this->converter->baseAmount($balance, $account->currency, $workspace);
 
             $total = $total->add(Decimal::of($base));
         }
 
-        return $this->converter->displayAmount($total->toString(MoneyConverter::SCALE), $display);
+        return $this->converter->displayAmount($total->toString(MoneyConverter::SCALE), $display, $workspace);
     }
 
     /**
@@ -182,7 +182,7 @@ class AccountCatalog
      *     note: string|null
      * }
      */
-    private function summary(Account $account, string $balance, Currency $display): array
+    private function summary(Account $account, string $balance, string $display, Workspace $workspace): array
     {
         return [
             'id' => $account->id,
@@ -190,9 +190,9 @@ class AccountCatalog
             'icon' => $account->icon,
             'type' => $account->type->value,
             'type_label' => $account->type->label(),
-            'currency' => $account->currency->value,
+            'currency' => $account->currency,
             'balance' => $this->money($balance, $account->currency),
-            'display_balance' => $this->displayBalance($account, $balance, $display),
+            'display_balance' => $this->displayBalance($account, $balance, $display, $workspace),
             'archived' => $account->archived_at !== null,
             'note' => $account->note,
         ];
@@ -203,29 +203,29 @@ class AccountCatalog
      *
      * @return array{amount: string, currency: string, formatted: string, negative: bool}|null
      */
-    private function displayBalance(Account $account, string $balance, Currency $display): ?array
+    private function displayBalance(Account $account, string $balance, string $display, Workspace $workspace): ?array
     {
         if ($account->currency === $display) {
             return null;
         }
 
-        $base = $account->currency->isBase()
+        $base = $account->currency === $workspace->base_currency
             ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
-            : $this->converter->baseAmount($balance, $account->currency);
+            : $this->converter->baseAmount($balance, $account->currency, $workspace);
 
-        return $this->money($this->converter->displayAmount($base, $display), $display);
+        return $this->money($this->converter->displayAmount($base, $display, $workspace), $display);
     }
 
     /**
      * @return array{amount: string, currency: string, formatted: string, negative: bool}
      */
-    private function money(string $amount, Currency $currency): array
+    private function money(string $amount, string $currency): array
     {
         $normalized = Decimal::of($amount)->toString(MoneyConverter::SCALE);
 
         return [
             'amount' => $normalized,
-            'currency' => $currency->value,
+            'currency' => $currency,
             'formatted' => $this->formatter->format($normalized, $currency),
             'negative' => Decimal::of($normalized)->isNegative(),
         ];

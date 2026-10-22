@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('display_currency')->default('RSD');
+            $table->string('display_currency', 3);
         });
     }
 

@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Enums\CategoryKind;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Category;
 use App\Models\Transaction;
@@ -50,7 +49,7 @@ class InsightsCatalog
      * @param  EloquentCollection<int, Category>  $categories
      * @return array<string, mixed>
      */
-    private function comparison(Workspace $workspace, EloquentCollection $categories, InsightsQuery $query, Currency $display): array
+    private function comparison(Workspace $workspace, EloquentCollection $categories, InsightsQuery $query, string $display): array
     {
         $transactions = $this->between($workspace, $query->left, $query->right)
             ->filter(fn (Transaction $transaction): bool => $transaction->type === TransactionType::Expense)
@@ -111,6 +110,7 @@ class InsightsCatalog
                 $left[$category->id] ?? '0.00',
                 $right[$category->id] ?? '0.00',
                 $display,
+                $workspace,
             );
         }
 
@@ -125,6 +125,7 @@ class InsightsCatalog
                 $left['none'] ?? '0.00',
                 $right['none'] ?? '0.00',
                 $display,
+                $workspace,
             );
         }
 
@@ -137,9 +138,9 @@ class InsightsCatalog
             'right' => $this->month($query->right),
             'rows' => $rows,
             'total' => [
-                'left' => $this->figure($leftTotal, $display),
-                'right' => $this->figure($rightTotal, $display),
-                'change' => $this->figure($change['base'], $display),
+                'left' => $this->figure($leftTotal, $display, $workspace),
+                'right' => $this->figure($rightTotal, $display, $workspace),
+                'change' => $this->figure($change['base'], $display, $workspace),
                 'direction' => $change['direction'],
                 'direction_label' => $change['label'],
             ],
@@ -158,7 +159,8 @@ class InsightsCatalog
         bool $archived,
         string $left,
         string $right,
-        Currency $display,
+        string $display,
+        Workspace $workspace,
     ): array {
         $change = $this->change($left, $right);
 
@@ -169,9 +171,9 @@ class InsightsCatalog
             'color' => $color,
             'description' => $description,
             'archived' => $archived,
-            'left' => $this->figure($left, $display),
-            'right' => $this->figure($right, $display),
-            'change' => $this->figure($change['base'], $display),
+            'left' => $this->figure($left, $display, $workspace),
+            'right' => $this->figure($right, $display, $workspace),
+            'change' => $this->figure($change['base'], $display, $workspace),
             'direction' => $change['direction'],
             'direction_label' => $change['label'],
         ];
@@ -180,7 +182,7 @@ class InsightsCatalog
     /**
      * @return array<string, mixed>
      */
-    private function trends(Workspace $workspace, Currency $display): array
+    private function trends(Workspace $workspace, string $display): array
     {
         $through = CalendarMonth::current();
         $months = $this->trendMonths($through);
@@ -225,8 +227,8 @@ class InsightsCatalog
                 'value' => $month->value(),
                 'label' => $month->label(),
                 'short_label' => $month->start()->format($withYear ? 'M Y' : 'M'),
-                'income' => $this->figure($bucket['income']->toString(MoneyConverter::SCALE), $display),
-                'spent' => $this->figure($bucket['spent']->toString(MoneyConverter::SCALE), $display),
+                'income' => $this->figure($bucket['income']->toString(MoneyConverter::SCALE), $display, $workspace),
+                'spent' => $this->figure($bucket['spent']->toString(MoneyConverter::SCALE), $display, $workspace),
             ];
         }
 
@@ -342,10 +344,10 @@ class InsightsCatalog
      *     base_amount: string
      * }
      */
-    private function figure(string $baseAmount, Currency $display): array
+    private function figure(string $baseAmount, string $display, Workspace $workspace): array
     {
         $normalized = Decimal::of($baseAmount)->toString(MoneyConverter::SCALE);
-        $presented = $this->converter->present($normalized, Currency::base(), $normalized, $display);
+        $presented = $this->converter->present($normalized, $workspace->base_currency, $normalized, $display, $workspace);
 
         return [
             ...$presented->toArray(),

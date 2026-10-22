@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -141,14 +140,14 @@ test('trends cover the last twelve months', function () {
 
 test('comparison figures follow the display currency', function () {
     $this->travelTo('2026-10-20');
-    $user = User::factory()->displaysIn(Currency::Eur)->create();
+    $user = User::factory()->displaysIn('EUR')->create();
     $account = Account::factory()->create();
     $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
 
     recordTransaction($account, $user, [
         'category' => $groceries,
         'amount' => '10.00',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
         'booked_on' => '2026-10-02',
     ]);
     recordTransaction($account, $user, [

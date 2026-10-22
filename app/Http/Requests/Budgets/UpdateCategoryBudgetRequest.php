@@ -42,7 +42,7 @@ class UpdateCategoryBudgetRequest extends FormRequest
             'category_id.required' => 'Choose an expense category.',
             'category_id.integer' => 'Choose an expense category.',
             'amount.required' => 'Enter an amount.',
-            'amount.regex' => 'Enter an amount in dinars with up to two decimal places.',
+            'amount.regex' => 'Enter an amount with up to two decimal places.',
         ];
     }
 
@@ -59,8 +59,8 @@ class UpdateCategoryBudgetRequest extends FormRequest
                     return;
                 }
 
-                if (! $user->display_currency->isBase()) {
-                    $validator->errors()->add('amount', 'Switch to RSD to edit the budget.');
+                if ($user->display_currency !== $user->workspace->base_currency) {
+                    $validator->errors()->add('amount', "Switch to {$user->workspace->base_currency} to edit the budget.");
                 }
 
                 if ($validator->errors()->has('category_id')) {

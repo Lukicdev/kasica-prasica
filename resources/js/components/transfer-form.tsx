@@ -8,72 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { isEnabledCurrency, rateMap } from '@/lib/currency';
 import {
     addAmounts,
-    divideAmount,
+    convertAmount,
     formatMoney,
-    multiplyAmount,
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import type { CurrencyCode } from '@/types/currency';
 import type {
     TransferAccountOption,
     TransferDefaults,
     TransferPersonOption,
     TransferValues,
 } from '@/types/transfer';
-
-function isCurrency(value: string): value is CurrencyCode {
-    return value === 'RSD' || value === 'EUR';
-}
-
-function convertAmount(
-    amount: string,
-    from: CurrencyCode,
-    to: CurrencyCode,
-    rate: string,
-): string | null {
-    if (from === to) {
-        return normalizeAmount(amount);
-    }
-
-    if (from === 'EUR' && to === 'RSD') {
-        return multiplyAmount(amount, rate);
-    }
-
-    if (from === 'RSD' && to === 'EUR') {
-        return divideAmount(amount, rate);
-    }
-
-    return null;
-}
-
-function arrivingAmount(
-    amount: string,
-    currency: CurrencyCode,
-    from: CurrencyCode,
-    to: CurrencyCode,
-    rate: string,
-): string | null {
-    const normalized = normalizeAmount(amount);
-
-    if (!normalized) {
-        return null;
-    }
-
-    if (currency === to) {
-        return normalized;
-    }
-
-    if (from === to) {
-        return convertAmount(normalized, currency, from, rate);
-    }
-
-    const base = convertAmount(normalized, currency, 'RSD', rate);
-
-    return base ? convertAmount(base, 'RSD', to, rate) : null;
-}
 
 function withoutCurrentTransfer(
     account: TransferAccountOption,
@@ -112,7 +60,8 @@ export function TransferForm({
     defaults: TransferDefaults;
 }) {
     const { currencies } = usePage().props;
-    const rate = currencies.eurToRsd;
+    const enabled = (value: string): boolean =>
+        isEnabledCurrency(value, currencies.supported);
     const editing = transfer !== null;
     const initialFrom =
         accounts.find(
@@ -127,9 +76,9 @@ export function TransferForm({
     const [toId, setToId] = useState(
         String(transfer?.to_account_id ?? defaults.to_account_id ?? ''),
     );
-    const [currency, setCurrency] = useState<CurrencyCode>(
+    const [currency, setCurrency] = useState(
         transfer?.currency ??
-            (initialFrom && isCurrency(initialFrom.currency)
+            (initialFrom && enabled(initialFrom.currency)
                 ? initialFrom.currency
                 : defaults.currency),
     );
@@ -141,17 +90,17 @@ export function TransferForm({
 
     const from = accounts.find((account) => String(account.id) === fromId);
     const to = accounts.find((account) => String(account.id) === toId);
-    const fromCurrency =
-        from && isCurrency(from.currency) ? from.currency : null;
-    const toCurrency = to && isCurrency(to.currency) ? to.currency : null;
+    const rates = rateMap(currencies.supported, transfer, currency);
+    const fromCurrency = from && enabled(from.currency) ? from.currency : null;
+    const toCurrency = to && enabled(to.currency) ? to.currency : null;
     const sameAccount = from !== undefined && from.id === to?.id;
     const leaving =
         fromCurrency && normalizeAmount(amount)
-            ? convertAmount(amount, currency, fromCurrency, rate)
+            ? convertAmount(amount, currency, fromCurrency, rates)
             : null;
     const arriving =
-        fromCurrency && toCurrency && !sameAccount
-            ? arrivingAmount(amount, currency, fromCurrency, toCurrency, rate)
+        toCurrency && !sameAccount
+            ? convertAmount(amount, currency, toCurrency, rates)
             : null;
     const fromBalance =
         from && leaving && !sameAccount
@@ -170,7 +119,7 @@ export function TransferForm({
         setFromId(value);
         const next = accounts.find((account) => String(account.id) === value);
 
-        if (next && isCurrency(next.currency)) {
+        if (next && enabled(next.currency)) {
             setCurrency(next.currency);
         }
     };
@@ -251,7 +200,7 @@ export function TransferForm({
                             required
                             value={currency}
                             onValueChange={(next) => {
-                                if (isCurrency(next)) {
+                                if (enabled(next)) {
                                     setCurrency(next);
                                 }
                             }}
@@ -270,7 +219,7 @@ export function TransferForm({
                                 Exchange rate
                             </span>{' '}
                             <span className="font-medium">
-                                1 EUR = {rate} RSD
+                                1 {currency} = {rates[currency]} {currencies.base}
                             </span>
                             . Both accounts move by this rate.
                         </p>

@@ -53,7 +53,7 @@ class UpdateAccountRequest extends FormRequest
                     return;
                 }
 
-                if ($this->string('currency')->toString() === $account->currency->value) {
+                if (strtoupper($this->string('currency')->toString()) === $account->currency) {
                     return;
                 }
 

@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -88,7 +87,7 @@ test('a recurring expense stays pending until it is confirmed', function () {
         ->and($confirmed->repeats)->toBeFalse()
         ->and($confirmed->type)->toBe(TransactionType::Expense)
         ->and(Decimal::of((string) $confirmed->amount)->toString(2))->toBe('200.00')
-        ->and($confirmed->currency)->toBe(Currency::Rsd)
+        ->and($confirmed->currency)->toBe('RSD')
         ->and($confirmed->account_id)->toBe($account->id)
         ->and($confirmed->category_id)->toBe($mortgage->id)
         ->and($confirmed->person_id)->toBe($user->id)
@@ -125,7 +124,7 @@ test('confirming a recurring expense can change the amount, account and currency
         'name' => 'Cash',
         'opening_balance' => '5000.00',
     ]);
-    $euro = Account::factory()->inCurrency(Currency::Eur)->create([
+    $euro = Account::factory()->inCurrency('EUR')->create([
         'name' => 'Euro card',
         'opening_balance' => '50.00',
     ]);
@@ -166,7 +165,7 @@ test('confirming a recurring expense can change the amount, account and currency
 
     expect($confirmed)->not->toBeNull()
         ->and(Decimal::of((string) $confirmed->amount)->toString(2))->toBe('10.00')
-        ->and($confirmed->currency)->toBe(Currency::Eur)
+        ->and($confirmed->currency)->toBe('EUR')
         ->and($confirmed->account_id)->toBe($euro->id)
         ->and(Decimal::of((string) $confirmed->account_amount)->toString(2))->toBe('10.00')
         ->and(Decimal::of((string) $confirmed->base_amount)->toString(2))->toBe('1175.00')
@@ -486,7 +485,7 @@ function recurringEntry(Account $account, Category $category, User $person, arra
     return array_merge([
         'type' => $category->kind->value,
         'amount' => '42.50',
-        'currency' => $account->currency->value,
+        'currency' => $account->currency,
         'account_id' => $account->id,
         'category_id' => $category->id,
         'booked_on' => '2026-10-02',

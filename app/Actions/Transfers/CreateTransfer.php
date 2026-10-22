@@ -2,7 +2,6 @@
 
 namespace App\Actions\Transfers;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
@@ -20,7 +19,7 @@ class CreateTransfer
     /**
      * @param  array{
      *     amount: string,
-     *     currency: Currency,
+     *     currency: string,
      *     booked_on: CarbonInterface|string,
      *     note?: string|null,
      *     person?: User|null

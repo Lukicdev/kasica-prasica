@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Settings\CurrencyController;
 use App\Http\Controllers\Settings\DisplayCurrencyController;
+use App\Http\Controllers\Settings\ExchangeRateController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -28,6 +30,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::patch('settings/display-currency', DisplayCurrencyController::class)
         ->name('display-currency.update');
+
+    Route::get('settings/currencies', [CurrencyController::class, 'edit'])->name('currencies.edit');
+    Route::post('settings/currencies', [CurrencyController::class, 'store'])->name('currencies.store');
+    Route::patch('settings/currencies/{code}', [CurrencyController::class, 'update'])
+        ->where('code', '[A-Za-z]{3}')
+        ->name('currencies.update');
+    Route::delete('settings/currencies/{code}', [CurrencyController::class, 'destroy'])
+        ->where('code', '[A-Za-z]{3}')
+        ->name('currencies.destroy');
+    Route::patch('settings/base-currency', [CurrencyController::class, 'updateBase'])->name('base-currency.update');
+    Route::post('settings/exchange-rates', ExchangeRateController::class)->name('exchange-rates.store');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

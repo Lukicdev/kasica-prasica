@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\ExchangeRate;
-use App\Support\FixedExchangeRate;
+use App\Support\StoredExchangeRate;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(ExchangeRate::class, FixedExchangeRate::class);
+        $this->app->singleton(ExchangeRate::class, StoredExchangeRate::class);
     }
 
     /**

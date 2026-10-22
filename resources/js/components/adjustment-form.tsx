@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import ReconciliationController from '@/actions/App/Http/Controllers/ReconciliationController';
 import { DatePicker } from '@/components/date-picker';
@@ -14,16 +14,12 @@ import {
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import type { CurrencyCode } from '@/types/currency';
+import { isEnabledCurrency } from '@/lib/currency';
 import type {
     AdjustmentAccountOption,
     AdjustmentValues,
     ReconciliationPerson,
 } from '@/types/reconciliation';
-
-function isCurrency(value: string): value is CurrencyCode {
-    return value === 'RSD' || value === 'EUR';
-}
 
 export function AdjustmentForm({
     adjustment,
@@ -34,6 +30,9 @@ export function AdjustmentForm({
     accounts: AdjustmentAccountOption[];
     people: ReconciliationPerson[];
 }) {
+    const { currencies } = usePage().props;
+    const enabled = (value: string): boolean =>
+        isEnabledCurrency(value, currencies.supported);
     const [amount, setAmount] = useState(adjustment.amount);
     const [accountId, setAccountId] = useState(String(adjustment.account_id));
     const [personId, setPersonId] = useState(
@@ -43,7 +42,7 @@ export function AdjustmentForm({
     const [note, setNote] = useState(adjustment.note ?? '');
     const account = accounts.find((item) => String(item.id) === accountId);
     const currency =
-        account && isCurrency(account.currency) ? account.currency : null;
+        account && enabled(account.currency) ? account.currency : null;
     const signed = normalizeAmount(amount);
     const withoutEntry =
         account === undefined

@@ -3,7 +3,6 @@
 namespace App\Actions\Accounts;
 
 use App\Enums\AccountType;
-use App\Enums\Currency;
 use App\Models\Account;
 use App\Models\User;
 
@@ -14,7 +13,7 @@ class CreateAccount
      *     name: string,
      *     icon: string|null,
      *     type: AccountType,
-     *     currency: Currency,
+     *     currency: string,
      *     opening_balance: string,
      *     opening_balance_on: string,
      *     note: string|null

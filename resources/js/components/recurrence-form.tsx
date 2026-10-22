@@ -8,42 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { isEnabledCurrency, rateMap } from '@/lib/currency';
 import {
     addAmounts,
-    divideAmount,
+    convertAmount,
     formatMoney,
-    multiplyAmount,
     negateAmount,
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import type { CurrencyCode } from '@/types/currency';
 import type { RecurrenceFormPage } from '@/types/recurrence';
-
-function isCurrency(value: string): value is CurrencyCode {
-    return value === 'RSD' || value === 'EUR';
-}
-
-function convertAmount(
-    amount: string,
-    from: CurrencyCode,
-    to: CurrencyCode,
-    rate: string,
-): string | null {
-    if (from === to) {
-        return normalizeAmount(amount);
-    }
-
-    if (from === 'EUR' && to === 'RSD') {
-        return multiplyAmount(amount, rate);
-    }
-
-    if (from === 'RSD' && to === 'EUR') {
-        return divideAmount(amount, rate);
-    }
-
-    return null;
-}
 
 function signedAmount(amount: string, refund: boolean): string | null {
     const normalized = normalizeAmount(amount);
@@ -64,23 +38,25 @@ export function RecurrenceForm({
     accounts,
 }: Pick<RecurrenceFormPage, 'recurrence' | 'accounts'>) {
     const { currencies } = usePage().props;
-    const rate = currencies.eurToRsd;
+    const enabled = (value: string): boolean =>
+        isEnabledCurrency(value, currencies.supported);
     const [amount, setAmount] = useState(recurrence.amount);
     const [refund, setRefund] = useState(recurrence.refund);
     const [accountId, setAccountId] = useState(String(recurrence.account_id));
-    const [currency, setCurrency] = useState<CurrencyCode>(recurrence.currency);
+    const [currency, setCurrency] = useState(recurrence.currency);
     const [date, setDate] = useState(recurrence.booked_on);
 
+    const rates = rateMap(currencies.supported, recurrence, currency);
     const account = accounts.find((item) => String(item.id) === accountId);
     const accountCurrency =
-        account && isCurrency(account.currency) ? account.currency : null;
+        account && enabled(account.currency) ? account.currency : null;
     const signed = signedAmount(
         amount,
         recurrence.type === 'expense' && refund,
     );
     const settled =
         signed && accountCurrency
-            ? convertAmount(signed, currency, accountCurrency, rate)
+            ? convertAmount(signed, currency, accountCurrency, rates)
             : null;
     const nextBalance =
         account && settled
@@ -89,14 +65,14 @@ export function RecurrenceForm({
                 : subtractAmounts(account.balance, settled)
             : null;
     const baseAmount = signed
-        ? convertAmount(signed, currency, 'RSD', rate)
+        ? convertAmount(signed, currency, currencies.base, rates)
         : null;
 
     const changeAccount = (value: string): void => {
         setAccountId(value);
         const next = accounts.find((item) => String(item.id) === value);
 
-        if (next && isCurrency(next.currency)) {
+        if (next && enabled(next.currency)) {
             setCurrency(next.currency);
         }
     };
@@ -200,7 +176,7 @@ export function RecurrenceForm({
                             required
                             value={currency}
                             onValueChange={(next) => {
-                                if (isCurrency(next)) {
+                                if (enabled(next)) {
                                     setCurrency(next);
                                 }
                             }}
@@ -214,13 +190,13 @@ export function RecurrenceForm({
                         <InputError message={errors.currency} />
                     </div>
 
-                    {currency === 'EUR' && baseAmount ? (
+                    {currency !== currencies.base && baseAmount ? (
                         <p className="text-sm">
                             <span className="text-muted-foreground">
-                                In dinars
+                                In {currencies.base}
                             </span>{' '}
                             <span className="font-medium">
-                                {formatMoney(baseAmount, 'RSD')}
+                                {formatMoney(baseAmount, currencies.base)}
                             </span>
                         </p>
                     ) : null}
@@ -247,11 +223,11 @@ export function RecurrenceForm({
                         >
                             <p className="flex flex-wrap items-baseline justify-between gap-2">
                                 <span className="text-muted-foreground">
-                                    Value in RSD
+                                    Value in {currencies.base}
                                 </span>
                                 <span>
                                     {baseAmount
-                                        ? formatMoney(baseAmount, 'RSD')
+                                        ? formatMoney(baseAmount, currencies.base)
                                         : '—'}
                                 </span>
                             </p>

@@ -3,13 +3,13 @@
 namespace App\Support;
 
 use App\Enums\CategoryKind;
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\BudgetMonth;
 use App\Models\Category;
 use App\Models\CategoryBudget;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Collection;
 
 /**
@@ -84,14 +84,14 @@ class BudgetCatalog
                 'next' => $month->next()->value(),
             ],
             'started' => $budgetMonth instanceof BudgetMonth,
-            'editable' => $display->isBase(),
+            'editable' => $display === $workspace->base_currency,
             'copy_from' => $this->copyFrom($user, $month),
             'categories' => array_values($this->visible($categories, $lines)->map(
-                fn (Category $category): array => $this->row($category, $lines->get($category->id), $display),
+                fn (Category $category): array => $this->row($category, $lines->get($category->id), $display, $workspace),
             )->all()),
-            'income' => $this->figure($incomeBase, $display),
-            'budget' => $this->figure($budgetBase, $display),
-            'unallocated' => $this->figure($unallocatedBase, $display),
+            'income' => $this->figure($incomeBase, $display, $workspace),
+            'budget' => $this->figure($budgetBase, $display, $workspace),
+            'unallocated' => $this->figure($unallocatedBase, $display, $workspace),
         ];
     }
 
@@ -198,7 +198,7 @@ class BudgetCatalog
      *     updated_by: string|null
      * }
      */
-    private function row(Category $category, mixed $line, Currency $display): array
+    private function row(Category $category, mixed $line, string $display, Workspace $workspace): array
     {
         $amount = $line instanceof CategoryBudget
             ? Decimal::of((string) $line->amount)->toString(MoneyConverter::SCALE)
@@ -212,7 +212,7 @@ class BudgetCatalog
             'description' => $category->description,
             'archived' => $category->archived_at !== null,
             'amount' => $amount,
-            'display' => $this->converter->present($amount, Currency::base(), $amount, $display)->toArray(),
+            'display' => $this->converter->present($amount, $workspace->base_currency, $amount, $display, $workspace)->toArray(),
             'updated_by' => $this->updatedBy($line),
         ];
     }
@@ -240,14 +240,14 @@ class BudgetCatalog
     /**
      * @return array{amount: string, currency: string, formatted: string, negative: bool, base_amount: string}
      */
-    private function figure(string $baseAmount, Currency $display): array
+    private function figure(string $baseAmount, string $display, Workspace $workspace): array
     {
         $normalized = Decimal::of($baseAmount)->toString(MoneyConverter::SCALE);
-        $amount = $this->converter->displayAmount($normalized, $display);
+        $amount = $this->converter->displayAmount($normalized, $display, $workspace);
 
         return [
             'amount' => $amount,
-            'currency' => $display->value,
+            'currency' => $display,
             'formatted' => $this->formatter->format($amount, $display),
             'negative' => Decimal::of($amount)->isNegative(),
             'base_amount' => $normalized,

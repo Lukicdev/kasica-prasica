@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -60,7 +59,7 @@ test('a member can add an expense and the confirmation shows the new balance', f
     expect($transaction)->not->toBeNull()
         ->and($transaction->type)->toBe(TransactionType::Expense)
         ->and(Decimal::of((string) $transaction->amount)->toString(2))->toBe('42.50')
-        ->and($transaction->currency)->toBe(Currency::Rsd)
+        ->and($transaction->currency)->toBe('RSD')
         ->and(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('42.50')
         ->and(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('42.50')
         ->and(Decimal::of((string) $transaction->exchange_rate)->toString(0))->toBe('1')
@@ -141,7 +140,7 @@ test('a euro amount stores the dinar value from the exchange rate', function () 
     $account = Account::factory()->create([
         'name' => 'Cash',
         'opening_balance' => '2000.00',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
     ]);
     $category = Category::factory()->create();
 
@@ -158,7 +157,7 @@ test('a euro amount stores the dinar value from the exchange rate', function () 
 
     expect($transaction)->not->toBeNull()
         ->and(Decimal::of((string) $transaction->amount)->toString(2))->toBe('10.00')
-        ->and($transaction->currency)->toBe(Currency::Eur)
+        ->and($transaction->currency)->toBe('EUR')
         ->and(Decimal::of((string) $transaction->account_amount)->toString(2))->toBe('1175.00')
         ->and(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('1175.00')
         ->and(Decimal::of((string) $transaction->exchange_rate)->toString(1))->toBe('117.5');
@@ -175,7 +174,7 @@ test('a euro amount stores the dinar value from the exchange rate', function () 
 
 test('a dinar amount on a euro account is converted at the exchange rate', function () {
     $user = User::factory()->create();
-    $account = Account::factory()->inCurrency(Currency::Eur)->create([
+    $account = Account::factory()->inCurrency('EUR')->create([
         'opening_balance' => '10.00',
     ]);
     $category = Category::factory()->create();
@@ -536,7 +535,7 @@ test('the table lists one month and can be filtered', function () {
     $user = User::factory()->create(['name' => 'Ada']);
     $partner = User::factory()->create(['name' => 'Bea']);
     $cash = Account::factory()->create(['name' => 'Cash']);
-    $card = Account::factory()->inCurrency(Currency::Eur)->create(['name' => 'Euro card']);
+    $card = Account::factory()->inCurrency('EUR')->create(['name' => 'Euro card']);
     $groceries = Category::factory()->create(['name' => 'Corner shop']);
     $taxi = Category::factory()->create(['name' => 'Taxi']);
     $salary = Category::factory()->income()->create(['name' => 'Paycheck']);
@@ -727,7 +726,7 @@ test('clicking a column title sorts that column and clicking again reverses it',
     ]);
     $euro = transactionFrom($bea, $card, $alpha, [
         'amount' => '1.00',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
         'account_amount' => '1.00',
         'base_amount' => '117.50',
         'exchange_rate' => '117.5',
@@ -807,7 +806,7 @@ test('clicking a column title sorts that column and clicking again reverses it',
 });
 
 test('the euro total is the dinar total divided once', function () {
-    $user = User::factory()->displaysIn(Currency::Eur)->create();
+    $user = User::factory()->displaysIn('EUR')->create();
     $account = Account::factory()->create();
     $category = Category::factory()->create();
 
@@ -853,7 +852,7 @@ function transactionPayload(Account $account, Category $category, User $person, 
     return array_merge([
         'type' => $category->kind->value,
         'amount' => '42.50',
-        'currency' => $account->currency->value,
+        'currency' => $account->currency,
         'account_id' => $account->id,
         'category_id' => $category->id,
         'booked_on' => '2026-10-02',

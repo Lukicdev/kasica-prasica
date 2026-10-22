@@ -2,16 +2,16 @@
 
 namespace App\Contracts;
 
-use App\Enums\Currency;
+use App\Models\Workspace;
 use Carbon\CarbonInterface;
 
 interface ExchangeRate
 {
     /**
-     * How many dinars one unit of the given currency is worth.
+     * How many units of the workspace base one unit of the currency is worth.
      *
-     * The date is part of the contract so a later dated-rate source can
-     * replace the fixed rate without changing callers. The fixed rate ignores it.
+     * A date selects the quote published on or before that day. Null uses the latest quote.
+     * A manual rate on the workspace ignores the date.
      */
-    public function rsdPerUnit(Currency $currency, ?CarbonInterface $on = null): string;
+    public function basePerUnit(Workspace $workspace, string $currency, ?CarbonInterface $on = null): string;
 }

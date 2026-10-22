@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\AccountType;
-use App\Enums\Currency;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string|null $icon
  * @property AccountType $type
- * @property Currency $currency
+ * @property string $currency
  * @property string $opening_balance
  * @property Carbon $opening_balance_on
  * @property string|null $note
@@ -62,7 +61,6 @@ class Account extends Model
     {
         return [
             'type' => AccountType::class,
-            'currency' => Currency::class,
             'opening_balance' => 'decimal:2',
             'opening_balance_on' => 'date',
             'archived_at' => 'datetime',

@@ -10,16 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { isEnabledCurrency, rateMap } from '@/lib/currency';
 import {
     addAmounts,
-    divideAmount,
+    convertAmount,
     formatMoney,
-    multiplyAmount,
     negateAmount,
     normalizeAmount,
     subtractAmounts,
 } from '@/lib/money';
-import type { CurrencyCode } from '@/types/currency';
 import type {
     TransactionAccountOption,
     TransactionDefaults,
@@ -27,31 +26,6 @@ import type {
     TransactionFormValues,
     TransactionOption,
 } from '@/types/transaction';
-
-function isCurrency(value: string): value is CurrencyCode {
-    return value === 'RSD' || value === 'EUR';
-}
-
-function convertAmount(
-    amount: string,
-    from: CurrencyCode,
-    to: CurrencyCode,
-    rate: string,
-): string | null {
-    if (from === to) {
-        return normalizeAmount(amount);
-    }
-
-    if (from === 'EUR' && to === 'RSD') {
-        return multiplyAmount(amount, rate);
-    }
-
-    if (from === 'RSD' && to === 'EUR') {
-        return divideAmount(amount, rate);
-    }
-
-    return null;
-}
 
 function signedAmount(amount: string, refund: boolean): string | null {
     const normalized = normalizeAmount(amount);
@@ -81,7 +55,8 @@ export function TransactionForm({
     defaults: TransactionDefaults;
 }) {
     const { currencies } = usePage().props;
-    const rate = currencies.eurToRsd;
+    const enabled = (value: string): boolean =>
+        isEnabledCurrency(value, currencies.supported);
     const editing = transaction !== null;
     const initialAccount =
         accounts.find(
@@ -96,9 +71,9 @@ export function TransactionForm({
     const [accountId, setAccountId] = useState(
         String(transaction?.account_id ?? defaults.account_id ?? ''),
     );
-    const [currency, setCurrency] = useState<CurrencyCode>(
+    const [currency, setCurrency] = useState(
         transaction?.currency ??
-            (initialAccount && isCurrency(initialAccount.currency)
+            (initialAccount && enabled(initialAccount.currency)
                 ? initialAccount.currency
                 : defaults.currency),
     );
@@ -113,12 +88,13 @@ export function TransactionForm({
     const [recurring, setRecurring] = useState(transaction?.recurring ?? false);
 
     const account = accounts.find((item) => String(item.id) === accountId);
+    const rates = rateMap(currencies.supported, transaction, currency);
     const accountCurrency =
-        account && isCurrency(account.currency) ? account.currency : null;
+        account && enabled(account.currency) ? account.currency : null;
     const signed = signedAmount(amount, type === 'expense' && refund);
     const settled =
         signed && accountCurrency
-            ? convertAmount(signed, currency, accountCurrency, rate)
+            ? convertAmount(signed, currency, accountCurrency, rates)
             : null;
     const nextBalance =
         account && settled
@@ -127,7 +103,7 @@ export function TransactionForm({
                 : subtractAmounts(account.balance, settled)
             : null;
     const baseAmount = signed
-        ? convertAmount(signed, currency, 'RSD', rate)
+        ? convertAmount(signed, currency, currencies.base, rates)
         : null;
     const categoriesForType = categories.filter(
         (category) => category.kind === type,
@@ -137,7 +113,7 @@ export function TransactionForm({
         setAccountId(value);
         const next = accounts.find((item) => String(item.id) === value);
 
-        if (next && isCurrency(next.currency)) {
+        if (next && enabled(next.currency)) {
             setCurrency(next.currency);
         }
     };
@@ -261,7 +237,7 @@ export function TransactionForm({
                             required
                             value={currency}
                             onValueChange={(next) => {
-                                if (isCurrency(next)) {
+                                if (enabled(next)) {
                                     setCurrency(next);
                                 }
                             }}
@@ -274,13 +250,13 @@ export function TransactionForm({
                         <InputError message={errors.currency} />
                     </div>
 
-                    {currency === 'EUR' && baseAmount ? (
-                        <p className="text-sm" data-test="rsd-value">
+                    {currency !== currencies.base && baseAmount ? (
+                        <p className="text-sm" data-test="base-preview">
                             <span className="text-muted-foreground">
-                                In dinars
+                                In {currencies.base}
                             </span>{' '}
                             <span className="font-medium">
-                                {formatMoney(baseAmount, 'RSD')}
+                                {formatMoney(baseAmount, currencies.base)}
                             </span>
                         </p>
                     ) : null}
@@ -384,11 +360,11 @@ export function TransactionForm({
                         >
                             <p className="flex flex-wrap items-baseline justify-between gap-2">
                                 <span className="text-muted-foreground">
-                                    Value in RSD
+                                    Value in {currencies.base}
                                 </span>
                                 <span data-test="base-amount">
                                     {baseAmount
-                                        ? formatMoney(baseAmount, 'RSD')
+                                        ? formatMoney(baseAmount, currencies.base)
                                         : '—'}
                                 </span>
                             </p>

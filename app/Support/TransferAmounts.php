@@ -2,13 +2,12 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
 use App\Models\Account;
 use Carbon\CarbonInterface;
 use Illuminate\Validation\ValidationException;
 
 /**
- * A transfer's source movement, destination movement, and dinar value.
+ * A transfer's source movement, destination movement, and base-currency value.
  * Both account movements use the rate stored for that date.
  */
 class TransferAmounts
@@ -31,7 +30,7 @@ class TransferAmounts
         Account $from,
         Account $to,
         string $amount,
-        Currency $currency,
+        string $currency,
         CarbonInterface $on,
     ): array {
         $source = $this->amounts->resolve($from, $amount, $currency, $on);
@@ -46,7 +45,7 @@ class TransferAmounts
             ? $source['amount']
             : ($from->currency === $to->currency
                 ? $source['account_amount']
-                : $this->converter->displayAmount($source['base_amount'], $to->currency, $on));
+                : $this->converter->displayAmount($source['base_amount'], $to->currency, $from->workspace, $on));
 
         if (Decimal::of($destinationAmount)->isZero()) {
             throw ValidationException::withMessages([

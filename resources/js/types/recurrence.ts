@@ -26,7 +26,8 @@ export type RecurrenceFormValues = {
     note: string | null;
     amount: string;
     refund: boolean;
-    currency: 'RSD' | 'EUR';
+    currency: string;
+    exchange_rate: string;
     account_id: number;
     booked_on: string;
     min_date: string;
@@ -38,7 +39,7 @@ export type RecurrenceFormPage = {
     accounts: {
         id: number;
         name: string;
-        currency: 'RSD' | 'EUR';
+        currency: string;
         balance: string;
         archived: boolean;
     }[];

@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
@@ -89,7 +88,7 @@ class TransferCatalog
             'accounts' => array_values($formAccounts->map(fn (Account $account): array => [
                 'id' => $account->id,
                 'name' => $account->archived_at === null ? $account->name : $account->name.' (archived)',
-                'currency' => $account->currency->value,
+                'currency' => $account->currency,
                 'balance' => $balances[$account->id],
                 'archived' => $account->archived_at !== null,
             ])->all()),
@@ -107,6 +106,7 @@ class TransferCatalog
      *     id: int,
      *     amount: string,
      *     currency: string,
+     *     exchange_rate: string,
      *     from_account_id: int,
      *     to_account_id: int|null,
      *     account_amount: string,
@@ -121,7 +121,8 @@ class TransferCatalog
         return [
             'id' => $transfer->id,
             'amount' => Decimal::of((string) $transfer->amount)->toString(MoneyConverter::SCALE),
-            'currency' => $transfer->currency->value,
+            'currency' => $transfer->currency,
+            'exchange_rate' => Rate::trim((string) $transfer->exchange_rate),
             'from_account_id' => $transfer->account_id,
             'to_account_id' => $transfer->destination_account_id,
             'account_amount' => Decimal::of((string) $transfer->account_amount)->toString(MoneyConverter::SCALE),
@@ -149,7 +150,7 @@ class TransferCatalog
             'to_account_id' => $to?->id,
             'person_id' => $user->id,
             'date' => $this->date($prefill['date'] ?? null),
-            'currency' => $from?->currency->value ?? Currency::base()->value,
+            'currency' => $from instanceof Account ? $from->currency : $user->workspace->base_currency,
         ];
     }
 

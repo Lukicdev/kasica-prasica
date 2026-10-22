@@ -1,10 +1,9 @@
-import type { CurrencyCode } from '@/types/currency';
 import type { MoneyFigure } from '@/types/account';
 
 export type ReconciliationAccount = {
     id: number;
     name: string;
-    currency: CurrencyCode;
+    currency: string;
     balance: MoneyFigure;
 };
 
@@ -26,7 +25,7 @@ export type ReconciliationCreatePage = {
 export type AdjustmentAccountOption = {
     id: number;
     name: string;
-    currency: CurrencyCode;
+    currency: string;
     balance: string;
     archived: boolean;
 };

@@ -1,4 +1,4 @@
-import type { CurrencyCode, DisplayedMoney } from '@/types/currency';
+import type { DisplayedMoney } from '@/types/currency';
 
 export type TransactionSortColumn =
     | 'date'
@@ -42,7 +42,7 @@ export type TransactionCategoryOption = TransactionOption & {
 };
 
 export type TransactionAccountOption = TransactionOption & {
-    currency: CurrencyCode;
+    currency: string;
     balance: string;
     archived: boolean;
 };
@@ -96,7 +96,8 @@ export type TransactionFormValues = {
     type: 'income' | 'expense';
     amount: string;
     refund: boolean;
-    currency: CurrencyCode;
+    currency: string;
+    exchange_rate: string;
     account_id: number;
     account_amount: string;
     category_id: number | null;
@@ -112,7 +113,7 @@ export type TransactionDefaults = {
     category_id: number | null;
     person_id: number;
     date: string;
-    currency: CurrencyCode;
+    currency: string;
 };
 
 export type TransactionFormCategory = {

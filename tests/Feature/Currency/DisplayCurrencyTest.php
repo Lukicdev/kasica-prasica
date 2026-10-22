@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Currency;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -10,7 +9,7 @@ uses(RefreshDatabase::class);
 test('a new user shows figures in dinars', function () {
     $user = User::factory()->create();
 
-    expect($user->display_currency)->toBe(Currency::Rsd);
+    expect($user->display_currency)->toBe('RSD');
 
     $this->actingAs($user)
         ->get(route('dashboard'))
@@ -18,10 +17,9 @@ test('a new user shows figures in dinars', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('auth.user.display_currency', 'RSD')
             ->where('currencies.base', 'RSD')
-            ->where('currencies.eurToRsd', '117.5')
             ->where('currencies.supported', [
-                ['code' => 'RSD', 'name' => 'Serbian dinar'],
-                ['code' => 'EUR', 'name' => 'Euro'],
+                ['code' => 'RSD', 'name' => 'Serbian Dinar', 'rateToBase' => '1'],
+                ['code' => 'EUR', 'name' => 'Euro', 'rateToBase' => '117.5'],
             ]));
 });
 
@@ -38,13 +36,13 @@ test('a user can remember euros as the display currency', function () {
 
     $user->refresh();
 
-    expect($user->display_currency)->toBe(Currency::Eur)
+    expect($user->display_currency)->toBe('EUR')
         ->and($user->name)->toBe('Ada')
         ->and($user->is_admin)->toBeFalse();
 });
 
 test('a member can switch back to dinars', function () {
-    $user = User::factory()->displaysIn(Currency::Eur)->create();
+    $user = User::factory()->displaysIn('EUR')->create();
 
     $this->actingAs($user)
         ->patch(route('display-currency.update'), [
@@ -52,7 +50,7 @@ test('a member can switch back to dinars', function () {
         ])
         ->assertSessionHasNoErrors();
 
-    expect($user->refresh()->display_currency)->toBe(Currency::Rsd);
+    expect($user->refresh()->display_currency)->toBe('RSD');
 });
 
 test('each user keeps their own display currency', function () {
@@ -65,8 +63,8 @@ test('each user keeps their own display currency', function () {
         ])
         ->assertSessionHasNoErrors();
 
-    expect($ada->refresh()->display_currency)->toBe(Currency::Eur)
-        ->and($bea->refresh()->display_currency)->toBe(Currency::Rsd);
+    expect($ada->refresh()->display_currency)->toBe('EUR')
+        ->and($bea->refresh()->display_currency)->toBe('RSD');
 });
 
 test('an unknown currency is rejected', function () {
@@ -80,7 +78,7 @@ test('an unknown currency is rejected', function () {
         ->assertRedirect(route('dashboard'))
         ->assertSessionHasErrors('currency');
 
-    expect($user->refresh()->display_currency)->toBe(Currency::Rsd);
+    expect($user->refresh()->display_currency)->toBe('RSD');
 });
 
 test('profile updates cannot change the display currency', function () {
@@ -94,7 +92,7 @@ test('profile updates cannot change the display currency', function () {
         ])
         ->assertRedirect(route('profile.edit'));
 
-    expect($user->refresh()->display_currency)->toBe(Currency::Rsd)
+    expect($user->refresh()->display_currency)->toBe('RSD')
         ->and($user->name)->toBe('Renamed');
 });
 
@@ -113,5 +111,5 @@ test('unverified users cannot change the display currency', function () {
         ])
         ->assertRedirect(route('verification.notice'));
 
-    expect($user->refresh()->display_currency)->toBe(Currency::Rsd);
+    expect($user->refresh()->display_currency)->toBe('RSD');
 });

@@ -2,15 +2,14 @@
 
 namespace App\Concerns;
 
-use App\Enums\Currency;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Rules\EnabledCurrency;
 use App\Support\Decimal;
 use App\Support\MoneyConverter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
@@ -34,7 +33,7 @@ trait TransferValidationRules
     {
         return [
             'amount' => ['required', 'regex:/^\d{1,13}(\.\d{1,2})?$/'],
-            'currency' => ['required', Rule::enum(Currency::class)],
+            'currency' => ['required', 'string', 'size:3', new EnabledCurrency($this->user())],
             'from_account_id' => ['required', 'integer'],
             'to_account_id' => ['required', 'integer'],
             'booked_on' => ['required', 'date'],
@@ -51,8 +50,8 @@ trait TransferValidationRules
         return [
             'amount.required' => 'Enter an amount.',
             'amount.regex' => 'Enter an amount greater than zero, with up to two decimal places.',
-            'currency.required' => 'Choose RSD or EUR.',
-            'currency.enum' => 'Choose RSD or EUR.',
+            'currency.required' => 'Choose a currency.',
+            'currency.size' => 'Choose a currency.',
             'from_account_id.required' => 'Choose the account the money leaves.',
             'from_account_id.integer' => 'Choose the account the money leaves.',
             'to_account_id.required' => 'Choose the account the money enters.',
@@ -106,7 +105,7 @@ trait TransferValidationRules
     /**
      * @return array{
      *     amount: string,
-     *     currency: Currency,
+     *     currency: string,
      *     booked_on: string,
      *     note: string|null,
      *     person: User
@@ -131,7 +130,7 @@ trait TransferValidationRules
 
         return [
             'amount' => $this->resolvedAmount,
-            'currency' => Currency::from($this->string('currency')->toString()),
+            'currency' => strtoupper($this->string('currency')->toString()),
             'booked_on' => $bookedOn,
             'note' => $note === '' ? null : $note,
             'person' => $this->resolvedPerson,

@@ -2,13 +2,11 @@
 
 namespace App\Support;
 
-use App\Enums\Currency;
-
 class MoneyFormatter
 {
-    public function format(string $amount, Currency $currency): string
+    public function format(string $amount, string $currency): string
     {
-        return $this->group(Decimal::of($amount)->toString(MoneyConverter::SCALE)).' '.$currency->value;
+        return $this->group(Decimal::of($amount)->toString(MoneyConverter::SCALE)).' '.$currency;
     }
 
     private function group(string $amount): string

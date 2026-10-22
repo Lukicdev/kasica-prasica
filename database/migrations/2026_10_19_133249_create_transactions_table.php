@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('currency', 3);
             $table->decimal('account_amount', 15, 2);
             $table->decimal('base_amount', 15, 2);
-            $table->decimal('exchange_rate', 16, 6);
+            $table->decimal('exchange_rate', 18, 8);
             $table->date('booked_on');
             $table->text('note')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

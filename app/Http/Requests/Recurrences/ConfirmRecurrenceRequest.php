@@ -2,12 +2,11 @@
 
 namespace App\Http\Requests\Recurrences;
 
-use App\Enums\Currency;
 use App\Models\Transaction;
+use App\Rules\EnabledCurrency;
 use App\Support\CalendarMonth;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class ConfirmRecurrenceRequest extends FormRequest
 {
@@ -28,7 +27,7 @@ class ConfirmRecurrenceRequest extends FormRequest
             'month' => ['required', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/'],
             'amount' => ['sometimes', 'required', 'regex:/^-?\d{1,13}(\.\d{1,2})?$/'],
             'refund' => ['sometimes', 'boolean'],
-            'currency' => ['sometimes', 'required', Rule::enum(Currency::class)],
+            'currency' => ['sometimes', 'required', 'string', 'size:3', new EnabledCurrency($this->user())],
             'account_id' => ['sometimes', 'required', 'integer'],
             'booked_on' => ['sometimes', 'required', 'date'],
         ];
@@ -44,8 +43,8 @@ class ConfirmRecurrenceRequest extends FormRequest
             'month.regex' => 'Choose a month.',
             'amount.required' => 'Enter an amount.',
             'amount.regex' => 'Enter an amount with up to two decimal places.',
-            'currency.required' => 'Choose RSD or EUR.',
-            'currency.enum' => 'Choose RSD or EUR.',
+            'currency.required' => 'Choose a currency.',
+            'currency.size' => 'Choose a currency.',
             'account_id.required' => 'Choose an account.',
             'account_id.integer' => 'Choose an account.',
             'booked_on.required' => 'Enter a date.',
@@ -61,7 +60,7 @@ class ConfirmRecurrenceRequest extends FormRequest
     /**
      * Fields the user changed. Anything omitted keeps the repeating transaction.
      *
-     * @return array{amount?: string, refund?: bool, currency?: Currency, account_id?: int, booked_on?: string}
+     * @return array{amount?: string, refund?: bool, currency?: string, account_id?: int, booked_on?: string}
      */
     public function changes(): array
     {
@@ -73,7 +72,7 @@ class ConfirmRecurrenceRequest extends FormRequest
         }
 
         if ($this->exists('currency')) {
-            $changes['currency'] = Currency::from($this->string('currency')->toString());
+            $changes['currency'] = strtoupper($this->string('currency')->toString());
         }
 
         if ($this->exists('account_id')) {

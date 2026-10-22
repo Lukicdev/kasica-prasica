@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Currency;
 use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
@@ -54,7 +53,7 @@ test('a member can create an account', function () {
 
     expect($account)->not->toBeNull()
         ->and($account->type->value)->toBe('bank')
-        ->and($account->currency)->toBe(Currency::Eur)
+        ->and($account->currency)->toBe('EUR')
         ->and(Decimal::of((string) $account->opening_balance)->toString(2))->toBe('17049.79')
         ->and($account->opening_balance_on->toDateString())->toBe('2026-10-01')
         ->and($account->note)->toBe('Wallet in the kitchen')
@@ -156,7 +155,7 @@ test('a member can edit every field while the account has no transactions', func
     $user = User::factory()->create();
     $account = Account::factory()->create([
         'name' => 'Cash',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'opening_balance' => '10.00',
     ]);
 
@@ -176,7 +175,7 @@ test('a member can edit every field while the account has no transactions', func
 
     expect($account->name)->toBe('Kitchen jar')
         ->and($account->type->value)->toBe('savings')
-        ->and($account->currency)->toBe(Currency::Eur)
+        ->and($account->currency)->toBe('EUR')
         ->and(Decimal::of((string) $account->opening_balance)->toString(2))->toBe('80.00')
         ->and($account->opening_balance_on->toDateString())->toBe('2026-02-01')
         ->and($account->note)->toBe('Moved')
@@ -188,7 +187,7 @@ test('currency stays fixed once the account has a transaction', function () {
     $editor = User::factory()->create(['name' => 'Bea']);
     $account = Account::factory()->create([
         'name' => 'Cash',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'opening_balance' => '500.00',
         'created_by' => $owner->id,
         'updated_by' => $owner->id,
@@ -209,7 +208,7 @@ test('currency stays fixed once the account has a transaction', function () {
         ->assertSessionHasErrors('currency');
 
     $account->refresh();
-    expect($account->currency)->toBe(Currency::Rsd)
+    expect($account->currency)->toBe('RSD')
         ->and($account->name)->toBe('Cash');
 
     $this->actingAs($editor)
@@ -290,19 +289,19 @@ test('the list groups accounts by type and totals them in the display currency',
     Account::factory()->create([
         'name' => 'Wallet',
         'type' => 'cash',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'opening_balance' => '100.00',
     ]);
     Account::factory()->create([
         'name' => 'Salary',
         'type' => 'bank',
-        'currency' => Currency::Rsd,
+        'currency' => 'RSD',
         'opening_balance' => '50.00',
     ]);
     Account::factory()->create([
         'name' => 'Current',
         'type' => 'bank',
-        'currency' => Currency::Eur,
+        'currency' => 'EUR',
         'opening_balance' => '10.00',
     ]);
     Account::factory()->archived()->create([
@@ -333,7 +332,7 @@ test('the list groups accounts by type and totals them in the display currency',
 });
 
 test('the euro total is the dinar total divided once', function () {
-    $user = User::factory()->displaysIn(Currency::Eur)->create();
+    $user = User::factory()->displaysIn('EUR')->create();
 
     Account::factory()->create(['name' => 'A', 'opening_balance' => '10.00']);
     Account::factory()->create(['name' => 'B', 'opening_balance' => '10.00']);

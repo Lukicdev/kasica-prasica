@@ -2,12 +2,12 @@
 
 namespace App\Concerns;
 
-use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Rules\EnabledCurrency;
 use App\Support\Decimal;
 use App\Support\MoneyConverter;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -38,7 +38,7 @@ trait TransactionValidationRules
             'type' => ['required', Rule::in([TransactionType::Income->value, TransactionType::Expense->value])],
             'amount' => ['required', 'regex:/^-?\d{1,13}(\.\d{1,2})?$/'],
             'refund' => ['sometimes', 'boolean'],
-            'currency' => ['required', Rule::enum(Currency::class)],
+            'currency' => ['required', 'string', 'size:3', new EnabledCurrency($this->user())],
             'account_id' => ['required', 'integer'],
             'category_id' => ['required', 'integer'],
             'booked_on' => ['required', 'date'],
@@ -59,8 +59,8 @@ trait TransactionValidationRules
             'type.in' => 'Choose income or expense.',
             'amount.required' => 'Enter an amount.',
             'amount.regex' => 'Enter an amount with up to two decimal places.',
-            'currency.required' => 'Choose RSD or EUR.',
-            'currency.enum' => 'Choose RSD or EUR.',
+            'currency.required' => 'Choose a currency.',
+            'currency.size' => 'Choose a currency.',
             'account_id.required' => 'Choose an account.',
             'account_id.integer' => 'Choose an account.',
             'category_id.required' => 'Choose a category.',
@@ -104,7 +104,7 @@ trait TransactionValidationRules
      * @return array{
      *     type: TransactionType,
      *     amount: string,
-     *     currency: Currency,
+     *     currency: string,
      *     booked_on: string,
      *     note: string|null,
      *     person: User,
@@ -136,7 +136,7 @@ trait TransactionValidationRules
         return [
             'type' => TransactionType::from($this->string('type')->toString()),
             'amount' => $this->resolvedAmount,
-            'currency' => Currency::from($this->string('currency')->toString()),
+            'currency' => strtoupper($this->string('currency')->toString()),
             'booked_on' => $bookedOn,
             'note' => $note === '' ? null : $note,
             'person' => $this->resolvedPerson,
