@@ -59,6 +59,7 @@ export type StatementLine = {
     type_label: string;
     category: string | null;
     category_icon: string | null;
+    category_color: string | null;
     note: string | null;
     person: string | null;
     repeats: boolean;

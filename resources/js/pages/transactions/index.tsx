@@ -719,6 +719,9 @@ export default function Transactions({
                                                     icon={
                                                         transaction.category_icon
                                                     }
+                                                    color={
+                                                        transaction.category_color
+                                                    }
                                                 />
                                             </TableCell>
                                             <TableCell className="relative max-w-48 whitespace-normal">

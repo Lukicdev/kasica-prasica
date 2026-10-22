@@ -1,11 +1,14 @@
+import { categoryColorClass } from '@/lib/category-colors';
 import { iconComponent } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
 export function EntityIcon({
     name,
+    color,
     className,
 }: {
     name: string | null;
+    color?: string | null;
     className?: string;
 }) {
     const Icon = iconComponent(name);
@@ -17,7 +20,8 @@ export function EntityIcon({
     return (
         <span
             className={cn(
-                'inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground',
+                'inline-flex size-8 shrink-0 items-center justify-center rounded-md text-foreground',
+                categoryColorClass(color) ?? 'bg-muted',
                 className,
             )}
             aria-hidden="true"

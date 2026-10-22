@@ -24,6 +24,7 @@ export type BudgetCategory = {
     id: number;
     name: string;
     icon: string | null;
+    color: string | null;
     description: string | null;
     archived: boolean;
     amount: string;

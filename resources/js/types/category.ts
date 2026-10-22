@@ -2,6 +2,7 @@ export type CategorySummary = {
     id: number;
     name: string;
     icon: string | null;
+    color: string | null;
     kind: string;
     description: string | null;
     label: string;

@@ -385,7 +385,7 @@ function BudgetRow({
         >
             <div className="flex flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
-                    <EntityIcon name={category.icon} />
+                    <EntityIcon name={category.icon} color={category.color} />
                     {editable ? (
                         <Label htmlFor={inputId} className="font-medium">
                             {category.name}

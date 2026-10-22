@@ -107,7 +107,7 @@ function ComparisonRow({
             data-test="comparison-row"
         >
             <div className="flex flex-wrap items-center gap-2">
-                <EntityIcon name={row.icon} />
+                <EntityIcon name={row.icon} color={row.color} />
                 <span className="font-medium">{row.name}</span>
                 {row.archived ? (
                     <Badge variant="outline">Archived</Badge>

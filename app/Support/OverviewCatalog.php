@@ -102,7 +102,7 @@ class OverviewCatalog
 
         $uncategorisedSpent = $spentByCategory['none'] ?? null;
         if ($uncategorisedSpent !== null) {
-            $expenseRows[] = $this->expenseRow(null, 'Uncategorised', null, null, false, $uncategorisedSpent, '0.00', $display);
+            $expenseRows[] = $this->expenseRow(null, 'Uncategorised', null, null, null, false, $uncategorisedSpent, '0.00', $display);
         }
 
         $sort = $sort === 'overspend' ? 'overspend' : 'category';
@@ -118,7 +118,7 @@ class OverviewCatalog
 
         $uncategorisedIncome = $incomeByCategory['none'] ?? null;
         if ($uncategorisedIncome !== null) {
-            $incomeRows[] = $this->incomeRow(null, 'Uncategorised', null, null, false, $uncategorisedIncome, [], $display);
+            $incomeRows[] = $this->incomeRow(null, 'Uncategorised', null, null, null, false, $uncategorisedIncome, [], $display);
         }
 
         $differenceBase = Decimal::of($spentBase)->subtract(Decimal::of($budgetBase))->toString(MoneyConverter::SCALE);
@@ -293,6 +293,7 @@ class OverviewCatalog
                 $category->name,
                 $category->description,
                 $category->icon,
+                $category->color,
                 $category->archived_at !== null,
                 $incomeByCategory[$category->id] ?? '0.00',
                 $peopleByCategory[$category->id] ?? [],
@@ -312,6 +313,7 @@ class OverviewCatalog
         string $name,
         ?string $description,
         ?string $icon,
+        ?string $color,
         bool $archived,
         string $base,
         array $people,
@@ -321,6 +323,7 @@ class OverviewCatalog
             'id' => $id,
             'name' => $name,
             'icon' => $icon,
+            'color' => $color,
             'description' => $description,
             'archived' => $archived,
             'amount' => $this->figure($base, $display),
@@ -348,6 +351,7 @@ class OverviewCatalog
                 $category->name,
                 $category->description,
                 $category->icon,
+                $category->color,
                 $category->archived_at !== null,
                 $spentByCategory[$category->id] ?? '0.00',
                 $this->budgetAmount($lines, $category->id),
@@ -366,6 +370,7 @@ class OverviewCatalog
         string $name,
         ?string $description,
         ?string $icon,
+        ?string $color,
         bool $archived,
         string $spent,
         string $budget,
@@ -378,6 +383,7 @@ class OverviewCatalog
             'id' => $id,
             'name' => $name,
             'icon' => $icon,
+            'color' => $color,
             'description' => $description,
             'archived' => $archived,
             'spent' => $this->figure($spent, $display),
@@ -601,6 +607,7 @@ class OverviewCatalog
             'id' => $category->id,
             'name' => $category->name,
             'icon' => $category->icon,
+            'color' => $category->color,
             'description' => $category->description,
             'kind' => $category->kind->value,
             'total' => $this->figure($base, $display),

@@ -55,6 +55,7 @@ export type TransactionRow = {
     type_label: string;
     category: string | null;
     category_icon: string | null;
+    category_color: string | null;
     note: string | null;
     account: string;
     person: string | null;

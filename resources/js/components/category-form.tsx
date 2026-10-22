@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import CategoryController from '@/actions/App/Http/Controllers/CategoryController';
+import { ColorPicker } from '@/components/color-picker';
 import { FormSelect } from '@/components/form-select';
 import { IconPicker } from '@/components/icon-picker';
 import InputError from '@/components/input-error';
@@ -19,6 +20,7 @@ export function CategoryForm({
 }) {
     const editing = category !== undefined;
     const [icon, setIcon] = useState<string | null>(category?.icon ?? null);
+    const [color, setColor] = useState<string | null>(category?.color ?? null);
     const [kind, setKind] = useState(category?.kind ?? 'expense');
 
     return (
@@ -44,8 +46,16 @@ export function CategoryForm({
                         <InputError message={errors.name} />
                     </div>
 
-                    <IconPicker id="icon" value={icon} onChange={setIcon} />
+                    <IconPicker
+                        id="icon"
+                        value={icon}
+                        color={color}
+                        onChange={setIcon}
+                    />
                     <InputError message={errors.icon} />
+
+                    <ColorPicker id="color" value={color} onChange={setColor} />
+                    <InputError message={errors.color} />
 
                     <div className="grid gap-2">
                         <Label htmlFor="kind">Kind</Label>

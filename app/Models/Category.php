@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int $workspace_id
  * @property string $name
  * @property string|null $icon
+ * @property string|null $color
  * @property CategoryKind $kind
  * @property string|null $description
  * @property int $position
@@ -38,6 +39,7 @@ use Illuminate\Support\Carbon;
     'workspace_id',
     'name',
     'icon',
+    'color',
     'kind',
     'description',
     'position',

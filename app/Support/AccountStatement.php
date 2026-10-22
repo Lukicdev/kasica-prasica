@@ -62,6 +62,7 @@ class AccountStatement
      *         type_label: string,
      *         category: string|null,
      *         category_icon: string|null,
+         category_color: string|null,
      *         note: string|null,
      *         person: string|null,
      *         repeats: bool,
@@ -99,7 +100,7 @@ class AccountStatement
                 'person:id,name',
                 'account:id,name',
                 'destinationAccount:id,name',
-                'category:id,name,icon',
+                'category:id,name,icon,color',
             ])
             ->skip($offset)
             ->take(self::PER_PAGE)
@@ -119,6 +120,7 @@ class AccountStatement
                 'type_label' => $this->typeLabel($transaction, $account),
                 'category' => $transaction->category?->name,
                 'category_icon' => $transaction->category?->icon,
+                'category_color' => $transaction->category?->color,
                 'note' => $transaction->note,
                 'person' => $transaction->person?->name,
                 'repeats' => $transaction->repeats,
@@ -164,6 +166,7 @@ class AccountStatement
      *     type_label: string,
      *     category: null,
      *     category_icon: null,
+     *     category_color: null,
      *     note: null,
      *     person: null,
      *     repeats: false,
@@ -182,6 +185,7 @@ class AccountStatement
             'type_label' => 'Opening balance',
             'category' => null,
             'category_icon' => null,
+            'category_color' => null,
             'note' => null,
             'person' => null,
             'repeats' => false,

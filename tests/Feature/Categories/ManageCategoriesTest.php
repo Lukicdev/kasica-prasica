@@ -52,7 +52,9 @@ test('a new workspace starts with the spreadsheet categories', function () {
         ->and($expenses->pluck('name')->all())->toBe(array_column(DefaultCategories::forKind(CategoryKind::Expense), 'name'))
         ->and($expenses->firstWhere('name', 'A1 (mobile provider)')->description)->toBe('Mobile provider')
         ->and($expenses->firstWhere('name', 'Groceries')->icon)->toBe('shopping-cart')
+        ->and($expenses->firstWhere('name', 'Groceries')->color)->toBe('lime')
         ->and($income->firstWhere('name', 'Salary')->icon)->toBe('briefcase')
+        ->and($income->firstWhere('name', 'Salary')->color)->toBe('green')
         ->and($income->first()->position)->toBe(1)
         ->and($expenses->last()->position)->toBe(14)
         ->and($categories->every(fn (Category $category): bool => $category->archived_at === null))->toBeTrue();
@@ -82,7 +84,9 @@ test('the category list shows descriptions and the label used when picking one',
             ->where('groups.1.categories.8.description', 'Mobile provider')
             ->where('groups.1.categories.8.label', 'A1 (mobile provider): Mobile provider')
             ->where('groups.1.categories.8.icon', 'smartphone')
+            ->where('groups.1.categories.8.color', 'blue')
             ->where('groups.0.categories.0.icon', 'briefcase')
+            ->where('groups.0.categories.0.color', 'green')
             ->where('groups.1.categories.13.name', 'Medical')
             ->where('groups.1.archived', []));
 });
@@ -148,6 +152,31 @@ test('a member can choose an icon and clear it later', function () {
     expect($category->refresh()->icon)->toBeNull();
 });
 
+test('a member can choose a color and clear it later', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('categories.store'), categoryPayload(['color' => 'rose']))
+        ->assertSessionHasNoErrors();
+
+    $category = Category::query()->where('name', 'Dog food')->first();
+
+    expect($category)->not->toBeNull()
+        ->and($category->color)->toBe('rose');
+
+    $this->actingAs($user)
+        ->get(route('categories.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('groups.1.categories', fn ($categories) => collect($categories)->firstWhere('name', 'Dog food')['color'] === 'rose'));
+
+    $this->actingAs($user)
+        ->patch(route('categories.update', $category), categoryPayload(['color' => '']))
+        ->assertSessionHasNoErrors();
+
+    expect($category->refresh()->color)->toBeNull();
+});
+
 test('a member can add a category at the end of its kind', function () {
     $user = User::factory()->create(['name' => 'Ada']);
 
@@ -205,6 +234,7 @@ test('category details are validated', function (array $overrides, string $field
     'long description' => [['description' => str_repeat('a', 256)], 'description'],
     'duplicate name in the same kind' => [['name' => 'Groceries', 'kind' => 'expense'], 'name'],
     'unknown icon' => [['icon' => 'not-an-icon'], 'icon'],
+    'unknown color' => [['color' => 'not-a-color'], 'color'],
 ]);
 
 test('the same name can exist once as income and once as expense', function () {

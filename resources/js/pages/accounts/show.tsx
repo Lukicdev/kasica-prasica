@@ -197,6 +197,7 @@ export default function AccountShow({
                                                 <CategoryLabel
                                                     name={line.category}
                                                     icon={line.category_icon}
+                                                    color={line.category_color}
                                                 />
                                             </TableCell>
                                             <TableCell className="relative max-w-48 whitespace-normal">

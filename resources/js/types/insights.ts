@@ -11,6 +11,7 @@ export type InsightsComparisonRow = {
     id: number | null;
     name: string;
     icon: string | null;
+    color: string | null;
     description: string | null;
     archived: boolean;
     left: OverviewFigure;

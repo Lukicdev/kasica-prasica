@@ -18,8 +18,8 @@ class CategoryCatalog
      *     groups: list<array{
      *         kind: string,
      *         label: string,
-     *         categories: list<array{id: int, name: string, icon: string|null, kind: string, description: string|null, label: string, archived: bool}>,
-     *         archived: list<array{id: int, name: string, icon: string|null, kind: string, description: string|null, label: string, archived: bool}>
+     *         categories: list<array{id: int, name: string, icon: string|null, color: string|null, kind: string, description: string|null, label: string, archived: bool}>,
+     *         archived: list<array{id: int, name: string, icon: string|null, color: string|null, kind: string, description: string|null, label: string, archived: bool}>
      *     }>
      * }
      */
@@ -67,6 +67,7 @@ class CategoryCatalog
      *     id: int,
      *     name: string,
      *     icon: string|null,
+     *     color: string|null,
      *     kind: string,
      *     description: string|null,
      *     label: string,
@@ -102,7 +103,7 @@ class CategoryCatalog
     }
 
     /**
-     * @return array{id: int, name: string, icon: string|null, kind: string, description: string|null, label: string, archived: bool}
+     * @return array{id: int, name: string, icon: string|null, color: string|null, kind: string, description: string|null, label: string, archived: bool}
      */
     private function summary(Category $category): array
     {
@@ -110,6 +111,7 @@ class CategoryCatalog
             'id' => $category->id,
             'name' => $category->name,
             'icon' => $category->icon,
+            'color' => $category->color,
             'kind' => $category->kind->value,
             'description' => $category->description,
             'label' => $category->choiceLabel(),

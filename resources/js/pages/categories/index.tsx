@@ -88,7 +88,7 @@ function CategoryRow({ category }: { category: CategorySummary }) {
                 href={edit(category.id)}
                 className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
             >
-                <EntityIcon name={category.icon} />
+                <EntityIcon name={category.icon} color={category.color} />
                 <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex min-w-0 items-center gap-2">
                         <span className="truncate font-medium">

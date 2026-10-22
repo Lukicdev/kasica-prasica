@@ -791,7 +791,10 @@ function Drilldown({
                 </Button>
                 <div className="flex flex-col gap-1">
                     <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                        <EntityIcon name={drilldown.icon} />
+                        <EntityIcon
+                            name={drilldown.icon}
+                            color={drilldown.color}
+                        />
                         {drilldown.name}
                     </h2>
                     {drilldown.description ? (
@@ -978,6 +981,7 @@ function CategoryName({
         id: number | null;
         name: string;
         icon: string | null;
+        color: string | null;
         archived: boolean;
     };
     month: OverviewMonth;
@@ -985,7 +989,7 @@ function CategoryName({
 }) {
     return (
         <span className="flex flex-wrap items-center gap-2">
-            <EntityIcon name={row.icon} />
+            <EntityIcon name={row.icon} color={row.color} />
             {row.id === null ? (
                 <span>{row.name}</span>
             ) : (

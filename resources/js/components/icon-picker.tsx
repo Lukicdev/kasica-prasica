@@ -18,11 +18,13 @@ export function IconPicker({
     id,
     name = 'icon',
     value,
+    color,
     onChange,
 }: {
     id: string;
     name?: string;
     value: string | null;
+    color?: string | null;
     onChange: (value: string | null) => void;
 }) {
     const [open, setOpen] = useState(false);
@@ -64,7 +66,7 @@ export function IconPicker({
                         }
                         data-test="icon-picker"
                     >
-                        <EntityIcon name={value} />
+                        <EntityIcon name={value} color={color} />
                         {selected ?? 'Choose an icon'}
                     </Button>
                 </DialogTrigger>

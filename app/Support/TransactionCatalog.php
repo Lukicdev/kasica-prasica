@@ -67,6 +67,7 @@ class TransactionCatalog
      *         type_label: string,
      *         category: string|null,
      *         category_icon: string|null,
+         category_color: string|null,
      *         note: string|null,
      *         account: string,
      *         person: string|null,
@@ -133,7 +134,7 @@ class TransactionCatalog
             ->where('booked_on', '>=', $start->toDateString())
             ->where('booked_on', '<', $nextMonth->toDateString())
             ->with([
-                'category:id,name,icon',
+                'category:id,name,icon,color',
                 'account:id,name',
                 'destinationAccount:id,name',
                 'person:id,name',
@@ -233,6 +234,7 @@ class TransactionCatalog
                 'type_label' => $transaction->typeLabel(),
                 'category' => $transaction->category?->name,
                 'category_icon' => $transaction->category?->icon,
+                'category_color' => $transaction->category?->color,
                 'note' => $transaction->note,
                 'account' => $this->accountLabel($transaction),
                 'person' => $transaction->person?->name,

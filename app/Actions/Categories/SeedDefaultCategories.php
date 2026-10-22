@@ -20,7 +20,9 @@ class SeedDefaultCategories
             return;
         }
 
-        $iconColumn = Schema::hasColumn((new Category)->getTable(), 'icon');
+        $table = (new Category)->getTable();
+        $iconColumn = Schema::hasColumn($table, 'icon');
+        $colorColumn = Schema::hasColumn($table, 'color');
 
         foreach (CategoryKind::ordered() as $kind) {
             foreach (DefaultCategories::forKind($kind) as $index => $category) {
@@ -30,6 +32,7 @@ class SeedDefaultCategories
                     'description' => $category['description'],
                     'position' => $index + 1,
                     ...($iconColumn ? ['icon' => $category['icon']] : []),
+                    ...($colorColumn ? ['color' => $category['color']] : []),
                 ]);
             }
         }
