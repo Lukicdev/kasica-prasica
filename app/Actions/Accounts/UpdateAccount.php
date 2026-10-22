@@ -23,10 +23,6 @@ class UpdateAccount
      */
     public function handle(Account $account, User $actor, array $attributes): Account
     {
-        if ($actor->workspace_id !== $account->workspace_id) {
-            throw new AuthorizationException('This account is outside your workspace.');
-        }
-
         if ($account->transactions()->exists() && $attributes['currency'] !== $account->currency) {
             throw ValidationException::withMessages([
                 'currency' => 'Currency cannot change once the account has transactions.',
