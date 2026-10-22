@@ -21,8 +21,6 @@ class OverviewController extends Controller
         return Inertia::render('overview/index', $this->catalog->page(
             $request->user(),
             CalendarMonth::fromQuery($request->string('month')->toString()),
-            $request->filled('category') ? $request->integer('category') : null,
-            $request->string('sort')->toString() === 'overspend' ? 'overspend' : 'category',
         ));
     }
 }

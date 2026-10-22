@@ -67,54 +67,28 @@ test('a new workspace opens on the current month with first-run guidance', funct
             ->where('month.previous', '2026-09')
             ->where('month.next', '2026-11')
             ->where('month.entry_date', '2026-10-20')
-            ->where('first_run', true)
-            ->where('recorded', false)
-            ->where('budget_started', false)
-            ->where('drilldown', null)
-            ->where('steps', [
-                ['key' => 'account', 'done' => false],
-                ['key' => 'budget', 'done' => false],
-                ['key' => 'transaction', 'done' => false],
-            ])
+            ->missing('first_run')
+            ->missing('income')
+            ->missing('drilldown')
+            ->missing('pending')
+            ->missing('accounts')
             ->where('totals.income.base_amount', '0.00')
             ->where('totals.spent.base_amount', '0.00')
-            ->where('totals.budget.base_amount', '0.00')
-            ->where('totals.difference.base_amount', '0.00')
-            ->where('totals.leftover.base_amount', '0.00')
-            ->where('totals.unallocated.base_amount', '0.00')
             ->where('summary.savings_rate', null)
             ->where('summary.pace.base_amount', '0.00')
             ->where('summary.pace.formatted', '0.00 RSD')
-            ->where('income.rows', fn ($rows) => count($rows) === 3 && collect($rows)->pluck('name')->all() === ['Salary', 'Bonus', 'Gifts and other income'])
+            ->where('flow.points', [])
+            ->where('flow.change', null)
+            ->where('flow.previous', null)
             ->where('expenses.rows', fn ($rows) => count($rows) === 14)
-            ->where('accounts.items', []));
+            ->where('balance.amount', '0.00')
+            ->where('balance.formatted', '0.00 RSD'));
 });
 
-test('first-run steps mark an account and a budget done before any transaction', function () {
+test('a recorded expense shows up in the month total', function () {
     $this->travelTo('2026-10-20');
     $user = User::factory()->create();
     $account = Account::factory()->create(['name' => 'Wallet']);
-
-    $this->actingAs($user)
-        ->get(route('dashboard'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('first_run', true)
-            ->where('steps.0.done', true)
-            ->where('steps.1.done', false)
-            ->where('steps.2.done', false)
-            ->where('accounts.items.0.name', 'Wallet'));
-
-    app(StartBudgetMonth::class)->handle($user, CalendarMonth::fromValue('2026-10'), false);
-
-    $this->actingAs($user)
-        ->get(route('dashboard'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('first_run', true)
-            ->where('budget_started', true)
-            ->where('steps.1.done', true));
-
     $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
 
     app(CreateTransaction::class)->handle($account, $user, [
@@ -130,8 +104,6 @@ test('first-run steps mark an account and a budget done before any transaction',
         ->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('first_run', false)
-            ->where('recorded', true)
             ->where('totals.spent.base_amount', '12.50'));
 });
 
@@ -151,31 +123,15 @@ test('the spreadsheet month matches the expected overview', function () {
             ->where('month.previous', '2026-08')
             ->where('month.next', '2026-10')
             ->where('month.entry_date', '2026-09-01')
-            ->where('first_run', false)
-            ->where('recorded', true)
-            ->where('budget_started', true)
             ->where('totals.income.base_amount', SpreadsheetReference::INCOME)
             ->where('totals.income.formatted', '503,354.00 RSD')
             ->where('totals.spent.base_amount', SpreadsheetReference::SPENT)
             ->where('totals.spent.formatted', '488,076.54 RSD')
-            ->where('totals.budget.base_amount', SpreadsheetReference::BUDGET)
-            ->where('totals.budget.formatted', '455,189.00 RSD')
-            ->where('totals.difference.base_amount', SpreadsheetReference::DIFFERENCE)
-            ->where('totals.difference.formatted', '32,887.54 RSD')
-            ->where('totals.leftover.base_amount', SpreadsheetReference::LEFTOVER)
-            ->where('totals.leftover.formatted', '15,277.46 RSD')
-            ->where('totals.unallocated.base_amount', SpreadsheetReference::UNALLOCATED)
-            ->where('totals.unallocated.formatted', '48,165.00 RSD')
             ->where('summary.savings_rate', 3)
-            ->where('expenses.total.status', 'over')
-            ->where('expenses.total.status_label', 'Over budget')
-            ->where('income.total.base_amount', SpreadsheetReference::INCOME)
-            ->where('income.rows', fn ($rows) => incomeRowsMatch($rows))
             ->where('expenses.rows', fn ($rows) => expenseRowsMatch($rows))
-            ->where('accounts.items', fn ($items) => collect($items)->pluck('name')->all() === ['Cash', 'Bank'])
-            ->where('accounts.total.amount', SpreadsheetReference::LEFTOVER)
-            ->where('accounts.total.currency', 'RSD')
-            ->where('accounts.total.formatted', '15,277.46 RSD'));
+            ->where('balance.amount', SpreadsheetReference::LEFTOVER)
+            ->where('balance.currency', 'RSD')
+            ->where('balance.formatted', '15,277.46 RSD'));
 
     $this->actingAs($second)
         ->get(route('dashboard', ['month' => SpreadsheetReference::MONTH]))
@@ -183,18 +139,15 @@ test('the spreadsheet month matches the expected overview', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('totals.income.base_amount', SpreadsheetReference::INCOME)
             ->where('totals.spent.base_amount', SpreadsheetReference::SPENT)
-            ->where('totals.leftover.base_amount', SpreadsheetReference::LEFTOVER));
+            ->where('balance.amount', SpreadsheetReference::LEFTOVER));
 
     $this->actingAs($first)
         ->get(route('dashboard', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('recorded', false)
-            ->where('first_run', false)
-            ->where('budget_started', false)
             ->where('totals.spent.base_amount', '0.00')
             ->where('totals.income.base_amount', '0.00')
-            ->where('accounts.total.amount', SpreadsheetReference::LEFTOVER));
+            ->where('balance.amount', SpreadsheetReference::LEFTOVER));
 });
 
 test('the overview summary reports the savings rate and the month-end pace', function () {
@@ -250,6 +203,82 @@ test('the overview summary reports the savings rate and the month-end pace', fun
             ->where('summary.pace.base_amount', '232.50'));
 });
 
+test('the balance flow follows the household total through today and the same day last month', function () {
+    $this->travelTo('2026-10-22');
+    $user = User::factory()->create();
+    $account = Account::factory()->create([
+        'opening_balance' => '1000.00',
+        'opening_balance_on' => '2026-01-01',
+    ]);
+    $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
+    $salary = Category::query()->where('name', 'Salary')->firstOrFail();
+
+    app(CreateTransaction::class)->handle($account, $user, [
+        'type' => TransactionType::Expense,
+        'amount' => '200.00',
+        'currency' => Currency::Rsd,
+        'booked_on' => '2026-09-22',
+        'category' => $groceries,
+    ]);
+    app(CreateTransaction::class)->handle($account, $user, [
+        'type' => TransactionType::Expense,
+        'amount' => '100.00',
+        'currency' => Currency::Rsd,
+        'booked_on' => '2026-10-10',
+        'category' => $groceries,
+    ]);
+    app(CreateTransaction::class)->handle($account, $user, [
+        'type' => TransactionType::Income,
+        'amount' => '50.00',
+        'currency' => Currency::Rsd,
+        'booked_on' => '2026-10-20',
+        'category' => $salary,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('flow.from', '1 Oct 2026')
+            ->where('flow.to', '22 Oct 2026')
+            ->where('flow.change.base_amount', '-50.00')
+            ->where('flow.change.formatted', '-50.00 RSD')
+            ->where('flow.points', fn ($points) => count($points) === 22
+                && $points[0]['day'] === 1
+                && $points[0]['amount'] === '800.00'
+                && $points[9]['amount'] === '700.00'
+                && $points[21]['day'] === 22
+                && $points[21]['amount'] === '750.00'
+                && $points[21]['formatted'] === '750.00 RSD')
+            ->where('flow.previous.month', 'September 2026')
+            ->where('flow.previous.day', 22)
+            ->where('flow.previous.balance.base_amount', '800.00')
+            ->where('flow.previous.percent', -6)
+            ->where('flow.previous_points', fn ($points) => count($points) === 30
+                && $points[21]['amount'] === '800.00')
+            ->where('balance.amount', '750.00'));
+
+    $this->actingAs($user)
+        ->get(route('dashboard', ['month' => '2026-09']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('flow.from', '1 Sep 2026')
+            ->where('flow.to', '30 Sep 2026')
+            ->where('flow.change.base_amount', '-200.00')
+            ->where('flow.points', fn ($points) => count($points) === 30 && $points[29]['amount'] === '800.00')
+            ->where('flow.previous.month', 'August 2026')
+            ->where('flow.previous.day', 30)
+            ->where('flow.previous.balance.base_amount', '1000.00')
+            ->where('flow.previous.percent', -20));
+
+    $this->actingAs($user)
+        ->get(route('dashboard', ['month' => '2026-11']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('flow.points', [])
+            ->where('flow.change', null));
+});
+
 test('the euro view converts overview totals from the dinar total', function () {
     [$first] = seedSpreadsheetMonth();
     $first->update(['display_currency' => Currency::Eur]);
@@ -265,14 +294,9 @@ test('the euro view converts overview totals from the dinar total', function () 
             ->where('totals.spent.amount', '4153.84')
             ->where('totals.spent.formatted', '4,153.84 EUR')
             ->where('totals.spent.base_amount', SpreadsheetReference::SPENT)
-            ->where('totals.budget.amount', '3873.95')
-            ->where('totals.budget.formatted', '3,873.95 EUR')
-            ->where('totals.difference.amount', '279.89')
-            ->where('totals.leftover.amount', '130.02')
-            ->where('totals.unallocated.amount', '409.91')
             ->where('summary.savings_rate', 3)
-            ->where('accounts.total.amount', '130.02')
-            ->where('accounts.total.formatted', '130.02 EUR')
+            ->where('balance.amount', '130.02')
+            ->where('balance.formatted', '130.02 EUR')
             ->where('expenses.rows', function ($rows) {
                 $sum = Decimal::of('0');
                 $mortgage = null;
@@ -291,91 +315,6 @@ test('the euro view converts overview totals from the dinar total', function () 
                     && $mortgage['spent']['original_formatted'] === '75,649.00 RSD'
                     && $mortgage['status_label'] === 'Under budget';
             }));
-});
-
-test('a category shows the transactions behind its spent figure', function () {
-    [$first] = seedSpreadsheetMonth();
-    $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
-
-    $this->actingAs($first)
-        ->get(route('dashboard', [
-            'month' => SpreadsheetReference::MONTH,
-            'category' => $groceries->id,
-        ]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('drilldown.id', $groceries->id)
-            ->where('drilldown.name', 'Groceries')
-            ->where('drilldown.kind', 'expense')
-            ->where('drilldown.total.base_amount', '42608.00')
-            ->where('drilldown.budget.base_amount', '39649.00')
-            ->where('drilldown.difference.base_amount', '2959.00')
-            ->where('drilldown.status', 'over')
-            ->where('drilldown.status_label', 'Over budget')
-            ->where('drilldown.transactions', function ($transactions) {
-                $sum = Decimal::of('0');
-
-                foreach ($transactions as $transaction) {
-                    $sum = $sum->add(Decimal::of($transaction['amount']['base_amount']));
-
-                    if (! str_contains((string) $transaction['amount']['formatted'], 'RSD')) {
-                        return false;
-                    }
-                }
-
-                return count($transactions) === 3
-                    && $sum->toString(2) === '42608.00';
-            }));
-
-    $this->actingAs($first)
-        ->get(route('dashboard', [
-            'month' => SpreadsheetReference::MONTH,
-            'category' => 999_999,
-        ]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('drilldown', null));
-});
-
-test('a euro transaction keeps its original amount on the drilldown', function () {
-    $this->travelTo('2026-10-20');
-    $user = User::factory()->create();
-    $account = Account::factory()->create([
-        'name' => 'Euro cash',
-        'icon' => 'wallet',
-    ]);
-    $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
-
-    app(CreateTransaction::class)->handle($account, $user, [
-        'type' => TransactionType::Expense,
-        'amount' => '10.00',
-        'currency' => Currency::Eur,
-        'booked_on' => '2026-10-04',
-        'category' => $groceries,
-        'note' => 'Train ticket',
-    ]);
-
-    $this->actingAs($user)
-        ->get(route('dashboard', ['month' => '2026-10', 'category' => $groceries->id]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('drilldown.total.base_amount', '1175.00')
-            ->where('drilldown.transactions.0.note', 'Train ticket')
-            ->where('drilldown.transactions.0.account', 'Euro cash')
-            ->where('drilldown.transactions.0.account_icon', 'wallet')
-            ->where('drilldown.transactions.0.amount.formatted', '1,175.00 RSD')
-            ->where('drilldown.transactions.0.amount.original_formatted', '10.00 EUR')
-            ->where('drilldown.transactions.0.amount.original_currency', 'EUR'));
-
-    $user->update(['display_currency' => Currency::Eur]);
-
-    $this->actingAs($user)
-        ->get(route('dashboard', ['month' => '2026-10', 'category' => $groceries->id]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('drilldown.transactions.0.amount.formatted', '10.00 EUR')
-            ->where('drilldown.transactions.0.amount.original_formatted', null)
-            ->where('drilldown.total.amount', '10.00')
-            ->where('drilldown.total.formatted', '10.00 EUR'));
 });
 
 test('other months, refunds and archived categories stay in the right rows', function () {
@@ -448,9 +387,7 @@ test('other months, refunds and archived categories stay in the right rows', fun
         ->get(route('dashboard', ['month' => '2026-09']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('budget_started', false)
             ->where('totals.spent.base_amount', '999.00')
-            ->where('totals.budget.base_amount', '0.00')
             ->where('expenses.rows', function ($rows) {
                 $groceries = collect($rows)->firstWhere('name', 'Groceries');
 
@@ -462,7 +399,7 @@ test('other months, refunds and archived categories stay in the right rows', fun
             }));
 });
 
-test('the accounts panel converts the total', function () {
+test('the overview balance converts every account into the display currency', function () {
     $user = User::factory()->create();
     Account::factory()->create([
         'name' => 'Wallet',
@@ -470,7 +407,7 @@ test('the accounts panel converts the total', function () {
         'opening_balance' => '100.00',
         'currency' => Currency::Rsd,
     ]);
-    $euro = Account::factory()->inCurrency(Currency::Eur)->create([
+    Account::factory()->inCurrency(Currency::Eur)->create([
         'name' => 'Euro cash',
         'type' => AccountType::Bank,
         'opening_balance' => '10.00',
@@ -480,17 +417,9 @@ test('the accounts panel converts the total', function () {
         ->get(route('dashboard', ['month' => '2026-10']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('accounts.items', function ($items) use ($euro) {
-                $names = collect($items)->pluck('name');
-                $euroCash = collect($items)->firstWhere('name', 'Euro cash');
-
-                return $names->all() === ['Wallet', 'Euro cash']
-                    && $euroCash['id'] === $euro->id
-                    && $euroCash['balance']['formatted'] === '10.00 EUR'
-                    && $euroCash['balance']['currency'] === 'EUR';
-            })
-            ->where('accounts.total.amount', '1275.00')
-            ->where('accounts.total.formatted', '1,275.00 RSD'));
+            ->where('balance.amount', '1275.00')
+            ->where('balance.currency', 'RSD')
+            ->where('balance.formatted', '1,275.00 RSD'));
 });
 
 /**
@@ -511,27 +440,6 @@ function seedSpreadsheetMonth(): array
     );
 
     return [$first, $second];
-}
-
-function incomeRowsMatch(mixed $rows): bool
-{
-    $byName = collect($rows)->keyBy('name');
-    $salary = $byName->get('Salary');
-    $bonus = $byName->get('Bonus');
-    $gifts = $byName->get('Gifts and other income');
-
-    if (! is_array($salary) || ! is_array($bonus) || ! is_array($gifts) || $byName->count() !== 3) {
-        return false;
-    }
-
-    $people = collect($salary['people'])->keyBy('name');
-
-    return $salary['amount']['base_amount'] === '493354.00'
-        && $people->get('Partner 1')['amount']['base_amount'] === '261434.00'
-        && $people->get('Partner 2')['amount']['base_amount'] === '231920.00'
-        && $bonus['amount']['base_amount'] === '0.00'
-        && $bonus['people'] === []
-        && $gifts['amount']['base_amount'] === '10000.00';
 }
 
 function expenseRowsMatch(mixed $rows): bool
@@ -561,11 +469,17 @@ function expenseRowsMatch(mixed $rows): bool
             default => 'Over budget',
         };
 
+        $budget = Decimal::of($expected['budget']);
+        $percent = $budget->isZero()
+            ? null
+            : (int) Decimal::of($expected['spent'])->multiply(Decimal::of('100'))->divide($budget, 0)->toString(0);
+
         if ($row['spent']['base_amount'] !== $expected['spent']
             || $row['budget']['base_amount'] !== $expected['budget']
             || $row['difference']['base_amount'] !== $difference
             || $row['status'] !== $status
-            || $row['status_label'] !== $label) {
+            || $row['status_label'] !== $label
+            || $row['budget_percent'] !== $percent) {
             return false;
         }
     }

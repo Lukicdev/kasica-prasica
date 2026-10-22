@@ -1,14 +1,11 @@
 <?php
 
-use App\Actions\Budgets\StartBudgetMonth;
-use App\Actions\Budgets\UpdateCategoryBudget;
 use App\Enums\Currency;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Support\CalendarMonth;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -140,50 +137,6 @@ test('trends cover the last twelve months', function () {
                     && $october['income']['base_amount'] === '0.00'
                     && $october['spent']['base_amount'] === '30.00';
             }));
-});
-
-test('the overview can sort and highlight categories by amount over budget', function () {
-    $this->travelTo('2026-10-20');
-    $user = User::factory()->create();
-    $account = Account::factory()->create();
-    $transport = Category::query()->where('name', 'Transportation')->firstOrFail();
-    $medical = Category::query()->where('name', 'Medical')->firstOrFail();
-    $month = CalendarMonth::fromValue('2026-10');
-
-    app(StartBudgetMonth::class)->handle($user, $month, false);
-    app(UpdateCategoryBudget::class)->handle($user, $month, $transport, '10');
-
-    recordTransaction($account, $user, [
-        'category' => $transport,
-        'amount' => '80.00',
-        'booked_on' => '2026-10-04',
-    ]);
-    recordTransaction($account, $user, [
-        'category' => $medical,
-        'amount' => '50.00',
-        'booked_on' => '2026-10-06',
-    ]);
-
-    $this->actingAs($user)
-        ->get(route('dashboard', ['month' => '2026-10']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('expenses.sort', 'category')
-            ->where('expenses.rows.0.name', 'Mortgage')
-            ->where('expenses.overspends.0.name', 'Transportation')
-            ->where('expenses.overspends.0.difference.base_amount', '70.00')
-            ->where('expenses.overspends.0.status', 'over')
-            ->where('expenses.overspends.1.name', 'Medical')
-            ->where('expenses.overspends.1.difference.base_amount', '50.00')
-            ->where('expenses.overspends', fn ($rows): bool => count($rows) === 2));
-
-    $this->actingAs($user)
-        ->get(route('dashboard', ['month' => '2026-10', 'sort' => 'overspend']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('expenses.sort', 'overspend')
-            ->where('expenses.rows.0.name', 'Transportation')
-            ->where('expenses.rows.1.name', 'Medical'));
 });
 
 test('comparison figures follow the display currency', function () {

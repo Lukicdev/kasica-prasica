@@ -1,134 +1,57 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, Minus, Plus } from 'lucide-react';
-import { AccountBalance } from '@/components/account-balance';
-import { AccountLabel } from '@/components/account-label';
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, Plus } from 'lucide-react';
+import { useId, useState } from 'react';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { EntityIcon } from '@/components/entity-icon';
 import { MoneyAmount } from '@/components/money-amount';
 import { MonthNav } from '@/components/month-nav';
-import { PendingRecurrences } from '@/components/pending-recurrences';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig,
+} from '@/components/ui/chart';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import {
-    create as createAccount,
-    index as accounts,
-    show as showAccount,
-} from '@/routes/accounts';
-import { index as budget } from '@/routes/budgets';
+import { edit as editCategory } from '@/routes/categories';
 import { index as insights } from '@/routes/insights';
-import {
-    create as createTransaction,
-    show as showTransaction,
-} from '@/routes/transactions';
-import type { PendingRecurrence } from '@/types/recurrence';
+import { create as createTransaction } from '@/routes/transactions';
+import type { MoneyFigure } from '@/types/account';
 import type {
-    OverviewAccounts,
-    OverviewDrilldown,
     OverviewExpenseRow,
-    OverviewExpenseSort,
-    OverviewExpenseTotal,
     OverviewFigure,
-    OverviewIncomeRow,
+    OverviewFlow,
     OverviewMonth,
-    OverviewStanding,
-    OverviewStep,
     OverviewSummary,
     OverviewTotals,
 } from '@/types/overview';
 
-const steps: Record<
-    OverviewStep['key'],
-    { title: string; body: string; action: string }
-> = {
-    account: {
-        title: 'Create an account',
-        body: 'Add cash, a bank account, or a card. Its balance updates from transactions.',
-        action: 'Create an account',
-    },
-    budget: {
-        title: 'Set a budget',
-        body: 'Give each expense category an amount in dinars for this month.',
-        action: 'Set the budget',
-    },
-    transaction: {
-        title: 'Add a transaction',
-        body: 'Record income or something you just paid.',
-        action: 'Add a transaction',
-    },
-};
-
-function monthQuery(
-    month: string,
-    category: number | null,
-    sort: OverviewExpenseSort,
-) {
-    return {
-        month,
-        category,
-        ...(sort === 'overspend' ? { sort: 'overspend' } : {}),
-    };
-}
-
-function addTransactionHref(categoryId: number, entryDate: string) {
-    return createTransaction({
-        query: {
-            category: categoryId,
-            date: entryDate,
-        },
-    });
+function monthHref(month: string) {
+    return dashboard({ query: { month } });
 }
 
 export default function Overview({
     month,
-    first_run,
-    recorded,
-    budget_started,
-    steps: progress,
-    income,
     expenses,
     totals,
     summary,
-    accounts: accountPanel,
-    drilldown,
-    pending,
+    flow,
+    balance,
 }: {
     month: OverviewMonth;
-    first_run: boolean;
-    recorded: boolean;
-    budget_started: boolean;
-    steps: OverviewStep[];
-    income: { rows: OverviewIncomeRow[]; total: OverviewFigure };
-    expenses: {
-        rows: OverviewExpenseRow[];
-        total: OverviewExpenseTotal;
-        sort: OverviewExpenseSort;
-        overspends: OverviewExpenseRow[];
-    };
+    expenses: { rows: OverviewExpenseRow[] };
     totals: OverviewTotals;
     summary: OverviewSummary;
-    accounts: OverviewAccounts;
-    drilldown: OverviewDrilldown | null;
-    pending: PendingRecurrence[];
+    flow: OverviewFlow;
+    balance: MoneyFigure;
 }) {
-    const accountReady =
-        progress.find((step) => step.key === 'account')?.done ?? false;
-
     return (
         <>
-            <Head
-                title={drilldown ? `${drilldown.name} · Overview` : 'Overview'}
-            />
+            <Head title="Overview" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border">
                     <div className="flex flex-col gap-1">
@@ -175,147 +98,12 @@ export default function Overview({
                     month={month}
                     totals={totals}
                     summary={summary}
-                    balance={accountPanel.total}
-                    sort={expenses.sort}
-                    categoryId={drilldown?.id ?? null}
+                    balance={balance}
                 />
 
-                <PendingRecurrences items={pending} />
-
-                {first_run ? (
-                    <FirstRun
-                        month={month}
-                        progress={progress}
-                        accountReady={accountReady}
-                    />
-                ) : (
-                    <>
-                        <Totals totals={totals} />
-                        {drilldown ? (
-                            <Drilldown
-                                month={month}
-                                drilldown={drilldown}
-                                sort={expenses.sort}
-                            />
-                        ) : (
-                            <>
-                                {!recorded ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        No transactions in {month.label}.
-                                    </p>
-                                ) : null}
-                                {!budget_started ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        This month has no budget yet.{' '}
-                                        <Link
-                                            href={budget({
-                                                query: { month: month.value },
-                                            })}
-                                            className="underline-offset-4 hover:underline"
-                                        >
-                                            Set one
-                                        </Link>
-                                        .
-                                    </p>
-                                ) : null}
-                                <IncomeBlock
-                                    month={month}
-                                    rows={income.rows}
-                                    total={income.total}
-                                    sort={expenses.sort}
-                                />
-                                <ExpenseTable
-                                    month={month}
-                                    rows={expenses.rows}
-                                    total={expenses.total}
-                                    sort={expenses.sort}
-                                    overspends={expenses.overspends}
-                                />
-                            </>
-                        )}
-                    </>
-                )}
-
-                <AccountsPanel panel={accountPanel} />
+                <MonthPicture month={month} rows={expenses.rows} flow={flow} />
             </div>
         </>
-    );
-}
-
-function FirstRun({
-    month,
-    progress,
-    accountReady,
-}: {
-    month: OverviewMonth;
-    progress: OverviewStep[];
-    accountReady: boolean;
-}) {
-    return (
-        <section
-            className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-            data-test="first-run"
-        >
-            <div className="flex flex-col gap-1">
-                <h2 className="font-medium">Nothing recorded yet</h2>
-                <p className="text-sm text-muted-foreground">
-                    Three steps get {month.label} started. You can do them in
-                    any order, but a transaction needs an account.
-                </p>
-            </div>
-            <ol className="flex flex-col gap-3">
-                {progress.map((step, index) => {
-                    const copy = steps[step.key];
-                    const href =
-                        step.key === 'account'
-                            ? createAccount()
-                            : step.key === 'budget'
-                              ? budget({ query: { month: month.value } })
-                              : accountReady
-                                ? createTransaction({
-                                      query: { date: month.entry_date },
-                                  })
-                                : createAccount();
-                    const action =
-                        step.key === 'transaction' && !accountReady
-                            ? 'Create an account first'
-                            : copy.action;
-
-                    return (
-                        <li
-                            key={step.key}
-                            className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border"
-                            data-test={`first-run-${step.key}`}
-                        >
-                            <div className="flex flex-col gap-1">
-                                <span className="font-medium">
-                                    {index + 1}. {copy.title}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                    {copy.body}
-                                </span>
-                                <span className="text-sm">
-                                    {step.done ? 'Done' : 'Not done yet'}
-                                </span>
-                            </div>
-                            {step.done ? null : (
-                                <Button
-                                    asChild
-                                    className="h-11 w-full sm:w-auto md:h-9"
-                                >
-                                    <Link href={href}>
-                                        {step.key === 'budget' ? null : (
-                                            <Plus data-icon="inline-start" />
-                                        )}
-                                        {action}
-                                    </Link>
-                                </Button>
-                            )}
-                        </li>
-                    );
-                })}
-            </ol>
-        </section>
     );
 }
 
@@ -347,15 +135,11 @@ function MonthSummary({
     totals,
     summary,
     balance,
-    sort,
-    categoryId,
 }: {
     month: OverviewMonth;
     totals: OverviewTotals;
     summary: OverviewSummary;
-    balance: OverviewAccounts['total'];
-    sort: OverviewExpenseSort;
-    categoryId: number | null;
+    balance: MoneyFigure;
 }) {
     return (
         <section
@@ -451,663 +235,443 @@ function MonthSummary({
             <div className="flex items-center justify-center border-t border-sidebar-border/70 p-4 lg:border-t-0 lg:border-l dark:border-sidebar-border">
                 <MonthNav
                     value={month.value}
-                    previousHref={dashboard({
-                        query: monthQuery(month.previous, categoryId, sort),
-                    })}
-                    nextHref={dashboard({
-                        query: monthQuery(month.next, categoryId, sort),
-                    })}
-                    hrefFor={(value) =>
-                        dashboard({
-                            query: monthQuery(value, categoryId, sort),
-                        })
-                    }
+                    previousHref={monthHref(month.previous)}
+                    nextHref={monthHref(month.next)}
+                    hrefFor={monthHref}
                 />
             </div>
         </section>
     );
 }
 
-function Totals({ totals }: { totals: OverviewTotals }) {
-    return (
-        <section
-            aria-label="Month totals"
-            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-        >
-            <TotalCard
-                testId="overview-income"
-                label="Income"
-                figure={totals.income}
-                caption="Income recorded this month."
-            />
-            <TotalCard
-                testId="overview-spent"
-                label="Spent"
-                figure={totals.spent}
-                caption="Expenses recorded this month."
-            />
-            <TotalCard
-                testId="overview-budget"
-                label="Budget"
-                figure={totals.budget}
-                caption="Sum of the category budgets."
-            />
-            <TotalCard
-                testId="overview-difference"
-                label="Difference"
-                figure={totals.difference}
-                caption="Spent minus budget. Positive means over budget."
-            />
-            <TotalCard
-                testId="overview-leftover"
-                label="Leftover"
-                figure={totals.leftover}
-                caption="Income minus spent."
-                markNegative
-            />
-            <TotalCard
-                testId="overview-unallocated"
-                label="Unallocated"
-                figure={totals.unallocated}
-                caption="Income minus the budget."
-                markNegative
-            />
-        </section>
-    );
+function barWidth(row: OverviewExpenseRow): number {
+    const spent = Number(row.spent.base_amount);
+    const budget = Number(row.budget.base_amount);
+
+    if (!Number.isFinite(spent) || spent <= 0) {
+        return 0;
+    }
+
+    if (!Number.isFinite(budget) || budget <= 0) {
+        return 100;
+    }
+
+    return Math.min(100, (spent / budget) * 100);
 }
 
-function TotalCard({
-    testId,
-    label,
-    figure,
-    caption,
-    markNegative = false,
+function barTone(row: OverviewExpenseRow): 'over' | 'near' | 'under' {
+    if (row.status === 'over') {
+        return 'over';
+    }
+
+    if (row.budget_percent !== null && row.budget_percent >= 80) {
+        return 'near';
+    }
+
+    return 'under';
+}
+
+const barFill = {
+    over: 'bg-destructive',
+    near: 'bg-primary',
+    under: 'bg-success',
+} as const;
+
+const barBadge = {
+    over: 'destructive',
+    near: 'default',
+    under: 'success',
+} as const;
+
+type SpendingOrder = 'highest' | 'lowest';
+
+function MonthPicture({
+    month,
+    rows,
+    flow,
 }: {
-    testId: string;
-    label: string;
-    figure: OverviewFigure;
-    caption: string;
-    markNegative?: boolean;
+    month: OverviewMonth;
+    rows: OverviewExpenseRow[];
+    flow: OverviewFlow;
 }) {
     return (
-        <div
-            className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-            data-test={testId}
-        >
-            <span className="text-sm text-muted-foreground">{label}</span>
-            <span className="text-lg font-semibold tracking-tight">
-                <MoneyAmount
-                    formatted={figure.formatted}
-                    originalFormatted={figure.original_formatted}
-                />
-            </span>
-            {markNegative && figure.negative ? (
-                <Badge variant="outline">Negative</Badge>
-            ) : null}
-            <span className="text-sm text-muted-foreground">{caption}</span>
+        <div className="grid gap-4 lg:grid-cols-2">
+            <SpendingBars month={month} rows={rows} />
+            <BalanceFlow flow={flow} />
         </div>
     );
 }
 
-function IncomeBlock({
+function SpendingBars({
     month,
     rows,
-    total,
-    sort,
-}: {
-    month: OverviewMonth;
-    rows: OverviewIncomeRow[];
-    total: OverviewFigure;
-    sort: OverviewExpenseSort;
-}) {
-    return (
-        <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-medium text-muted-foreground">
-                Income
-            </h2>
-            <ul
-                className="flex flex-col gap-3"
-                aria-label={`Income in ${month.label}`}
-            >
-                {rows.map((row) => (
-                    <li
-                        key={row.id ?? row.name}
-                        className="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-                        data-test="income-row"
-                    >
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="flex flex-col gap-1">
-                                <CategoryName
-                                    row={row}
-                                    month={month}
-                                    sort={sort}
-                                />
-                                {row.description ? (
-                                    <span className="text-sm text-muted-foreground">
-                                        {row.description}
-                                    </span>
-                                ) : null}
-                            </div>
-                            <span className="font-medium">
-                                <MoneyAmount
-                                    formatted={row.amount.formatted}
-                                    originalFormatted={
-                                        row.amount.original_formatted
-                                    }
-                                />
-                            </span>
-                        </div>
-                        {row.people.length > 0 ? (
-                            <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
-                                {row.people.map((person) => (
-                                    <li
-                                        key={`${row.id ?? 'none'}-${person.id ?? person.name}`}
-                                    >
-                                        {person.name}: {person.amount.formatted}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : null}
-                        {row.id !== null ? (
-                            <AddLink
-                                categoryId={row.id}
-                                name={row.name}
-                                entryDate={month.entry_date}
-                            />
-                        ) : null}
-                    </li>
-                ))}
-            </ul>
-            <p
-                className="flex items-center justify-between gap-3 rounded-xl border border-sidebar-border/70 px-4 py-3 font-medium dark:border-sidebar-border"
-                data-test="income-total"
-            >
-                <span>Total income</span>
-                <MoneyAmount
-                    formatted={total.formatted}
-                    originalFormatted={total.original_formatted}
-                />
-            </p>
-        </section>
-    );
-}
-
-function ExpenseTable({
-    month,
-    rows,
-    total,
-    sort,
-    overspends,
 }: {
     month: OverviewMonth;
     rows: OverviewExpenseRow[];
-    total: OverviewExpenseTotal;
-    sort: OverviewExpenseSort;
-    overspends: OverviewExpenseRow[];
 }) {
+    const [order, setOrder] = useState<SpendingOrder>('highest');
+    const bars = rows
+        .filter(
+            (row) =>
+                row.spent.base_amount !== '0.00' ||
+                row.budget.base_amount !== '0.00',
+        )
+        .sort((left, right) => {
+            const bySpent =
+                Number(left.spent.base_amount) -
+                Number(right.spent.base_amount);
+            const directed = order === 'lowest' ? bySpent : -bySpent;
+
+            if (directed !== 0) {
+                return directed;
+            }
+
+            return left.name.localeCompare(right.name);
+        });
+
     return (
-        <section className="flex flex-col gap-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <h2 className="text-sm font-medium text-muted-foreground">
-                    Expenses
-                </h2>
-                <div
-                    className="grid grid-cols-2 gap-2 sm:flex"
-                    role="group"
-                    aria-label="Sort expenses"
+        <section
+            className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+            data-test="overview-spending"
+        >
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="font-medium">Spending by category</h2>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                        setOrder((current) =>
+                            current === 'highest' ? 'lowest' : 'highest',
+                        )
+                    }
+                    aria-pressed={order === 'lowest'}
+                    data-test="spending-order"
                 >
-                    <Button
-                        asChild
-                        variant={sort === 'category' ? 'default' : 'outline'}
-                        className="h-11 md:h-9"
-                    >
-                        <Link
-                            href={dashboard({
-                                query: monthQuery(
-                                    month.value,
-                                    null,
-                                    'category',
-                                ),
-                            })}
-                            data-test="sort-category"
-                            aria-current={
-                                sort === 'category' ? 'true' : undefined
-                            }
-                        >
-                            Category order
-                        </Link>
-                    </Button>
-                    <Button
-                        asChild
-                        variant={sort === 'overspend' ? 'default' : 'outline'}
-                        className="h-11 md:h-9"
-                    >
-                        <Link
-                            href={dashboard({
-                                query: monthQuery(
-                                    month.value,
-                                    null,
-                                    'overspend',
-                                ),
-                            })}
-                            data-test="sort-overspend"
-                            aria-current={
-                                sort === 'overspend' ? 'true' : undefined
-                            }
-                        >
-                            Biggest overspend
-                        </Link>
-                    </Button>
-                </div>
+                    {order === 'highest' ? (
+                        <ArrowDownWideNarrow data-icon="inline-start" />
+                    ) : (
+                        <ArrowUpWideNarrow data-icon="inline-start" />
+                    )}
+                    {order === 'highest' ? 'Highest first' : 'Lowest first'}
+                </Button>
             </div>
-            <Overspends month={month} rows={overspends} sort={sort} />
-            <div className="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                <Table className="min-w-[44rem]" data-test="expense-table">
-                    <TableCaption className="sr-only">
-                        Expenses for {month.label}. Difference is spent minus
-                        budget.
-                    </TableCaption>
-                    <TableHeader>
-                        <TableRow className="group">
-                            <TableHead
-                                scope="col"
-                                className="sticky left-0 bg-background group-hover:bg-muted/50"
-                            >
-                                Category
-                            </TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Spent
-                            </TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Budget
-                            </TableHead>
-                            <TableHead scope="col" className="text-right">
-                                Difference
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {rows.map((row) => (
-                            <TableRow
+            {bars.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                    No spending or budgets in {month.label}.
+                </p>
+            ) : (
+                <ul
+                    className="flex max-h-80 flex-col gap-4 overflow-y-auto pr-4"
+                    aria-label={`Spending by category in ${month.label}`}
+                >
+                    {bars.map((row) => {
+                        const tone = barTone(row);
+
+                        return (
+                            <li
                                 key={row.id ?? row.name}
-                                className="group"
-                                data-test="expense-row"
+                                className="flex flex-col gap-2"
+                                data-test="spending-bar"
                             >
-                                <TableHead
-                                    scope="row"
-                                    className="sticky left-0 bg-background whitespace-normal group-hover:bg-muted/50"
-                                >
-                                    <div className="flex flex-col items-start gap-1">
-                                        <CategoryName
-                                            row={row}
-                                            month={month}
-                                            sort={sort}
-                                        />
-                                        {row.description ? (
-                                            <span className="font-normal text-muted-foreground">
-                                                {row.description}
+                                <div className="flex items-start justify-between gap-3">
+                                    <CategoryName row={row} />
+                                    <span className="flex flex-col items-end gap-1">
+                                        <span className="flex items-center gap-2">
+                                            <span className="flex flex-col items-end font-medium tabular-nums">
+                                                <MoneyAmount
+                                                    formatted={
+                                                        row.spent.formatted
+                                                    }
+                                                    originalFormatted={
+                                                        row.spent
+                                                            .original_formatted
+                                                    }
+                                                />
+                                                <span className="text-xs text-muted-foreground">
+                                                    of {row.budget.formatted}
+                                                </span>
                                             </span>
-                                        ) : null}
-                                        {row.id !== null ? (
-                                            <AddLink
-                                                categoryId={row.id}
-                                                name={row.name}
-                                                entryDate={month.entry_date}
-                                            />
-                                        ) : null}
-                                    </div>
-                                </TableHead>
-                                <TableCell className="text-right">
-                                    <MoneyAmount
-                                        formatted={row.spent.formatted}
-                                        originalFormatted={
-                                            row.spent.original_formatted
-                                        }
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <MoneyAmount
-                                        formatted={row.budget.formatted}
-                                        originalFormatted={
-                                            row.budget.original_formatted
-                                        }
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right whitespace-normal">
-                                    <div className="flex flex-col items-end gap-1">
-                                        <MoneyAmount
-                                            formatted={row.difference.formatted}
-                                            originalFormatted={
-                                                row.difference
-                                                    .original_formatted
-                                            }
-                                        />
-                                        <Standing
-                                            status={row.status}
-                                            label={row.status_label}
-                                        />
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                    <TableFooter>
-                        <TableRow data-test="expense-total">
-                            <TableHead
-                                scope="row"
-                                className="sticky left-0 bg-muted/50"
-                            >
-                                Total
-                            </TableHead>
-                            <TableCell className="text-right">
-                                <MoneyAmount
-                                    formatted={total.spent.formatted}
-                                    originalFormatted={
-                                        total.spent.original_formatted
-                                    }
-                                />
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <MoneyAmount
-                                    formatted={total.budget.formatted}
-                                    originalFormatted={
-                                        total.budget.original_formatted
-                                    }
-                                />
-                            </TableCell>
-                            <TableCell className="text-right whitespace-normal">
-                                <div className="flex flex-col items-end gap-1">
-                                    <MoneyAmount
-                                        formatted={total.difference.formatted}
-                                        originalFormatted={
-                                            total.difference.original_formatted
-                                        }
-                                    />
-                                    <Standing
-                                        status={total.status}
-                                        label={total.status_label}
+                                            {row.budget_percent === null ? (
+                                                <Badge variant="destructive">
+                                                    No budget
+                                                </Badge>
+                                            ) : (
+                                                <Badge
+                                                    variant={barBadge[tone]}
+                                                    data-test="budget-percent"
+                                                >
+                                                    {row.budget_percent}%
+                                                </Badge>
+                                            )}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div className="h-2 overflow-hidden rounded-full bg-background">
+                                    <div
+                                        className={cn(
+                                            'h-full rounded-full',
+                                            barFill[tone],
+                                        )}
+                                        style={{ width: `${barWidth(row)}%` }}
                                     />
                                 </div>
-                            </TableCell>
-                        </TableRow>
-                    </TableFooter>
-                </Table>
-            </div>
-        </section>
-    );
-}
-
-function Overspends({
-    month,
-    rows,
-    sort,
-}: {
-    month: OverviewMonth;
-    rows: OverviewExpenseRow[];
-    sort: OverviewExpenseSort;
-}) {
-    return (
-        <section
-            className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-            data-test="biggest-overspends"
-        >
-            <div className="flex flex-col gap-1">
-                <h3 className="font-medium">Biggest overspends</h3>
-                <p className="text-sm text-muted-foreground">
-                    Categories where spent is above the budget, largest first.
-                </p>
-            </div>
-            {rows.length === 0 ? (
-                <p className="text-sm">Nothing is over budget this month.</p>
-            ) : (
-                <ol className="flex flex-col gap-2">
-                    {rows.map((row, index) => (
-                        <li
-                            key={row.id ?? row.name}
-                            className="flex flex-wrap items-baseline justify-between gap-2"
-                            data-test="overspend-row"
-                        >
-                            <span className="flex flex-wrap items-center gap-2">
-                                <span className="text-muted-foreground">
-                                    {index + 1}.
-                                </span>
-                                <CategoryName
-                                    row={row}
-                                    month={month}
-                                    sort={sort}
-                                />
-                            </span>
-                            <span className="flex flex-wrap items-center gap-2">
-                                <MoneyAmount
-                                    formatted={row.difference.formatted}
-                                    originalFormatted={
-                                        row.difference.original_formatted
-                                    }
-                                />
-                                <Standing
-                                    status={row.status}
-                                    label={row.status_label}
-                                />
-                            </span>
-                        </li>
-                    ))}
-                </ol>
+                            </li>
+                        );
+                    })}
+                </ul>
             )}
         </section>
     );
 }
 
-function Drilldown({
-    month,
-    drilldown,
-    sort,
-}: {
-    month: OverviewMonth;
-    drilldown: OverviewDrilldown;
-    sort: OverviewExpenseSort;
-}) {
-    const totalLabel = drilldown.kind === 'income' ? 'Received' : 'Spent';
+function BalanceFlow({ flow }: { flow: OverviewFlow }) {
+    return (
+        <section
+            className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+            data-test="overview-flow"
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                    <h2 className="font-medium">Balance flow</h2>
+                    {flow.from && flow.to ? (
+                        <p className="text-sm text-muted-foreground">
+                            {flow.from} – {flow.to}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Household balance through the month.
+                        </p>
+                    )}
+                </div>
+                {flow.change ? (
+                    <span
+                        className="font-medium tabular-nums"
+                        data-test="flow-change"
+                    >
+                        <MoneyAmount
+                            formatted={flow.change.formatted}
+                            originalFormatted={flow.change.original_formatted}
+                            direction={
+                                flow.change.base_amount === '0.00'
+                                    ? null
+                                    : flow.change.negative
+                                      ? 'expense'
+                                      : 'income'
+                            }
+                        />
+                    </span>
+                ) : null}
+            </div>
+            {flow.points.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                    No balance to plot for this month.
+                </p>
+            ) : (
+                <FlowChart flow={flow} />
+            )}
+            {flow.previous ? (
+                <p
+                    className="text-sm text-muted-foreground"
+                    data-test="flow-previous"
+                >
+                    In {flow.previous.month} on day {flow.previous.day}:{' '}
+                    <MoneyAmount
+                        formatted={flow.previous.balance.formatted}
+                        originalFormatted={
+                            flow.previous.balance.original_formatted
+                        }
+                        className="font-medium text-foreground"
+                    />
+                    {flow.previous.percent === null ? null : (
+                        <span
+                            className={cn(
+                                'font-medium',
+                                flow.previous.percent > 0 && 'text-success',
+                                flow.previous.percent < 0 && 'text-destructive',
+                            )}
+                        >
+                            {' '}
+                            ({flow.previous.percent > 0 ? '+' : ''}
+                            {flow.previous.percent}%)
+                        </span>
+                    )}
+                </p>
+            ) : null}
+        </section>
+    );
+}
+
+const flowChartConfig = {
+    balance: {
+        label: 'This month',
+        color: 'var(--chart-1)',
+    },
+    previous: {
+        label: 'Previous month',
+        color: 'var(--chart-2)',
+    },
+} satisfies ChartConfig;
+
+type FlowChartRow = {
+    day: string;
+    balance: number | null;
+    previous: number | null;
+    balanceFormatted: string | null;
+    previousFormatted: string | null;
+};
+
+function flowChartData(flow: OverviewFlow): FlowChartRow[] {
+    const days = Math.max(
+        0,
+        ...flow.points.map((point) => point.day),
+        ...flow.previous_points.map((point) => point.day),
+    );
+    const balance = new Map(flow.points.map((point) => [point.day, point]));
+    const previous = new Map(
+        flow.previous_points.map((point) => [point.day, point]),
+    );
+
+    return Array.from({ length: days }, (_, index) => {
+        const day = index + 1;
+        const current = balance.get(day);
+        const earlier = previous.get(day);
+
+        return {
+            day: String(day),
+            balance: current ? Number(current.amount) : null,
+            previous: earlier ? Number(earlier.amount) : null,
+            balanceFormatted: current?.formatted ?? null,
+            previousFormatted: earlier?.formatted ?? null,
+        };
+    });
+}
+
+function FlowChart({ flow }: { flow: OverviewFlow }) {
+    const gradientId = useId().replace(/:/g, '');
+    const data = flowChartData(flow);
+    const hasPrevious = flow.previous_points.length > 0;
 
     return (
-        <section className="flex flex-col gap-4" data-test="drilldown">
-            <div className="flex flex-col gap-3">
-                <Button
-                    asChild
-                    variant="outline"
-                    className="h-11 w-full sm:w-auto md:h-9"
-                >
-                    <Link
-                        href={dashboard({
-                            query: monthQuery(month.value, null, sort),
-                        })}
-                        data-test="back-to-overview"
-                    >
-                        Back to {month.label}
-                    </Link>
-                </Button>
-                <div className="flex flex-col gap-1">
-                    <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                        <EntityIcon
-                            name={drilldown.icon}
-                            color={drilldown.color}
-                        />
-                        {drilldown.name}
-                    </h2>
-                    {drilldown.description ? (
-                        <p className="text-sm text-muted-foreground">
-                            {drilldown.description}
-                        </p>
-                    ) : null}
-                    <p className="text-sm text-muted-foreground">
-                        {drilldown.transactions.length === 1
-                            ? '1 transaction'
-                            : `${drilldown.transactions.length} transactions`}{' '}
-                        add up to this {totalLabel.toLowerCase()} figure.
-                    </p>
-                </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-                <TotalCard
-                    testId="drilldown-total"
-                    label={totalLabel}
-                    figure={drilldown.total}
-                    caption="Sum of the transactions below, in the display currency."
+        <ChartContainer
+            config={flowChartConfig}
+            className="aspect-auto h-44 w-full"
+            aria-label={
+                flow.from && flow.to
+                    ? `Balance from ${flow.from} to ${flow.to}`
+                    : 'Balance through the month'
+            }
+        >
+            <AreaChart
+                accessibilityLayer
+                data={data}
+                margin={{ left: 12, right: 12 }}
+            >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={16}
                 />
-                {drilldown.budget ? (
-                    <TotalCard
-                        testId="drilldown-budget"
-                        label="Budget"
-                        figure={drilldown.budget}
-                        caption="The plan for this category."
+                <ChartTooltip
+                    cursor={false}
+                    content={
+                        <ChartTooltipContent
+                            labelFormatter={(value) => `Day ${value}`}
+                            formatter={(value, name, item) => {
+                                const key =
+                                    name === 'previous'
+                                        ? 'previousFormatted'
+                                        : 'balanceFormatted';
+                                const formatted = item.payload?.[key];
+
+                                return (
+                                    <span className="flex flex-1 items-center justify-between gap-2">
+                                        <span className="text-muted-foreground">
+                                            {
+                                                flowChartConfig[
+                                                    name === 'previous'
+                                                        ? 'previous'
+                                                        : 'balance'
+                                                ].label
+                                            }
+                                        </span>
+                                        <span className="font-medium text-foreground tabular-nums">
+                                            {typeof formatted === 'string'
+                                                ? formatted
+                                                : String(value)}
+                                        </span>
+                                    </span>
+                                );
+                            }}
+                        />
+                    }
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                <defs>
+                    <linearGradient
+                        id={`${gradientId}-balance`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop
+                            offset="5%"
+                            stopColor="var(--color-balance)"
+                            stopOpacity={0.8}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor="var(--color-balance)"
+                            stopOpacity={0.1}
+                        />
+                    </linearGradient>
+                    {hasPrevious ? (
+                        <linearGradient
+                            id={`${gradientId}-previous`}
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="5%"
+                                stopColor="var(--color-previous)"
+                                stopOpacity={0.8}
+                            />
+                            <stop
+                                offset="95%"
+                                stopColor="var(--color-previous)"
+                                stopOpacity={0.1}
+                            />
+                        </linearGradient>
+                    ) : null}
+                </defs>
+                {hasPrevious ? (
+                    <Area
+                        dataKey="previous"
+                        type="natural"
+                        fill={`url(#${gradientId}-previous)`}
+                        fillOpacity={0.4}
+                        stroke="var(--color-previous)"
                     />
                 ) : null}
-                {drilldown.difference &&
-                drilldown.status &&
-                drilldown.status_label ? (
-                    <div
-                        className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-                        data-test="drilldown-difference"
-                    >
-                        <span className="text-sm text-muted-foreground">
-                            Difference
-                        </span>
-                        <span className="text-lg font-semibold tracking-tight">
-                            <MoneyAmount
-                                formatted={drilldown.difference.formatted}
-                                originalFormatted={
-                                    drilldown.difference.original_formatted
-                                }
-                            />
-                        </span>
-                        <Standing
-                            status={drilldown.status}
-                            label={drilldown.status_label}
-                        />
-                    </div>
-                ) : null}
-            </div>
-
-            {drilldown.transactions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                    No transactions in {drilldown.name} for {month.label}.
-                </p>
-            ) : (
-                <ul className="flex flex-col gap-3" aria-label={drilldown.name}>
-                    {drilldown.transactions.map((transaction) => (
-                        <li key={transaction.id}>
-                            <Link
-                                href={showTransaction(transaction.id)}
-                                className="flex flex-col gap-1 rounded-xl border border-sidebar-border/70 p-4 transition-colors hover:bg-accent dark:border-sidebar-border"
-                                data-test="drilldown-transaction"
-                            >
-                                <span className="flex flex-wrap items-baseline justify-between gap-2">
-                                    <time
-                                        dateTime={transaction.date}
-                                        className="font-medium"
-                                    >
-                                        {transaction.date_label}
-                                    </time>
-                                    <MoneyAmount
-                                        formatted={transaction.amount.formatted}
-                                        originalFormatted={
-                                            transaction.amount
-                                                .original_formatted
-                                        }
-                                    />
-                                </span>
-                                <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <AccountLabel
-                                        name={transaction.account}
-                                        icon={transaction.account_icon}
-                                    />
-                                    {transaction.person ? (
-                                        <span>· {transaction.person}</span>
-                                    ) : null}
-                                </span>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </section>
-    );
-}
-
-function AccountsPanel({ panel }: { panel: OverviewAccounts }) {
-    return (
-        <section
-            aria-label="Accounts"
-            className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-            data-test="overview-accounts"
-        >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="font-medium">Accounts</h2>
-                <Button
-                    asChild
-                    variant="outline"
-                    className="h-11 w-full sm:w-auto md:h-9"
-                >
-                    <Link href={accounts()} data-test="overview-all-accounts">
-                        All accounts
-                    </Link>
-                </Button>
-            </div>
-            {panel.items.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                    No accounts yet.{' '}
-                    <Link
-                        href={createAccount()}
-                        className="underline-offset-4 hover:underline"
-                    >
-                        Create one
-                    </Link>
-                    .
-                </p>
-            ) : (
-                <ul className="flex flex-col divide-y divide-sidebar-border/70">
-                    {panel.items.map((account) => (
-                        <li key={account.id}>
-                            <Link
-                                href={showAccount(account.id)}
-                                className="flex min-h-11 flex-wrap items-center justify-between gap-2 py-3"
-                            >
-                                <span className="flex flex-wrap items-center gap-2">
-                                    <EntityIcon name={account.icon} />
-                                    <span className="font-medium">
-                                        {account.name}
-                                    </span>
-                                    {account.archived ? (
-                                        <Badge variant="outline">
-                                            Archived
-                                        </Badge>
-                                    ) : null}
-                                </span>
-                                <AccountBalance balance={account.balance} />
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            )}
-            <p
-                className="flex flex-wrap items-baseline justify-between gap-2 border-t border-sidebar-border/70 pt-3"
-                data-test="overview-account-total"
-            >
-                <span className="text-sm text-muted-foreground">
-                    Total in {panel.total.currency}
-                </span>
-                <span className="font-semibold">
-                    <AccountBalance balance={panel.total} />
-                </span>
-            </p>
-        </section>
+                <Area
+                    dataKey="balance"
+                    type="natural"
+                    fill={`url(#${gradientId}-balance)`}
+                    fillOpacity={0.4}
+                    stroke="var(--color-balance)"
+                />
+            </AreaChart>
+        </ChartContainer>
     );
 }
 
 function CategoryName({
     row,
-    month,
-    sort,
 }: {
     row: {
         id: number | null;
@@ -1116,8 +680,6 @@ function CategoryName({
         color: string | null;
         archived: boolean;
     };
-    month: OverviewMonth;
-    sort: OverviewExpenseSort;
 }) {
     return (
         <span className="flex flex-wrap items-center gap-2">
@@ -1126,9 +688,7 @@ function CategoryName({
                 <span>{row.name}</span>
             ) : (
                 <Link
-                    href={dashboard({
-                        query: monthQuery(month.value, row.id, sort),
-                    })}
+                    href={editCategory(row.id)}
                     className="underline-offset-4 hover:underline"
                     data-test="open-category"
                 >
@@ -1137,61 +697,6 @@ function CategoryName({
             )}
             {row.archived ? <Badge variant="outline">Archived</Badge> : null}
         </span>
-    );
-}
-
-function AddLink({
-    categoryId,
-    name,
-    entryDate,
-}: {
-    categoryId: number;
-    name: string;
-    entryDate: string;
-}) {
-    return (
-        <Link
-            href={addTransactionHref(categoryId, entryDate)}
-            className="inline-flex min-h-11 items-center gap-1 text-sm font-normal underline-offset-4 hover:underline"
-            aria-label={`Add a ${name} transaction`}
-            data-test="add-category-transaction"
-        >
-            <Plus className="size-4" />
-            Add
-        </Link>
-    );
-}
-
-function Standing({
-    status,
-    label,
-}: {
-    status: OverviewStanding;
-    label: string;
-}) {
-    const icon =
-        status === 'over' ? (
-            <ArrowUp aria-hidden="true" />
-        ) : status === 'under' ? (
-            <ArrowDown aria-hidden="true" />
-        ) : (
-            <Minus aria-hidden="true" />
-        );
-
-    return (
-        <Badge
-            variant={
-                status === 'over'
-                    ? 'destructive'
-                    : status === 'under'
-                      ? 'success'
-                      : 'outline'
-            }
-            data-test="budget-status"
-        >
-            {icon}
-            {label}
-        </Badge>
     );
 }
 

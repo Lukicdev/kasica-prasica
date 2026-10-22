@@ -76,8 +76,7 @@ test('reconciliation shows the gap and a balancing entry that is left out of the
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('totals.income.base_amount', '200.00')
-            ->where('totals.spent.base_amount', '100.00')
-            ->where('totals.leftover.base_amount', '100.00'));
+            ->where('totals.spent.base_amount', '100.00'));
 
     $this->actingAs($user)
         ->get(route('budgets.index', ['month' => '2026-10']))

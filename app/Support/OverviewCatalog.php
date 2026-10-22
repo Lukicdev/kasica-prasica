@@ -5,46 +5,50 @@ namespace App\Support;
 use App\Enums\CategoryKind;
 use App\Enums\Currency;
 use App\Enums\TransactionType;
+use App\Models\Account;
 use App\Models\BudgetMonth;
 use App\Models\Category;
 use App\Models\CategoryBudget;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 /**
- * The month overview: income, expenses against the budget, and account balances.
+ * The month overview: savings, spending by category, and the household balance.
  *
- * Spent and income are sums of transactions in the base currency. Difference
- * is spent minus budget. Leftover is income minus spent. Unallocated is
- * income minus the budget. The savings rate is leftover as a percent of
- * income. Pace projects spending through the last day of the current month.
+ * Spent and income are sums of transactions in the base currency. The savings
+ * rate is leftover as a percent of income. Pace projects spending through the
+ * last day of the current month. The balance flow is the household total at
+ * the end of each day.
  */
 class OverviewCatalog
 {
     public function __construct(
         private AccountCatalog $accounts,
+        private AccountBalance $accountBalances,
         private MoneyConverter $converter,
-        private RecurrenceCatalog $recurrences,
     ) {}
 
     /**
      * @return array{
      *     month: array{value: string, label: string, previous: string, next: string, entry_date: string},
-     *     first_run: bool,
-     *     recorded: bool,
-     *     budget_started: bool,
-     *     steps: list<array{key: string, done: bool}>,
-     *     income: array{rows: list<array<string, mixed>>, total: array<string, mixed>},
-     *     expenses: array{rows: list<array<string, mixed>>, total: array<string, mixed>, sort: string, overspends: list<array<string, mixed>>},
-     *     totals: array<string, array<string, mixed>>,
+     *     expenses: array{rows: list<array<string, mixed>>},
+     *     totals: array{income: array<string, mixed>, spent: array<string, mixed>},
      *     summary: array{savings_rate: int|null, pace: array<string, mixed>|null},
-     *     accounts: array{items: list<array<string, mixed>>, total: array<string, mixed>},
-     *     drilldown: array<string, mixed>|null,
-     *     pending: list<array<string, mixed>>
+     *     flow: array{
+     *         from: string|null,
+     *         to: string|null,
+     *         change: array<string, mixed>|null,
+     *         previous: array{month: string, day: int, balance: array<string, mixed>, percent: int|null}|null,
+     *         points: list<array{day: int, amount: string, formatted: string}>,
+     *         previous_points: list<array{day: int, amount: string, formatted: string}>
+     *     },
+     *     balance: array{amount: string, currency: string, formatted: string, negative: bool}
      * }
      */
-    public function page(User $user, CalendarMonth $month, ?int $categoryId, string $sort = 'category'): array
+    public function page(User $user, CalendarMonth $month): array
     {
         $workspace = $user->workspace;
         $display = $user->display_currency;
@@ -53,7 +57,7 @@ class OverviewCatalog
             ->whereBelongsTo($workspace)
             ->where('booked_on', '>=', $month->start()->toDateString())
             ->where('booked_on', '<', $month->endExclusive()->toDateString())
-            ->get(['id', 'category_id', 'person_id', 'type', 'base_amount']);
+            ->get(['category_id', 'type', 'base_amount']);
 
         $expenses = $transactions
             ->filter(fn (Transaction $transaction): bool => $transaction->type === TransactionType::Expense)
@@ -63,12 +67,12 @@ class OverviewCatalog
             ->values();
 
         $spentByCategory = $this->totalsByCategory($expenses);
-        $incomeByCategory = $this->totalsByCategory($incomes);
         $spentBase = $this->sumTransactions($expenses);
         $incomeBase = $this->sumTransactions($incomes);
 
         $categories = Category::query()
             ->whereBelongsTo($workspace)
+            ->where('kind', CategoryKind::Expense)
             ->ordered()
             ->get();
 
@@ -80,25 +84,11 @@ class OverviewCatalog
         $lines = $budgetMonth instanceof BudgetMonth
             ? $budgetMonth->lines->keyBy('category_id')
             : new Collection;
-        $budgetBase = $this->budgetBase($lines);
-
-        $expenseCategories = $categories
-            ->filter(fn (Category $category): bool => $category->kind === CategoryKind::Expense)
-            ->values();
-        $incomeCategories = $categories
-            ->filter(fn (Category $category): bool => $category->kind === CategoryKind::Income)
-            ->values();
 
         $expenseRows = $this->expenseRows(
-            $this->visible($expenseCategories, $spentByCategory, $lines),
+            $this->visible($categories, $spentByCategory, $lines),
             $spentByCategory,
             $lines,
-            $display,
-        );
-        $incomeRows = $this->incomeRows(
-            $this->visible($incomeCategories, $incomeByCategory, new Collection),
-            $incomeByCategory,
-            $this->peopleByCategory($incomes),
             $display,
         );
 
@@ -106,28 +96,6 @@ class OverviewCatalog
         if ($uncategorisedSpent !== null) {
             $expenseRows[] = $this->expenseRow(null, 'Uncategorised', null, null, null, false, $uncategorisedSpent, '0.00', $display);
         }
-
-        $sort = $sort === 'overspend' ? 'overspend' : 'category';
-        $overspends = $this->byOverspend($expenseRows);
-        $overspends = array_values(array_filter(
-            $overspends,
-            fn (array $row): bool => $row['status'] === 'over',
-        ));
-
-        if ($sort === 'overspend') {
-            $expenseRows = $this->byOverspend($expenseRows);
-        }
-
-        $uncategorisedIncome = $incomeByCategory['none'] ?? null;
-        if ($uncategorisedIncome !== null) {
-            $incomeRows[] = $this->incomeRow(null, 'Uncategorised', null, null, null, false, $uncategorisedIncome, [], $display);
-        }
-
-        $differenceBase = Decimal::of($spentBase)->subtract(Decimal::of($budgetBase))->toString(MoneyConverter::SCALE);
-        $difference = $this->standing($differenceBase);
-        $hasAccount = $user->workspace->accounts()->exists();
-        $firstRun = $transactions->isEmpty()
-            && ! Transaction::query()->whereBelongsTo($workspace)->exists();
 
         return [
             'month' => [
@@ -139,48 +107,16 @@ class OverviewCatalog
                     ? now()->toDateString()
                     : $month->date(),
             ],
-            'first_run' => $firstRun,
-            'recorded' => $transactions->isNotEmpty(),
-            'budget_started' => $budgetMonth instanceof BudgetMonth,
-            'steps' => [
-                ['key' => 'account', 'done' => $hasAccount],
-                ['key' => 'budget', 'done' => $budgetMonth instanceof BudgetMonth],
-                ['key' => 'transaction', 'done' => ! $firstRun],
-            ],
-            'income' => [
-                'rows' => $incomeRows,
-                'total' => $this->figure($incomeBase, $display),
-            ],
             'expenses' => [
                 'rows' => $expenseRows,
-                'total' => [
-                    'spent' => $this->figure($spentBase, $display),
-                    'budget' => $this->figure($budgetBase, $display),
-                    'difference' => $this->figure($differenceBase, $display),
-                    'status' => $difference['status'],
-                    'status_label' => $difference['label'],
-                ],
-                'sort' => $sort,
-                'overspends' => $overspends,
             ],
             'totals' => [
                 'income' => $this->figure($incomeBase, $display),
                 'spent' => $this->figure($spentBase, $display),
-                'budget' => $this->figure($budgetBase, $display),
-                'difference' => $this->figure($differenceBase, $display),
-                'leftover' => $this->figure(
-                    Decimal::of($incomeBase)->subtract(Decimal::of($spentBase))->toString(MoneyConverter::SCALE),
-                    $display,
-                ),
-                'unallocated' => $this->figure(
-                    Decimal::of($incomeBase)->subtract(Decimal::of($budgetBase))->toString(MoneyConverter::SCALE),
-                    $display,
-                ),
             ],
             'summary' => $this->summary($incomeBase, $spentBase, $month, $display),
-            'accounts' => $this->accountPanel($user, $display),
-            'drilldown' => $this->drilldown($user, $month, $categories, $categoryId, $spentByCategory, $incomeByCategory, $lines, $display),
-            'pending' => $this->recurrences->pending($user, $month),
+            'flow' => $this->flow($user, $month, $display),
+            'balance' => $this->balance($user, $display),
         ];
     }
 
@@ -233,109 +169,6 @@ class OverviewCatalog
         }
 
         return $result;
-    }
-
-    /**
-     * @param  Collection<int, Transaction>  $transactions
-     * @return array<int|string, list<array{id: int|null, name: string, base: string}>>
-     */
-    private function peopleByCategory(Collection $transactions): array
-    {
-        /** @var array<int|string, array<int|string, Decimal>> $totals */
-        $totals = [];
-        /** @var array<int|string, int|null> $ids */
-        $ids = [];
-
-        foreach ($transactions as $transaction) {
-            $categoryKey = $transaction->category_id ?? 'none';
-            $personKey = $transaction->person_id ?? 'none';
-            $totals[$categoryKey][$personKey] = ($totals[$categoryKey][$personKey] ?? Decimal::of('0'))
-                ->add(Decimal::of((string) $transaction->base_amount));
-            $ids[$personKey] = $transaction->person_id;
-        }
-
-        $personIds = array_values(array_filter($ids, fn (?int $id): bool => $id !== null));
-        $names = $personIds === []
-            ? new Collection
-            : User::query()->whereIn('id', $personIds)->pluck('name', 'id');
-
-        $grouped = [];
-
-        foreach ($totals as $categoryKey => $people) {
-            $rows = [];
-
-            foreach ($people as $personKey => $total) {
-                $id = $ids[$personKey];
-                $rows[] = [
-                    'id' => $id,
-                    'name' => $id === null ? 'Unknown' : (string) $names->get($id, 'Unknown'),
-                    'base' => $total->toString(MoneyConverter::SCALE),
-                ];
-            }
-
-            usort($rows, fn (array $left, array $right): int => [$left['name'], $left['id'] ?? 0] <=> [$right['name'], $right['id'] ?? 0]);
-            $grouped[$categoryKey] = $rows;
-        }
-
-        return $grouped;
-    }
-
-    /**
-     * @param  Collection<int, Category>  $categories
-     * @param  array<int|string, string>  $incomeByCategory
-     * @param  array<int|string, list<array{id: int|null, name: string, base: string}>>  $peopleByCategory
-     * @return list<array<string, mixed>>
-     */
-    private function incomeRows(Collection $categories, array $incomeByCategory, array $peopleByCategory, Currency $display): array
-    {
-        $rows = [];
-
-        foreach ($categories as $category) {
-            $rows[] = $this->incomeRow(
-                $category->id,
-                $category->name,
-                $category->description,
-                $category->icon,
-                $category->color,
-                $category->archived_at !== null,
-                $incomeByCategory[$category->id] ?? '0.00',
-                $peopleByCategory[$category->id] ?? [],
-                $display,
-            );
-        }
-
-        return $rows;
-    }
-
-    /**
-     * @param  list<array{id: int|null, name: string, base: string}>  $people
-     * @return array<string, mixed>
-     */
-    private function incomeRow(
-        ?int $id,
-        string $name,
-        ?string $description,
-        ?string $icon,
-        ?string $color,
-        bool $archived,
-        string $base,
-        array $people,
-        Currency $display,
-    ): array {
-        return [
-            'id' => $id,
-            'name' => $name,
-            'icon' => $icon,
-            'color' => $color,
-            'description' => $description,
-            'archived' => $archived,
-            'amount' => $this->figure($base, $display),
-            'people' => array_map(fn (array $person): array => [
-                'id' => $person['id'],
-                'name' => $person['name'],
-                'amount' => $this->figure($person['base'], $display),
-            ], $people),
-        ];
     }
 
     /**
@@ -394,7 +227,25 @@ class OverviewCatalog
             'difference' => $this->figure($differenceBase, $display),
             'status' => $standing['status'],
             'status_label' => $standing['label'],
+            'budget_percent' => $this->budgetPercent($spent, $budget),
         ];
+    }
+
+    /**
+     * Spent as a percent of the budget. Omitted when the category has no budget.
+     */
+    private function budgetPercent(string $spent, string $budget): ?int
+    {
+        $budgetAmount = Decimal::of($budget);
+
+        if ($budgetAmount->isZero()) {
+            return null;
+        }
+
+        return (int) Decimal::of($spent)
+            ->multiply(Decimal::of('100'))
+            ->divide($budgetAmount, 0)
+            ->toString(0);
     }
 
     /**
@@ -412,20 +263,6 @@ class OverviewCatalog
     }
 
     /**
-     * @param  Collection<int, CategoryBudget>  $lines
-     */
-    private function budgetBase(Collection $lines): string
-    {
-        $total = Decimal::of('0');
-
-        foreach ($lines as $line) {
-            $total = $total->add(Decimal::of((string) $line->amount));
-        }
-
-        return $total->toString(MoneyConverter::SCALE);
-    }
-
-    /**
      * @param  Collection<int, Transaction>  $transactions
      */
     private function sumTransactions(Collection $transactions): string
@@ -437,41 +274,6 @@ class OverviewCatalog
         }
 
         return $total->toString(MoneyConverter::SCALE);
-    }
-
-    /**
-     * Largest amount over budget first. Difference is spent minus budget.
-     *
-     * @param  list<array<string, mixed>>  $rows
-     * @return list<array<string, mixed>>
-     */
-    private function byOverspend(array $rows): array
-    {
-        usort($rows, function (array $left, array $right): int {
-            $leftDifference = is_array($left['difference'] ?? null) ? (string) ($left['difference']['base_amount'] ?? '0') : '0';
-            $rightDifference = is_array($right['difference'] ?? null) ? (string) ($right['difference']['base_amount'] ?? '0') : '0';
-            $byAmount = $this->compareMoney($rightDifference, $leftDifference);
-
-            if ($byAmount !== 0) {
-                return $byAmount;
-            }
-
-            return [(string) ($left['name'] ?? ''), (int) ($left['id'] ?? 0)]
-                <=> [(string) ($right['name'] ?? ''), (int) ($right['id'] ?? 0)];
-        });
-
-        return $rows;
-    }
-
-    private function compareMoney(string $left, string $right): int
-    {
-        $difference = Decimal::of($left)->subtract(Decimal::of($right));
-
-        if ($difference->isZero()) {
-            return 0;
-        }
-
-        return $difference->isNegative() ? -1 : 1;
     }
 
     /**
@@ -519,6 +321,246 @@ class OverviewCatalog
     }
 
     /**
+     * Household balance at the end of each day, and the same days last month.
+     *
+     * The window runs from the first of the month through today when that
+     * month is still open, or through the last day when it is already over.
+     * Change is the movement inside the window. The comparison is the
+     * balance on the same day number of the previous month.
+     *
+     * @return array{
+     *     from: string|null,
+     *     to: string|null,
+     *     change: array<string, mixed>|null,
+     *     previous: array{month: string, day: int, balance: array<string, mixed>, percent: int|null}|null,
+     *     points: list<array{day: int, amount: string, formatted: string}>,
+     *     previous_points: list<array{day: int, amount: string, formatted: string}>
+     * }
+     */
+    private function flow(User $user, CalendarMonth $month, Currency $display): array
+    {
+        $accounts = $user->workspace->accounts()->get(['id', 'currency', 'opening_balance']);
+        $through = $this->throughDay($month);
+
+        if ($accounts->isEmpty() || $through === 0) {
+            return $this->emptyFlow();
+        }
+
+        $previous = $month->previous();
+        $native = [];
+
+        foreach ($accounts as $account) {
+            $native[$account->id] = Decimal::of((string) $account->opening_balance)->toString(MoneyConverter::SCALE);
+        }
+
+        $byDate = $this->movementsByDate($user, $accounts, $native, $previous->start(), $month->endExclusive());
+        $previousSeries = $this->flowSeries($accounts, $native, $byDate, $previous->start(), $previous->start()->daysInMonth, $display);
+        $openingBase = $this->householdBase($accounts, $native);
+        $series = $this->flowSeries($accounts, $native, $byDate, $month->start(), $through, $display);
+        $closingBase = $this->householdBase($accounts, $native);
+        $day = min($through, $previous->start()->daysInMonth);
+        $previousBase = $previousSeries['bases'][$day] ?? $openingBase;
+        $from = $month->start();
+        $to = $month->start()->addDays($through - 1);
+
+        return [
+            'from' => $from->format('j M Y'),
+            'to' => $to->format('j M Y'),
+            'change' => $this->figure(
+                Decimal::of($closingBase)->subtract(Decimal::of($openingBase))->toString(MoneyConverter::SCALE),
+                $display,
+            ),
+            'previous' => [
+                'month' => $previous->label(),
+                'day' => $day,
+                'balance' => $this->figure($previousBase, $display),
+                'percent' => $this->changePercent($closingBase, $previousBase),
+            ],
+            'points' => $series['points'],
+            'previous_points' => $previousSeries['points'],
+        ];
+    }
+
+    /**
+     * Days elapsed in the month being viewed. A future month has none yet.
+     */
+    private function throughDay(CalendarMonth $month): int
+    {
+        $today = CarbonImmutable::now()->startOfDay();
+
+        if ($today->lessThan($month->start())) {
+            return 0;
+        }
+
+        if ($today->greaterThanOrEqualTo($month->endExclusive())) {
+            return $month->start()->daysInMonth;
+        }
+
+        return $today->day;
+    }
+
+    /**
+     * @param  EloquentCollection<int, Account>  $accounts
+     * @param  array<int, string>  $native
+     * @return array<string, list<Transaction>>
+     */
+    private function movementsByDate(User $user, EloquentCollection $accounts, array &$native, CarbonImmutable $from, CarbonImmutable $until): array
+    {
+        $ids = $accounts->modelKeys();
+        $transactions = Transaction::query()
+            ->whereBelongsTo($user->workspace)
+            ->where(function ($query) use ($ids): void {
+                $query->whereIn('account_id', $ids)
+                    ->orWhereIn('destination_account_id', $ids);
+            })
+            ->where('booked_on', '<', $until->toDateString())
+            ->orderBy('booked_on')
+            ->orderBy('id')
+            ->get([
+                'account_id',
+                'destination_account_id',
+                'type',
+                'account_amount',
+                'destination_amount',
+                'booked_on',
+            ]);
+
+        $byDate = [];
+        $fromDate = $from->toDateString();
+
+        foreach ($transactions as $transaction) {
+            $date = $transaction->booked_on->toDateString();
+
+            if ($date < $fromDate) {
+                $this->applyNative($native, $transaction);
+
+                continue;
+            }
+
+            $byDate[$date][] = $transaction;
+        }
+
+        return $byDate;
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     * @param  array<int, string>  $native
+     * @param  array<string, list<Transaction>>  $byDate
+     * @return array{points: list<array{day: int, amount: string, formatted: string}>, bases: array<int, string>}
+     */
+    private function flowSeries(
+        Collection $accounts,
+        array &$native,
+        array $byDate,
+        CarbonImmutable $start,
+        int $days,
+        Currency $display,
+    ): array {
+        $points = [];
+        $bases = [];
+
+        for ($offset = 0; $offset < $days; $offset++) {
+            $cursor = $start->addDays($offset);
+
+            foreach ($byDate[$cursor->toDateString()] ?? [] as $transaction) {
+                $this->applyNative($native, $transaction);
+            }
+
+            $base = $this->householdBase($accounts, $native);
+            $presented = $this->figure($base, $display);
+            $points[] = [
+                'day' => $cursor->day,
+                'amount' => $presented['amount'],
+                'formatted' => $presented['formatted'],
+            ];
+            $bases[$cursor->day] = $base;
+        }
+
+        return ['points' => $points, 'bases' => $bases];
+    }
+
+    /**
+     * @param  array<int, string>  $native
+     */
+    private function applyNative(array &$native, Transaction $transaction): void
+    {
+        foreach ([$transaction->account_id, $transaction->destination_account_id] as $accountId) {
+            if ($accountId === null) {
+                continue;
+            }
+
+            $accountId = (int) $accountId;
+
+            if (! array_key_exists($accountId, $native)) {
+                continue;
+            }
+
+            $native[$accountId] = $this->accountBalances->applyOnAccount($native[$accountId], $transaction, $accountId);
+        }
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     * @param  array<int, string>  $native
+     */
+    private function householdBase(Collection $accounts, array $native): string
+    {
+        $total = Decimal::of('0');
+
+        foreach ($accounts as $account) {
+            $balance = $native[$account->id];
+            $base = $account->currency->isBase()
+                ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
+                : $this->converter->baseAmount($balance, $account->currency);
+            $total = $total->add(Decimal::of($base));
+        }
+
+        return $total->toString(MoneyConverter::SCALE);
+    }
+
+    private function changePercent(string $current, string $previous): ?int
+    {
+        $baseline = Decimal::of($previous);
+
+        if ($baseline->isZero()) {
+            return null;
+        }
+
+        if ($baseline->isNegative()) {
+            $baseline = Decimal::of('0')->subtract($baseline);
+        }
+
+        return (int) Decimal::of($current)
+            ->subtract(Decimal::of($previous))
+            ->multiply(Decimal::of('100'))
+            ->divide($baseline, 0)
+            ->toString(0);
+    }
+
+    /**
+     * @return array{
+     *     from: null,
+     *     to: null,
+     *     change: null,
+     *     previous: null,
+     *     points: list<array{day: int, amount: string, formatted: string}>,
+     *     previous_points: list<array{day: int, amount: string, formatted: string}>
+     * }
+     */
+    private function emptyFlow(): array
+    {
+        return [
+            'from' => null,
+            'to' => null,
+            'change' => null,
+            'previous' => null,
+            'points' => [],
+            'previous_points' => [],
+        ];
+    }
+
+    /**
      * @return array{status: 'over'|'under'|'on', label: string}
      */
     private function standing(string $difference): array
@@ -561,131 +603,12 @@ class OverviewCatalog
     }
 
     /**
-     * @return array{items: list<array<string, mixed>>, total: array<string, mixed>}
+     * @return array{amount: string, currency: string, formatted: string, negative: bool}
      */
-    private function accountPanel(User $user, Currency $display): array
+    private function balance(User $user, Currency $display): array
     {
         $accounts = $user->workspace->accounts()->get();
-        $list = $this->accounts->list($accounts, $display);
-        $items = [];
 
-        foreach ($list['groups'] as $group) {
-            foreach ($group['accounts'] as $account) {
-                $items[] = $account;
-            }
-        }
-
-        return [
-            'items' => $items,
-            'total' => $list['total'],
-        ];
-    }
-
-    /**
-     * @param  Collection<int, Category>  $categories
-     * @param  array<int|string, string>  $spentByCategory
-     * @param  array<int|string, string>  $incomeByCategory
-     * @param  Collection<int, CategoryBudget>  $lines
-     * @return array<string, mixed>|null
-     */
-    private function drilldown(
-        User $user,
-        CalendarMonth $month,
-        Collection $categories,
-        ?int $categoryId,
-        array $spentByCategory,
-        array $incomeByCategory,
-        Collection $lines,
-        Currency $display,
-    ): ?array {
-        if ($categoryId === null) {
-            return null;
-        }
-
-        $category = $categories->firstWhere('id', $categoryId);
-
-        if (! $category instanceof Category) {
-            return null;
-        }
-
-        $type = $category->kind === CategoryKind::Income
-            ? TransactionType::Income
-            : TransactionType::Expense;
-        $base = $category->kind === CategoryKind::Income
-            ? ($incomeByCategory[$category->id] ?? '0.00')
-            : ($spentByCategory[$category->id] ?? '0.00');
-
-        $transactions = Transaction::query()
-            ->whereBelongsTo($user->workspace)
-            ->where('category_id', $category->id)
-            ->where('type', $type)
-            ->where('booked_on', '>=', $month->start()->toDateString())
-            ->where('booked_on', '<', $month->endExclusive()->toDateString())
-            ->with(['account:id,name,icon', 'person:id,name'])
-            ->orderBy('booked_on')
-            ->orderBy('id')
-            ->get([
-                'id',
-                'account_id',
-                'person_id',
-                'amount',
-                'currency',
-                'base_amount',
-                'booked_on',
-                'note',
-            ]);
-
-        $budget = null;
-        $difference = null;
-        $status = null;
-        $statusLabel = null;
-
-        if ($category->kind === CategoryKind::Expense) {
-            $budgetBase = $this->budgetAmount($lines, $category->id);
-            $differenceBase = Decimal::of($base)->subtract(Decimal::of($budgetBase))->toString(MoneyConverter::SCALE);
-            $standing = $this->standing($differenceBase);
-            $budget = $this->figure($budgetBase, $display);
-            $difference = $this->figure($differenceBase, $display);
-            $status = $standing['status'];
-            $statusLabel = $standing['label'];
-        }
-
-        return [
-            'id' => $category->id,
-            'name' => $category->name,
-            'icon' => $category->icon,
-            'color' => $category->color,
-            'description' => $category->description,
-            'kind' => $category->kind->value,
-            'total' => $this->figure($base, $display),
-            'budget' => $budget,
-            'difference' => $difference,
-            'status' => $status,
-            'status_label' => $statusLabel,
-            'transactions' => $transactions->map(function (Transaction $transaction) use ($display): array {
-                $presented = $this->converter->present(
-                    (string) $transaction->amount,
-                    $transaction->currency,
-                    (string) $transaction->base_amount,
-                    $display,
-                    $transaction->booked_on,
-                );
-
-                return [
-                    'id' => $transaction->id,
-                    'date' => $transaction->booked_on->toDateString(),
-                    'date_label' => $transaction->booked_on->format('j M Y'),
-                    'note' => $transaction->note,
-                    'account' => $transaction->account->name,
-                    'account_icon' => $transaction->account->icon,
-                    'person' => $transaction->person?->name,
-                    'amount' => [
-                        ...$presented->toArray(),
-                        'negative' => Decimal::of($presented->amount)->isNegative(),
-                        'base_amount' => Decimal::of((string) $transaction->base_amount)->toString(MoneyConverter::SCALE),
-                    ],
-                ];
-            })->values()->all(),
-        ];
+        return $this->accounts->list($accounts, $display)['total'];
     }
 }

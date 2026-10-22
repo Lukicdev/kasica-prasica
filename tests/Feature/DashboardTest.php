@@ -20,7 +20,9 @@ test('authenticated users can visit the dashboard', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('overview/index')
-            ->where('first_run', true));
+            ->has('summary')
+            ->has('flow')
+            ->missing('first_run'));
 });
 
 test('the dashboard shows whether the user is the workspace admin', function (bool $isAdmin) {

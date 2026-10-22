@@ -74,14 +74,8 @@ test('a recurring expense stays pending until it is confirmed', function () {
         ->get(route('dashboard', ['month' => '2026-11']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('pending.0.category', 'House loan')
-            ->where('pending.0.status_label', 'Pending')
             ->where('totals.spent.amount', '0.00')
-            ->where('accounts.items', function ($items) use ($account): bool {
-                $match = collect($items)->firstWhere('id', $account->id);
-
-                return is_array($match) && $match['balance']['amount'] === '800.00';
-            }));
+            ->where('balance.amount', '800.00'));
 
     $this->actingAs($user)
         ->post(route('recurrences.store', $template), ['month' => '2026-11'])
@@ -115,13 +109,8 @@ test('a recurring expense stays pending until it is confirmed', function () {
         ->get(route('dashboard', ['month' => '2026-11']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('pending', [])
             ->where('totals.spent.amount', '200.00')
-            ->where('accounts.items', function ($items) use ($account): bool {
-                $match = collect($items)->firstWhere('id', $account->id);
-
-                return is_array($match) && $match['balance']['amount'] === '600.00';
-            }));
+            ->where('balance.amount', '600.00'));
 
     $this->actingAs($user)
         ->post(route('recurrences.store', $template), ['month' => '2026-11'])
@@ -188,15 +177,7 @@ test('confirming a recurring expense can change the amount, account and currency
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('totals.spent.amount', '1175.00')
-            ->where('accounts.items', function ($items) use ($cash, $euro): bool {
-                $cashRow = collect($items)->firstWhere('id', $cash->id);
-                $euroRow = collect($items)->firstWhere('id', $euro->id);
-
-                return is_array($cashRow)
-                    && is_array($euroRow)
-                    && $cashRow['balance']['amount'] === '4800.00'
-                    && $euroRow['balance']['amount'] === '40.00';
-            }));
+            ->where('balance.amount', '9500.00'));
 });
 
 test('a recurring salary stays pending until it is confirmed', function () {
@@ -222,15 +203,8 @@ test('a recurring salary stays pending until it is confirmed', function () {
         ->get(route('dashboard', ['month' => '2026-11']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('pending.0.type', 'income')
-            ->where('pending.0.category', 'Pay')
-            ->where('pending.0.status_label', 'Pending')
             ->where('totals.income.amount', '0.00')
-            ->where('accounts.items', function ($items) use ($account): bool {
-                $match = collect($items)->firstWhere('id', $account->id);
-
-                return is_array($match) && $match['balance']['amount'] === '6000.00';
-            }));
+            ->where('balance.amount', '6000.00'));
 
     $this->actingAs($user)
         ->post(route('recurrences.store', $template), ['month' => '2026-11'])
@@ -247,13 +221,8 @@ test('a recurring salary stays pending until it is confirmed', function () {
         ->get(route('dashboard', ['month' => '2026-11']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('pending', [])
             ->where('totals.income.amount', '5000.00')
-            ->where('accounts.items', function ($items) use ($account): bool {
-                $match = collect($items)->firstWhere('id', $account->id);
-
-                return is_array($match) && $match['balance']['amount'] === '11000.00';
-            }));
+            ->where('balance.amount', '11000.00'));
 });
 
 test('editing the repeating transaction changes later pending amounts only', function () {
@@ -424,8 +393,8 @@ test('an archived account cannot be confirmed until another account is chosen', 
         ->get(route('dashboard', ['month' => '2026-11']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('pending.0.account', $account->name.' (archived)')
-            ->where('totals.spent.amount', '0.00'));
+            ->where('totals.spent.amount', '0.00')
+            ->where('balance.amount', '800.00'));
 });
 
 test('a date outside the month is rejected', function () {

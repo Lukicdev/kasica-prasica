@@ -16,7 +16,7 @@ A shared household budget. Everyone in the household sees the same accounts, tra
 
 ## Stack
 
-- PHP 8.3, Laravel
+- PHP 8.3+, Laravel
 - React, Inertia, Vite, Tailwind CSS
 - SQLite by default
 
