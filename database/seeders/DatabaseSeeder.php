@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Actions\Demo\SeedSpreadsheetMonth;
+use App\Actions\Demo\SeedHouseholdHistory;
 use App\Models\User;
-use App\Support\CalendarMonth;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,8 +14,8 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * The spreadsheet month is loaded into the current calendar month so the
-     * overview shows it as soon as you sign in.
+     * Two people share one workspace. Transactions and an expense budget
+     * cover the current month and the three before it.
      */
     public function run(): void
     {
@@ -31,6 +30,6 @@ class DatabaseSeeder extends Seeder
             'workspace_id' => $admin->workspace_id,
         ]);
 
-        app(SeedSpreadsheetMonth::class)->handle($admin, $partner, CalendarMonth::current());
+        app(SeedHouseholdHistory::class)->handle($admin, $partner);
     }
 }
