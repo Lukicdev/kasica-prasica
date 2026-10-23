@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Actions\Demo\SeedHouseholdHistory;
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -14,22 +12,11 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Two people share one workspace. Transactions and an expense budget
-     * cover the current month and the three before it.
+     * Model events stay off for this run. Workspace::shared() still creates
+     * the default categories, because the workspace observer does not fire.
      */
     public function run(): void
     {
-        $admin = User::factory()->admin()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-        $partner = User::factory()->create([
-            'name' => 'Partner',
-            'email' => 'partner@example.com',
-            'workspace_id' => $admin->workspace_id,
-        ]);
-
-        app(SeedHouseholdHistory::class)->handle($admin, $partner);
+        $this->call(HouseholdHistorySeeder::class);
     }
 }

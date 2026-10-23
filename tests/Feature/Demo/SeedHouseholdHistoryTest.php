@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Demo\SeedHouseholdHistory;
 use App\Enums\CategoryKind;
 use App\Enums\TransactionType;
 use App\Models\BudgetMonth;
@@ -62,18 +61,24 @@ test('the database seeder fills four months for two people', function () {
     $mortgage = Category::query()->where('name', 'Mortgage')->firstOrFail();
 
     expect(CategoryBudget::query()->where('category_id', $mortgage->id)->pluck('amount')->unique()->values()->all())
-        ->toBe(['75700.00']);
+        ->toBe(['75700.00'])
+        ->and(Transaction::query()->whereNull('created_by')->exists())->toBeFalse();
+});
+
+test('seeding again leaves the household as it is', function () {
+    $this->travelTo('2026-10-22');
+
+    $this->seed();
+    $this->seed();
+
+    expect(User::query()->count())->toBe(2)
+        ->and(Transaction::query()->count())->toBe(102);
 });
 
 test('seeding early in the month keeps every income inside that month', function () {
     $this->travelTo('2026-10-04');
 
-    $first = User::factory()->admin()->create();
-    $second = User::factory()->create([
-        'workspace_id' => $first->workspace_id,
-    ]);
-
-    app(SeedHouseholdHistory::class)->handle($first, $second);
+    $this->seed();
 
     expect(Transaction::query()->whereDate('booked_on', '>', '2026-10-04')->exists())->toBeFalse();
 
