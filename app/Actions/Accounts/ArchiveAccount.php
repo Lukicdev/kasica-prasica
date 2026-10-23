@@ -4,7 +4,6 @@ namespace App\Actions\Accounts;
 
 use App\Models\Account;
 use App\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
 
 class ArchiveAccount
 {

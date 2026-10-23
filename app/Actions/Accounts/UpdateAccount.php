@@ -5,7 +5,6 @@ namespace App\Actions\Accounts;
 use App\Enums\AccountType;
 use App\Models\Account;
 use App\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 
 class UpdateAccount
