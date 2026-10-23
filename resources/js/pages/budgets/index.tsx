@@ -260,8 +260,8 @@ function CopyOverBanner({
     return (
         <section className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border">
             <p className="text-sm text-muted-foreground">
-                Copying from {from.label} replaces the budget already on{' '}
-                {month}.
+                Copying from {from.label} replaces the budget already on {month}
+                .
             </p>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
@@ -525,7 +525,9 @@ function BudgetRow({
                                         }}
                                     />
                                     <InputGroupAddon align="inline-end">
-                                        <InputGroupText>{currencies.base}</InputGroupText>
+                                        <InputGroupText>
+                                            {currencies.base}
+                                        </InputGroupText>
                                     </InputGroupAddon>
                                 </InputGroup>
                                 {error ? (

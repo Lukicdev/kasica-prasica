@@ -1,4 +1,3 @@
-
 export type TransferAccountOption = {
     id: number;
     name: string;

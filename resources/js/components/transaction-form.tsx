@@ -367,7 +367,10 @@ export function TransactionForm({
                                 </span>
                                 <span data-test="base-amount">
                                     {baseAmount
-                                        ? formatMoney(baseAmount, currencies.base)
+                                        ? formatMoney(
+                                              baseAmount,
+                                              currencies.base,
+                                          )
                                         : '—'}
                                 </span>
                             </p>

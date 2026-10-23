@@ -13,7 +13,9 @@ export function CurrencySwitch({ className }: CurrencySwitchProps) {
     const { auth, currencies } = usePage().props;
     const saved = auth.user?.display_currency;
     const [pending, setPending] = useState<string | null>(null);
-    const known = currencies.supported.some((currency) => currency.code === saved);
+    const known = currencies.supported.some(
+        (currency) => currency.code === saved,
+    );
 
     if (!auth.user || !saved || !known) {
         return null;
@@ -51,7 +53,11 @@ export function CurrencySwitch({ className }: CurrencySwitchProps) {
                     label: currency.code,
                 }))}
                 onValueChange={(next) => {
-                    if (currencies.supported.some((currency) => currency.code === next)) {
+                    if (
+                        currencies.supported.some(
+                            (currency) => currency.code === next,
+                        )
+                    ) {
                         select(next);
                     }
                 }}

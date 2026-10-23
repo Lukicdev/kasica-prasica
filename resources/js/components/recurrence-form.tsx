@@ -228,7 +228,10 @@ export function RecurrenceForm({
                                 </span>
                                 <span>
                                     {baseAmount
-                                        ? formatMoney(baseAmount, currencies.base)
+                                        ? formatMoney(
+                                              baseAmount,
+                                              currencies.base,
+                                          )
                                         : '—'}
                                 </span>
                             </p>

@@ -172,7 +172,8 @@ export default function Currencies({
                                                     name="manual_rate"
                                                     inputMode="decimal"
                                                     defaultValue={
-                                                        currency.manualRate ?? ''
+                                                        currency.manualRate ??
+                                                        ''
                                                     }
                                                     placeholder="Leave empty to use Frankfurter"
                                                 />

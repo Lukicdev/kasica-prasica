@@ -221,7 +221,8 @@ export function TransferForm({
                                 Exchange rate
                             </span>{' '}
                             <span className="font-medium">
-                                1 {currency} = {rates[currency]} {currencies.base}
+                                1 {currency} = {rates[currency]}{' '}
+                                {currencies.base}
                             </span>
                             . Both accounts move by this rate.
                         </p>

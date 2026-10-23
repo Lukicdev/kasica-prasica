@@ -4,7 +4,11 @@ import { EntityIcon } from '@/components/entity-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { create, index, show } from '@/routes/accounts';
-import type { AccountGroup, AccountSummary, MoneyFigure } from '@/types/account';
+import type {
+    AccountGroup,
+    AccountSummary,
+    MoneyFigure,
+} from '@/types/account';
 
 export default function Accounts({
     groups,
