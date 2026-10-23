@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Currency;
-use App\Support\Rate;
+use App\Money\Rate;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;

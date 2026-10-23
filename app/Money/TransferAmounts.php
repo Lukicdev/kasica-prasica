@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Money;
 
 use App\Models\Account;
 use Carbon\CarbonInterface;

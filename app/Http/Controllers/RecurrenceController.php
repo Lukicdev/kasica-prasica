@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Recurrences\ConfirmRecurrence;
+use App\Catalogs\RecurrenceCatalog;
 use App\Http\Requests\Recurrences\ConfirmRecurrenceRequest;
 use App\Models\Account;
 use App\Models\Transaction;
-use App\Support\AccountBalance;
-use App\Support\MoneyFormatter;
-use App\Support\RecurrenceCatalog;
+use App\Money\AccountBalance;
+use App\Money\MoneyFormatter;
 use App\Support\RecurringSchedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

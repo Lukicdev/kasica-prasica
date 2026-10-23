@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TransactionType;
-use App\Support\Decimal;
+use App\Money\Decimal;
 use Database\Factories\TransactionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;

@@ -3,10 +3,10 @@
 namespace App\Concerns;
 
 use App\Enums\AccountType;
+use App\Enums\Icon;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
 use App\Rules\EnabledCurrency;
-use App\Support\Decimal;
-use App\Support\Icons;
-use App\Support\MoneyConverter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -33,7 +33,7 @@ trait AccountValidationRules
     {
         return [
             'name' => ['required', 'string', 'max:100'],
-            'icon' => ['nullable', 'string', Rule::in(Icons::names())],
+            'icon' => ['nullable', Rule::enum(Icon::class)],
             'type' => ['required', Rule::enum(AccountType::class)],
             'currency' => ['required', 'string', 'size:3', new EnabledCurrency($this->user())],
             'opening_balance' => ['required', 'regex:/^-?\d{1,13}(\.\d{1,2})?$/'],
@@ -50,7 +50,7 @@ trait AccountValidationRules
         return [
             'name.required' => 'Enter a name.',
             'name.max' => 'Keep the name under 100 characters.',
-            'icon.in' => 'Choose an icon from the list.',
+            'icon.enum' => 'Choose an icon from the list.',
             'type.required' => 'Choose a type.',
             'type.enum' => 'Choose a type.',
             'currency.required' => 'Choose a currency.',

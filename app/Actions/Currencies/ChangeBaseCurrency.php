@@ -4,7 +4,7 @@ namespace App\Actions\Currencies;
 
 use App\Enums\Currency;
 use App\Models\Workspace;
-use App\Support\CurrencyRates;
+use App\Money\CurrencyRates;
 use Illuminate\Validation\ValidationException;
 
 class ChangeBaseCurrency

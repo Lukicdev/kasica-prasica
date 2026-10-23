@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\ExchangeRate;
-use App\Support\StoredExchangeRate;
+use App\Money\StoredExchangeRate;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;

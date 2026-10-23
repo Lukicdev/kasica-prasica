@@ -3,9 +3,9 @@
 namespace App\Actions\Currencies;
 
 use App\Models\WorkspaceCurrency;
-use App\Support\CurrencyRates;
-use App\Support\Decimal;
-use App\Support\Rate;
+use App\Money\CurrencyRates;
+use App\Money\Decimal;
+use App\Money\Rate;
 use Illuminate\Validation\ValidationException;
 
 class UpdateWorkspaceCurrency

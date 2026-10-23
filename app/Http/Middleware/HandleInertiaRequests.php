@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\CurrencyShare;
+use App\Money\CurrencyShare;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 

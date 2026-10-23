@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Actions\Budgets\StartBudgetMonth;
 use App\Actions\Budgets\UpdateCategoryBudget;
+use App\Catalogs\BudgetCatalog;
 use App\Http\Requests\Budgets\StoreBudgetMonthRequest;
 use App\Http\Requests\Budgets\UpdateCategoryBudgetRequest;
 use App\Models\BudgetMonth;
-use App\Support\BudgetCatalog;
 use App\Support\CalendarMonth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Money;
 
 /**
  * Exchange rates kept as exact decimals, without trailing zeros.

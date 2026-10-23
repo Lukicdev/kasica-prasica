@@ -1,13 +1,13 @@
 <?php
 
+use App\Catalogs\TransactionCatalog;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Support\Decimal;
-use App\Support\TransactionCatalog;
+use App\Money\Decimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 

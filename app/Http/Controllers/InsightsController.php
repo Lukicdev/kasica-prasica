@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Catalogs\InsightsCatalog;
 use App\Models\Transaction;
-use App\Support\InsightsCatalog;
-use App\Support\InsightsQuery;
+use App\Queries\InsightsQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;

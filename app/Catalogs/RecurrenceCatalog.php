@@ -1,11 +1,17 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Money\AccountBalance;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Money\Rate;
+use App\Support\CalendarMonth;
+use App\Support\RecurringSchedule;
 
 /**
  * Pending repeats for a month, and the form that confirms one of them.

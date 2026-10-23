@@ -3,7 +3,7 @@
 use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Support\Decimal;
+use App\Money\Decimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 

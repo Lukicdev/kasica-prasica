@@ -7,7 +7,7 @@ use App\Models\Account;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Support\TransactionAmounts;
+use App\Money\TransactionAmounts;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;

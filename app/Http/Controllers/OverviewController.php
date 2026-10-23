@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Catalogs\OverviewCatalog;
 use App\Models\Transaction;
 use App\Support\CalendarMonth;
-use App\Support\OverviewCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;

@@ -1,10 +1,14 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Money\AccountBalance;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Money\MoneyFormatter;
 use Illuminate\Database\Eloquent\Builder;
 
 /**

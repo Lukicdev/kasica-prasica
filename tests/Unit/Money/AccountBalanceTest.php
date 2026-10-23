@@ -2,7 +2,7 @@
 
 use App\Enums\TransactionType;
 use App\Models\Transaction;
-use App\Support\AccountBalance;
+use App\Money\AccountBalance;
 use Tests\TestCase;
 
 uses(TestCase::class);

@@ -1,10 +1,14 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Money\AccountBalance;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Money\Rate;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;

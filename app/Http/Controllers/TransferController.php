@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\Transfers\CreateTransfer;
 use App\Actions\Transfers\UpdateTransfer;
+use App\Catalogs\TransferCatalog;
 use App\Enums\TransactionType;
 use App\Http\Requests\Transfers\StoreTransferRequest;
 use App\Http\Requests\Transfers\UpdateTransferRequest;
 use App\Models\Transaction;
-use App\Support\AccountBalance;
-use App\Support\MoneyFormatter;
-use App\Support\TransferCatalog;
+use App\Money\AccountBalance;
+use App\Money\MoneyFormatter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;

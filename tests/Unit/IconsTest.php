@@ -1,9 +1,9 @@
 <?php
 
+use App\Enums\CategoryColor;
 use App\Enums\CategoryKind;
-use App\Support\CategoryColors;
+use App\Enums\Icon;
 use App\Support\DefaultCategories;
-use App\Support\Icons;
 use Tests\TestCase;
 
 uses(TestCase::class);
@@ -19,7 +19,7 @@ test('the icon catalog matches the picker', function () {
 
     preg_match_all("/'([^']+)'/", $matches[1], $names);
 
-    expect($names[1])->toBe(Icons::names());
+    expect($names[1])->toBe(array_column(Icon::cases(), 'value'));
 });
 
 test('default category icons come from the catalog', function () {
@@ -31,7 +31,7 @@ test('default category icons come from the catalog', function () {
         }
     }
 
-    expect($icons)->each->toBeIn(Icons::names())
+    expect($icons)->each->toBeIn(array_column(Icon::cases(), 'value'))
         ->and(array_unique($icons))->toHaveCount(count($icons));
 });
 
@@ -46,7 +46,7 @@ test('the color catalog matches the picker', function () {
 
     preg_match_all("/'([^']+)'/", $matches[1], $names);
 
-    expect($names[1])->toBe(CategoryColors::names());
+    expect($names[1])->toBe(array_column(CategoryColor::cases(), 'value'));
 });
 
 test('default category colors come from the catalog', function () {
@@ -58,5 +58,5 @@ test('default category colors come from the catalog', function () {
         }
     }
 
-    expect($colors)->each->toBeIn(CategoryColors::names());
+    expect($colors)->each->toBeIn(array_column(CategoryColor::cases(), 'value'));
 });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Enums\CategoryKind;
 use App\Enums\TransactionType;
@@ -8,6 +8,10 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Queries\InsightsQuery;
+use App\Support\CalendarMonth;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 

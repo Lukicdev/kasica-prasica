@@ -6,8 +6,8 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Support\AccountBalance;
-use App\Support\Decimal;
+use App\Money\AccountBalance;
+use App\Money\Decimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 

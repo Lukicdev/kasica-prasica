@@ -2,10 +2,10 @@
 
 namespace App\Concerns;
 
+use App\Enums\CategoryColor;
 use App\Enums\CategoryKind;
+use App\Enums\Icon;
 use App\Models\Category;
-use App\Support\CategoryColors;
-use App\Support\Icons;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -48,8 +48,8 @@ trait CategoryValidationRules
 
         return [
             'name' => ['required', 'string', 'max:100', $unique],
-            'icon' => ['nullable', 'string', Rule::in(Icons::names())],
-            'color' => ['nullable', 'string', Rule::in(CategoryColors::names())],
+            'icon' => ['nullable', Rule::enum(Icon::class)],
+            'color' => ['nullable', Rule::enum(CategoryColor::class)],
             'kind' => ['required', Rule::enum(CategoryKind::class)],
             'description' => ['nullable', 'string', 'max:255'],
         ];
@@ -64,8 +64,8 @@ trait CategoryValidationRules
             'name.required' => 'Enter a name.',
             'name.max' => 'Keep the name under 100 characters.',
             'name.unique' => 'A category with this name already exists.',
-            'icon.in' => 'Choose an icon from the list.',
-            'color.in' => 'Choose a color from the list.',
+            'icon.enum' => 'Choose an icon from the list.',
+            'color.enum' => 'Choose a color from the list.',
             'kind.required' => 'Choose income or expense.',
             'kind.enum' => 'Choose income or expense.',
             'description.max' => 'Keep the description under 255 characters.',

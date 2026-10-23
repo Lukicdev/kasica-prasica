@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Support;
+namespace App\Queries;
 
+use App\Support\CalendarMonth;
 use Illuminate\Http\Request;
 
 /**

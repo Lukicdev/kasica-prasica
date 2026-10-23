@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Enums\TransactionType;
 use App\Models\Account;
@@ -8,6 +8,13 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Money\AccountBalance;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Money\MoneyFormatter;
+use App\Money\Rate;
+use App\Queries\TransactionFilters;
+use App\Support\CalendarMonth;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;

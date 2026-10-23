@@ -6,7 +6,7 @@ use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Support\TransferAmounts;
+use App\Money\TransferAmounts;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;

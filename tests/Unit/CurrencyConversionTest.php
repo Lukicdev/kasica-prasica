@@ -2,8 +2,8 @@
 
 use App\Contracts\ExchangeRate;
 use App\Models\Workspace;
-use App\Support\MoneyConverter;
-use App\Support\StoredExchangeRate;
+use App\Money\MoneyConverter;
+use App\Money\StoredExchangeRate;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

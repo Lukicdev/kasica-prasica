@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Enums\CategoryKind;
 use App\Enums\TransactionType;
@@ -10,6 +10,10 @@ use App\Models\CategoryBudget;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Money\MoneyFormatter;
+use App\Support\CalendarMonth;
 use Illuminate\Support\Collection;
 
 /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Enums\CategoryKind;
 use App\Models\Category;

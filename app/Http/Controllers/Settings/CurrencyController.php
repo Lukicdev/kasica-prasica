@@ -11,7 +11,7 @@ use App\Http\Requests\Settings\StoreWorkspaceCurrencyRequest;
 use App\Http\Requests\Settings\UpdateBaseCurrencyRequest;
 use App\Http\Requests\Settings\UpdateWorkspaceCurrencyRequest;
 use App\Models\WorkspaceCurrency;
-use App\Support\CurrencyShare;
+use App\Money\CurrencyShare;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

@@ -1,10 +1,14 @@
 <?php
 
-namespace App\Support;
+namespace App\Catalogs;
 
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Money\AccountBalance;
+use App\Money\Decimal;
+use App\Money\MoneyConverter;
+use App\Money\MoneyFormatter;
 
 /**
  * Reconciliation compares the calculated balance with the balance the user counted.
