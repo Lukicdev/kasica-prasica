@@ -54,8 +54,8 @@ class TransactionCatalog
      *     filtered: bool,
      *     options: array{
      *         types: list<array{value: string, label: string}>,
-     *         categories: list<array{id: int, name: string, kind: string}>,
-     *         accounts: list<array{id: int, name: string}>,
+     *         categories: list<array{id: int, name: string, kind: string, icon: string|null, color: string|null}>,
+     *         accounts: list<array{id: int, name: string, icon: string|null}>,
      *         people: list<array{id: int, name: string}>,
      *         currencies: list<array{value: string, label: string}>
      *     },
@@ -213,12 +213,15 @@ class TransactionCatalog
                         ? $category->name
                         : $category->name.' (archived)',
                     'kind' => $category->kind->value,
+                    'icon' => $category->icon,
+                    'color' => $category->color,
                 ])->all()),
                 'accounts' => array_values($accounts->map(fn (Account $account): array => [
                     'id' => $account->id,
                     'name' => $account->archived_at === null
                         ? $account->name
                         : $account->name.' (archived)',
+                    'icon' => $account->icon,
                 ])->all()),
                 'people' => array_values($people->map(fn (User $person): array => [
                     'id' => $person->id,
@@ -303,8 +306,8 @@ class TransactionCatalog
      *         note: string|null,
      *         recurring: bool
      *     }|null,
-     *     accounts: list<array{id: int, name: string, currency: string, balance: string, archived: bool}>,
-     *     categories: list<array{id: int, name: string, kind: string, label: string, archived: bool}>,
+     *     accounts: list<array{id: int, name: string, icon: string|null, currency: string, balance: string, archived: bool}>,
+     *     categories: list<array{id: int, name: string, kind: string, icon: string|null, color: string|null, label: string, archived: bool}>,
      *     people: list<array{id: int, name: string}>,
      *     defaults: array{type: string, account_id: int|null, category_id: int|null, person_id: int, date: string, currency: string},
      *     needs_account: bool
@@ -364,6 +367,7 @@ class TransactionCatalog
             'accounts' => array_values($formAccounts->map(fn (Account $account): array => [
                 'id' => $account->id,
                 'name' => $account->archived_at === null ? $account->name : $account->name.' (archived)',
+                'icon' => $account->icon,
                 'currency' => $account->currency,
                 'balance' => $balances[$account->id],
                 'archived' => $account->archived_at !== null,
@@ -372,6 +376,8 @@ class TransactionCatalog
                 'id' => $category->id,
                 'name' => $category->name,
                 'kind' => $category->kind->value,
+                'icon' => $category->icon,
+                'color' => $category->color,
                 'label' => $category->archived_at === null
                     ? $category->choiceLabel()
                     : $category->choiceLabel().' (archived)',

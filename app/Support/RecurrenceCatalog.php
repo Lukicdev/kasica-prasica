@@ -150,7 +150,7 @@ class RecurrenceCatalog
      *         min_date: string,
      *         max_date: string
      *     },
-     *     accounts: list<array{id: int, name: string, currency: string, balance: string, archived: bool}>,
+     *     accounts: list<array{id: int, name: string, icon: string|null, currency: string, balance: string, archived: bool}>,
      *     needs_account: bool
      * }
      */
@@ -200,6 +200,7 @@ class RecurrenceCatalog
             'accounts' => array_values($accounts->map(fn (Account $account): array => [
                 'id' => $account->id,
                 'name' => $account->archived_at === null ? $account->name : $account->name.' (archived)',
+                'icon' => $account->icon,
                 'currency' => $account->currency,
                 'balance' => $balances[$account->id],
                 'archived' => $account->archived_at !== null,

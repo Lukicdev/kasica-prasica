@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { EntityIcon } from '@/components/entity-icon';
 import {
     Select,
     SelectContent,
@@ -14,7 +15,30 @@ const emptyValue = '__empty__';
 export type FormSelectOption = {
     value: string;
     label: string;
+    icon?: string | null;
+    color?: string | null;
 };
+
+function SelectOptionLabel({
+    label,
+    icon,
+    color,
+}: {
+    label: string;
+    icon?: string | null;
+    color?: string | null;
+}) {
+    if (!icon) {
+        return label;
+    }
+
+    return (
+        <>
+            <EntityIcon name={icon} color={color} className="size-6" />
+            <span className="min-w-0 truncate">{label}</span>
+        </>
+    );
+}
 
 export function FormSelect({
     id,
@@ -77,7 +101,10 @@ export function FormSelect({
                         className,
                     )}
                 >
-                    <SelectValue placeholder={placeholder ?? emptyLabel} />
+                    <SelectValue
+                        placeholder={placeholder ?? emptyLabel}
+                        className="min-w-0"
+                    />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectGroup>
@@ -88,7 +115,11 @@ export function FormSelect({
                         ) : null}
                         {options.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
-                                {option.label}
+                                <SelectOptionLabel
+                                    label={option.label}
+                                    icon={option.icon}
+                                    color={option.color}
+                                />
                             </SelectItem>
                         ))}
                     </SelectGroup>

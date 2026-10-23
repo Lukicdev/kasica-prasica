@@ -2,6 +2,7 @@
 export type TransferAccountOption = {
     id: number;
     name: string;
+    icon: string | null;
     currency: string;
     balance: string;
     archived: boolean;

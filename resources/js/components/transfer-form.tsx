@@ -164,6 +164,7 @@ export function TransferForm({
                             options={accounts.map((account) => ({
                                 value: String(account.id),
                                 label: account.name,
+                                icon: account.icon,
                             }))}
                         />
                         <InputError message={errors.from_account_id} />
@@ -182,6 +183,7 @@ export function TransferForm({
                             options={accounts.map((account) => ({
                                 value: String(account.id),
                                 label: account.name,
+                                icon: account.icon,
                             }))}
                         />
                         <InputError message={errors.to_account_id} />

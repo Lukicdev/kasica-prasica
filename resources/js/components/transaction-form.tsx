@@ -224,6 +224,7 @@ export function TransactionForm({
                             options={accounts.map((item) => ({
                                 value: String(item.id),
                                 label: item.name,
+                                icon: item.icon,
                             }))}
                         />
                         <InputError message={errors.account_id} />
@@ -280,6 +281,8 @@ export function TransactionForm({
                                 options={categoriesForType.map((category) => ({
                                     value: String(category.id),
                                     label: category.label,
+                                    icon: category.icon,
+                                    color: category.color,
                                 }))}
                             />
                         )}

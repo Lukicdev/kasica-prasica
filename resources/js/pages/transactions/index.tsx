@@ -370,6 +370,8 @@ function TransactionToolbar({
                                                 (category) => ({
                                                     value: String(category.id),
                                                     label: category.name,
+                                                    icon: category.icon,
+                                                    color: category.color,
                                                 }),
                                             )}
                                         />
@@ -397,6 +399,7 @@ function TransactionToolbar({
                                                 (account) => ({
                                                     value: String(account.id),
                                                     label: account.name,
+                                                    icon: account.icon,
                                                 }),
                                             )}
                                         />

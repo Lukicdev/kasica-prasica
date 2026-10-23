@@ -157,6 +157,7 @@ export function RecurrenceForm({
                             options={accounts.map((item) => ({
                                 value: String(item.id),
                                 label: item.name,
+                                icon: item.icon,
                             }))}
                         />
                         <InputError message={errors.account_id} />

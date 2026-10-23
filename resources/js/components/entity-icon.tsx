@@ -26,7 +26,7 @@ export function EntityIcon({
             )}
             aria-hidden="true"
         >
-            <Icon className="size-4" />
+            <Icon className="size-4 text-foreground" />
         </span>
     );
 }

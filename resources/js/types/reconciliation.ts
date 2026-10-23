@@ -25,6 +25,7 @@ export type ReconciliationCreatePage = {
 export type AdjustmentAccountOption = {
     id: number;
     name: string;
+    icon: string | null;
     currency: string;
     balance: string;
     archived: boolean;

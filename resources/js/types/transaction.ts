@@ -37,11 +37,14 @@ export type TransactionOption = {
 
 export type TransactionCategoryOption = TransactionOption & {
     kind: string;
+    icon: string | null;
+    color: string | null;
     label?: string;
     archived?: boolean;
 };
 
 export type TransactionAccountOption = TransactionOption & {
+    icon: string | null;
     currency: string;
     balance: string;
     archived: boolean;
@@ -86,7 +89,7 @@ export type TransactionTotal = {
 export type TransactionListOptions = {
     types: { value: string; label: string }[];
     categories: TransactionCategoryOption[];
-    accounts: TransactionOption[];
+    accounts: (TransactionOption & { icon: string | null })[];
     people: TransactionOption[];
     currencies: { value: string; label: string }[];
 };
@@ -119,6 +122,8 @@ export type TransactionDefaults = {
 export type TransactionFormCategory = {
     id: number;
     name: string;
+    icon: string | null;
+    color: string | null;
     kind: 'income' | 'expense';
     label: string;
     archived: boolean;
