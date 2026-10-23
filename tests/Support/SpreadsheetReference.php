@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace Tests\Support;
 
 /**
  * The household spreadsheet in section 6 of the product plan.
