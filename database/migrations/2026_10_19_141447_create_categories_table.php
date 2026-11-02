@@ -22,6 +22,8 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->string('icon', 50)->nullable();
+            $table->string('color', 20)->nullable();
 
             $table->unique(['workspace_id', 'kind', 'name']);
             $table->index(['workspace_id', 'kind', 'position']);

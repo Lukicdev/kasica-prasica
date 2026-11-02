@@ -27,8 +27,15 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->foreignId('category_id')->nullable()->constrained()->restrictOnDelete();
+            $table->foreignId('destination_account_id')->nullable()->constrained('accounts')->restrictOnDelete();
+            $table->decimal('destination_amount', 15, 2)->nullable();
+            $table->boolean('repeats')->default(false);
+            $table->foreignId('recurrence_id')->nullable()->constrained('transactions')->nullOnDelete();
 
             $table->index(['account_id', 'booked_on']);
+            $table->index(['workspace_id', 'booked_on']);
+            $table->index(['workspace_id', 'repeats', 'booked_on']);
         });
     }
 
