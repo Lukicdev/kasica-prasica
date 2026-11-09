@@ -17,3 +17,15 @@ export type InsightsTrends = {
     through: InsightsMonth;
     months: InsightsTrendMonth[];
 };
+
+export type InsightsNetWorthMonth = {
+    value: string;
+    label: string;
+    short_label: string;
+    net_worth: OverviewFigure;
+};
+
+export type InsightsNetWorth = {
+    through: InsightsMonth;
+    months: InsightsNetWorthMonth[];
+};

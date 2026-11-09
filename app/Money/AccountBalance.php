@@ -6,6 +6,7 @@ use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 /**
@@ -77,6 +78,79 @@ class AccountBalance
         return $this->forAccounts(new Collection([$account]))[$account->id];
     }
 
+    /**
+     * Balance in each account's currency on each date.
+     *
+     * The opening balance counts from its date. A transaction counts from
+     * the day it is booked. Dates are independent of the order they are given.
+     *
+     * @param  Collection<int, Account>  $accounts
+     * @param  list<string>  $dates
+     * @return array<string, array<int, string>>
+     */
+    public function forAccountsThrough(Collection $accounts, array $dates): array
+    {
+        if ($dates === []) {
+            return [];
+        }
+
+        $ordered = array_values(array_unique($dates));
+        sort($ordered);
+
+        /** @var array<int, Decimal> $running */
+        $running = [];
+        /** @var array<int, bool> $opened */
+        $opened = [];
+
+        foreach ($accounts as $account) {
+            $running[$account->id] = Decimal::of('0');
+            $opened[$account->id] = false;
+        }
+
+        $transactions = $this->transactionsFor($accounts)->values();
+        $index = 0;
+        $count = $transactions->count();
+        $snapshots = [];
+
+        foreach ($ordered as $date) {
+            foreach ($accounts as $account) {
+                if ($opened[$account->id] || $account->opening_balance_on->toDateString() > $date) {
+                    continue;
+                }
+
+                $running[$account->id] = $running[$account->id]->add(Decimal::of((string) $account->opening_balance));
+                $opened[$account->id] = true;
+            }
+
+            while ($index < $count && $transactions->get($index)?->booked_on->toDateString() <= $date) {
+                $transaction = $transactions->get($index);
+                $index++;
+
+                if ($transaction === null) {
+                    break;
+                }
+
+                foreach ($this->affectedAccountIds($transaction) as $accountId) {
+                    if (! isset($running[$accountId])) {
+                        continue;
+                    }
+
+                    $running[$accountId] = $running[$accountId]->add($this->signedEffect($transaction, $accountId));
+                }
+            }
+
+            $balances = [];
+
+            foreach ($running as $id => $total) {
+                $balances[$id] = $total->toString(MoneyConverter::SCALE);
+            }
+
+            $snapshots[$date] = $balances;
+        }
+
+        return $snapshots;
+    }
+
     public function apply(string $balance, TransactionType $type, string $accountAmount): string
     {
         $effect = Decimal::of($accountAmount);
@@ -120,6 +194,36 @@ class AccountBalance
         return $transaction->type === TransactionType::Income || $transaction->type === TransactionType::Adjustment
             ? $effect
             : Decimal::of('0')->subtract($effect);
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     * @return EloquentCollection<int, Transaction>
+     */
+    private function transactionsFor(Collection $accounts): EloquentCollection
+    {
+        if ($accounts->isEmpty()) {
+            return new EloquentCollection;
+        }
+
+        $ids = $accounts->pluck('id')->all();
+
+        return Transaction::query()
+            ->where(function (Builder $query) use ($ids): void {
+                $query->whereIn('account_id', $ids)
+                    ->orWhereIn('destination_account_id', $ids);
+            })
+            ->orderBy('booked_on')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'account_id',
+                'destination_account_id',
+                'type',
+                'account_amount',
+                'destination_amount',
+                'booked_on',
+            ]);
     }
 
     /**

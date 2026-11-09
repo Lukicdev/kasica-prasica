@@ -3,17 +3,24 @@
 namespace App\Catalogs;
 
 use App\Enums\TransactionType;
+use App\Models\Account;
+use App\Models\Asset;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Money\AccountBalance;
 use App\Money\Decimal;
 use App\Money\MoneyConverter;
 use App\Support\CalendarMonth;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 
 /**
- * Income against spending for the last twelve months.
+ * Income against spending, and net worth, for the last twelve months.
  *
- * Amounts are the sum of income and expense transactions in the base currency.
+ * Income and spending are the sums of those transactions in the base currency.
+ * Net worth is account balances plus asset values on each date. Debt is not
+ * subtracted yet.
  */
 class InsightsCatalog
 {
@@ -21,15 +28,23 @@ class InsightsCatalog
 
     public function __construct(
         private MoneyConverter $converter,
+        private AccountBalance $balances,
     ) {}
 
     /**
-     * @return array{trends: array<string, mixed>}
+     * @return array{
+     *     trends: array<string, mixed>,
+     *     net_worth: array<string, mixed>
+     * }
      */
     public function page(User $user): array
     {
+        $workspace = $user->workspace;
+        $display = $user->display_currency;
+
         return [
-            'trends' => $this->trends($user->workspace, $user->display_currency),
+            'trends' => $this->trends($workspace, $display),
+            'net_worth' => $this->netWorth($workspace, $display),
         ];
     }
 
@@ -75,20 +90,127 @@ class InsightsCatalog
 
         foreach ($months as $index => $month) {
             $bucket = $buckets[$month->value()];
-            $withYear = $index === 0 || $month->start()->month === 1;
 
-            $rows[] = [
-                'value' => $month->value(),
-                'label' => $month->label(),
-                'short_label' => $month->start()->format($withYear ? 'M Y' : 'M'),
+            $rows[] = $this->monthRow($month, $index, [
                 'income' => $this->figure($bucket['income']->toString(MoneyConverter::SCALE), $display, $workspace),
                 'spent' => $this->figure($bucket['spent']->toString(MoneyConverter::SCALE), $display, $workspace),
-            ];
+            ]);
         }
 
         return [
             'through' => $this->month($through),
             'months' => $rows,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function netWorth(Workspace $workspace, string $display): array
+    {
+        $through = CalendarMonth::current();
+        $months = $this->trendMonths($through);
+        $dates = [];
+
+        foreach ($months as $month) {
+            $dates[$month->value()] = $this->asOf($month, $through);
+        }
+
+        $accounts = Account::query()
+            ->whereBelongsTo($workspace)
+            ->get(['id', 'currency', 'opening_balance', 'opening_balance_on']);
+        $assets = Asset::query()
+            ->whereBelongsTo($workspace)
+            ->get(['id', 'currency', 'value', 'valued_on']);
+        $balances = $this->balances->forAccountsThrough($accounts, array_values($dates));
+        $assetBases = $this->assetBases($assets, $workspace);
+        $rows = [];
+
+        foreach ($months as $index => $month) {
+            $date = $dates[$month->value()];
+            $total = Decimal::of('0');
+
+            foreach ($accounts as $account) {
+                $total = $total->add(Decimal::of($this->inBase(
+                    $balances[$date][$account->id],
+                    $account->currency,
+                    $workspace,
+                )));
+            }
+
+            foreach ($assetBases as $asset) {
+                if ($asset['valued_on'] > $date) {
+                    continue;
+                }
+
+                $total = $total->add(Decimal::of($asset['base']));
+            }
+
+            $rows[] = $this->monthRow($month, $index, [
+                'net_worth' => $this->figure($total->toString(MoneyConverter::SCALE), $display, $workspace),
+            ]);
+        }
+
+        return [
+            'through' => $this->month($through),
+            'months' => $rows,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Asset>  $assets
+     * @return list<array{valued_on: string, base: string}>
+     */
+    private function assetBases(Collection $assets, Workspace $workspace): array
+    {
+        $rows = [];
+
+        foreach ($assets as $asset) {
+            $value = Decimal::of((string) $asset->value)->toString(MoneyConverter::SCALE);
+
+            $rows[] = [
+                'valued_on' => $asset->valued_on->toDateString(),
+                'base' => $this->inBase($value, $asset->currency, $workspace),
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function inBase(string $amount, string $currency, Workspace $workspace): string
+    {
+        if ($currency === $workspace->base_currency) {
+            return Decimal::of($amount)->toString(MoneyConverter::SCALE);
+        }
+
+        return $this->converter->baseAmount($amount, $currency, $workspace);
+    }
+
+    /**
+     * The current month stops today. Earlier months use their last day.
+     */
+    private function asOf(CalendarMonth $month, CalendarMonth $through): string
+    {
+        if ($month->value() === $through->value()) {
+            return CarbonImmutable::now()->toDateString();
+        }
+
+        return $month->endExclusive()->subDay()->toDateString();
+    }
+
+    /**
+     * @param  array<string, mixed>  $figures
+     * @return array<string, mixed>
+     */
+    private function monthRow(CalendarMonth $month, int $index, array $figures): array
+    {
+        $withYear = $index === 0 || $month->start()->month === 1;
+
+        return [
+            'value' => $month->value(),
+            'label' => $month->label(),
+            'short_label' => $month->start()->format($withYear ? 'M Y' : 'M'),
+            ...$figures,
         ];
     }
 

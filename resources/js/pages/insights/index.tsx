@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
-import { type ComponentProps } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
+import { type ComponentProps, type ReactNode } from 'react';
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from 'recharts';
 import {
     Card,
     CardContent,
@@ -17,7 +17,12 @@ import {
     type ChartConfig,
 } from '@/components/ui/chart';
 import { index as insights } from '@/routes/insights';
-import type { InsightsTrendMonth, InsightsTrends } from '@/types/insights';
+import type {
+    InsightsNetWorth,
+    InsightsNetWorthMonth,
+    InsightsTrendMonth,
+    InsightsTrends,
+} from '@/types/insights';
 
 const chartConfig = {
     income: {
@@ -30,7 +35,20 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
-export default function Insights({ trends }: { trends: InsightsTrends }) {
+const netWorthChartConfig = {
+    netWorth: {
+        label: 'Net worth',
+        color: 'var(--chart-1)',
+    },
+} satisfies ChartConfig;
+
+export default function Insights({
+    trends,
+    net_worth,
+}: {
+    trends: InsightsTrends;
+    net_worth: InsightsNetWorth;
+}) {
     return (
         <>
             <Head title="Insights" />
@@ -44,6 +62,18 @@ export default function Insights({ trends }: { trends: InsightsTrends }) {
                     </CardHeader>
                     <CardContent>
                         <TrendChart months={trends.months} />
+                    </CardContent>
+                </Card>
+                <Card data-test="net-worth">
+                    <CardHeader>
+                        <CardTitle>Net worth</CardTitle>
+                        <CardDescription>
+                            Accounts and assets for the last 12 months, through{' '}
+                            {net_worth.through.label}.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <NetWorthChart months={net_worth.months} />
                     </CardContent>
                 </Card>
             </div>
@@ -103,6 +133,62 @@ function TrendChart({ months }: { months: InsightsTrendMonth[] }) {
     );
 }
 
+function NetWorthChart({ months }: { months: InsightsNetWorthMonth[] }) {
+    return (
+        <ChartContainer
+            config={netWorthChartConfig}
+            className="aspect-auto h-72 w-full"
+            aria-label="Line chart of net worth"
+        >
+            <LineChart
+                accessibilityLayer
+                data={netWorthChartData(months)}
+                margin={{ left: 12, right: 12 }}
+            >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={16}
+                />
+                <ChartTooltip
+                    cursor={false}
+                    content={<NetWorthTooltipContent />}
+                />
+                <Line
+                    dataKey="netWorth"
+                    type="monotone"
+                    stroke="var(--color-netWorth)"
+                    strokeWidth={2}
+                    dot={false}
+                />
+            </LineChart>
+        </ChartContainer>
+    );
+}
+
+type NetWorthChartRow = {
+    month: string;
+    label: string;
+    netWorth: number;
+    netWorthFormatted: string;
+    netWorthOriginalFormatted: string | null;
+};
+
+function netWorthChartData(
+    months: InsightsNetWorthMonth[],
+): NetWorthChartRow[] {
+    return months.map((month) => ({
+        month: month.short_label,
+        label: month.label,
+        netWorth: chartAmount(month.net_worth.amount),
+        netWorthFormatted: month.net_worth.formatted,
+        netWorthOriginalFormatted: month.net_worth.original_formatted,
+    }));
+}
+
 function TrendTooltipContent({
     payload,
     ...props
@@ -116,29 +202,67 @@ function TrendTooltipContent({
             label={typeof label === 'string' ? label : props.label}
             formatter={(value, name, item) => {
                 const series = name === 'spent' ? 'spent' : 'income';
-                const formatted = item.payload?.[`${series}Formatted`];
-                const original = item.payload?.[`${series}OriginalFormatted`];
 
                 return (
-                    <span className="flex flex-1 items-center justify-between gap-2">
-                        <span className="text-muted-foreground">
-                            {chartConfig[series].label}
-                        </span>
-                        <span className="font-medium text-foreground tabular-nums">
-                            {typeof formatted === 'string'
-                                ? formatted
-                                : String(value)}
-                            {typeof original === 'string' ? (
-                                <span className="font-normal text-muted-foreground">
-                                    {' '}
-                                    {original}
-                                </span>
-                            ) : null}
-                        </span>
-                    </span>
+                    <MoneyTooltipRow
+                        label={chartConfig[series].label}
+                        formatted={item.payload?.[`${series}Formatted`]}
+                        original={item.payload?.[`${series}OriginalFormatted`]}
+                        fallback={value}
+                    />
                 );
             }}
         />
+    );
+}
+
+function NetWorthTooltipContent({
+    payload,
+    ...props
+}: ComponentProps<typeof ChartTooltipContent>) {
+    const label = payload?.[0]?.payload?.label;
+
+    return (
+        <ChartTooltipContent
+            {...props}
+            payload={payload}
+            label={typeof label === 'string' ? label : props.label}
+            formatter={(value, _name, item) => (
+                <MoneyTooltipRow
+                    label={netWorthChartConfig.netWorth.label}
+                    formatted={item.payload?.netWorthFormatted}
+                    original={item.payload?.netWorthOriginalFormatted}
+                    fallback={value}
+                />
+            )}
+        />
+    );
+}
+
+function MoneyTooltipRow({
+    label,
+    formatted,
+    original,
+    fallback,
+}: {
+    label: ReactNode;
+    formatted: unknown;
+    original: unknown;
+    fallback: unknown;
+}) {
+    return (
+        <span className="flex flex-1 items-center justify-between gap-2">
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-medium text-foreground tabular-nums">
+                {typeof formatted === 'string' ? formatted : String(fallback)}
+                {typeof original === 'string' ? (
+                    <span className="font-normal text-muted-foreground">
+                        {' '}
+                        {original}
+                    </span>
+                ) : null}
+            </span>
+        </span>
     );
 }
 
