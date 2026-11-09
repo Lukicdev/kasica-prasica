@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     ChartColumn,
     Gem,
@@ -8,6 +8,7 @@ import {
     Tags,
     Wallet,
 } from 'lucide-react';
+import { useEffect } from 'react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -19,6 +20,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as accounts } from '@/routes/accounts';
@@ -68,6 +70,14 @@ const mainNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { setOpenMobile } = useSidebar();
+
+    useEffect(() => {
+        return router.on('success', () => {
+            setOpenMobile(false);
+        });
+    }, [setOpenMobile]);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
