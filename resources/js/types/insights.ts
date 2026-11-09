@@ -5,35 +5,6 @@ export type InsightsMonth = {
     label: string;
 };
 
-export type InsightsDirection = 'up' | 'down' | 'same';
-
-export type InsightsComparisonRow = {
-    id: number | null;
-    name: string;
-    icon: string | null;
-    color: string | null;
-    description: string | null;
-    archived: boolean;
-    left: OverviewFigure;
-    right: OverviewFigure;
-    change: OverviewFigure;
-    direction: InsightsDirection;
-    direction_label: string;
-};
-
-export type InsightsComparison = {
-    left: InsightsMonth;
-    right: InsightsMonth;
-    rows: InsightsComparisonRow[];
-    total: {
-        left: OverviewFigure;
-        right: OverviewFigure;
-        change: OverviewFigure;
-        direction: InsightsDirection;
-        direction_label: string;
-    };
-};
-
 export type InsightsTrendMonth = {
     value: string;
     label: string;

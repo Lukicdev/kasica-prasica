@@ -69,13 +69,7 @@ export default function Overview({
                             variant="outline"
                             className="h-11 w-full sm:w-auto md:h-9"
                         >
-                            <Link
-                                href={insights({
-                                    query: { right: month.value },
-                                })}
-                            >
-                                Insights
-                            </Link>
+                            <Link href={insights()}>Insights</Link>
                         </Button>
                         <Button
                             asChild
