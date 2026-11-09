@@ -63,6 +63,17 @@ export default function Insights({
         <>
             <Head title="Insights" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <section className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-lg font-semibold tracking-tight">
+                            Insights
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Income, spending, and net worth for the last 12
+                            months, in the display currency from the header.
+                        </p>
+                    </div>
+                </section>
                 <Card data-test="trends">
                     <CardHeader>
                         <CardTitle>Income and spending</CardTitle>
