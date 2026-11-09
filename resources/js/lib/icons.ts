@@ -236,6 +236,13 @@ export const accountTypeIcons: Record<string, IconName> = {
     other: 'wallet',
 };
 
+export const assetTypeIcons: Record<string, IconName> = {
+    real_estate: 'house',
+    vehicle: 'car',
+    valuable: 'sparkles',
+    other: 'package',
+};
+
 export function iconComponent(
     name: string | null | undefined,
 ): LucideIcon | null {

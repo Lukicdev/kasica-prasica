@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InsightsController;
@@ -16,6 +17,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('insights', [InsightsController::class, 'index'])->name('insights.index');
 
     Route::resource('accounts', AccountController::class);
+    Route::resource('assets', AssetController::class);
+    Route::patch('assets/{asset}/archive', [AssetController::class, 'archive'])->name('assets.archive');
+    Route::patch('assets/{asset}/restore', [AssetController::class, 'restore'])->name('assets.restore');
     Route::get('accounts/{account}/reconcile', [ReconciliationController::class, 'create'])->name('accounts.reconcile');
     Route::post('accounts/{account}/reconcile', [ReconciliationController::class, 'store'])->name('accounts.reconcile.store');
     Route::patch('accounts/{account}/archive', [AccountController::class, 'archive'])->name('accounts.archive');

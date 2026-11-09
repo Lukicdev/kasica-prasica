@@ -3,7 +3,7 @@
 namespace App\Enums;
 
 /**
- * Lucide icons a person can assign to an account or a category.
+ * Lucide icons a person can assign to an account, a category, or an asset.
  * The same names are listed in resources/js/lib/icons.ts.
  */
 enum Icon: string

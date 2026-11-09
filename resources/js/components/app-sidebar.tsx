@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     ChartColumn,
+    Gem,
     LayoutGrid,
     PiggyBank,
     Receipt,
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as accounts } from '@/routes/accounts';
+import { index as assets } from '@/routes/assets';
 import { index as budget } from '@/routes/budgets';
 import { index as categories } from '@/routes/categories';
 import { index as insights } from '@/routes/insights';
@@ -52,6 +54,11 @@ const mainNavItems: NavItem[] = [
         title: 'Accounts',
         href: accounts(),
         icon: Wallet,
+    },
+    {
+        title: 'Assets',
+        href: assets(),
+        icon: Gem,
     },
     {
         title: 'Categories',
