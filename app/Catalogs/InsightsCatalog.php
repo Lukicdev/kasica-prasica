@@ -116,45 +116,113 @@ class InsightsCatalog
             $dates[$month->value()] = $this->asOf($month, $through);
         }
 
+        $comparison = $this->comparisonDate($through);
         $accounts = Account::query()
             ->whereBelongsTo($workspace)
             ->get(['id', 'currency', 'opening_balance', 'opening_balance_on']);
         $assets = Asset::query()
             ->whereBelongsTo($workspace)
             ->get(['id', 'currency', 'value', 'valued_on']);
-        $balances = $this->balances->forAccountsThrough($accounts, array_values($dates));
+        $snapshotDates = array_values($dates);
+
+        if (! in_array($comparison['date'], $snapshotDates, true)) {
+            $snapshotDates[] = $comparison['date'];
+        }
+
+        $balances = $this->balances->forAccountsThrough($accounts, $snapshotDates);
         $assetBases = $this->assetBases($assets, $workspace);
         $rows = [];
 
         foreach ($months as $index => $month) {
-            $date = $dates[$month->value()];
-            $total = Decimal::of('0');
-
-            foreach ($accounts as $account) {
-                $total = $total->add(Decimal::of($this->inBase(
-                    $balances[$date][$account->id],
-                    $account->currency,
-                    $workspace,
-                )));
-            }
-
-            foreach ($assetBases as $asset) {
-                if ($asset['valued_on'] > $date) {
-                    continue;
-                }
-
-                $total = $total->add(Decimal::of($asset['base']));
-            }
-
             $rows[] = $this->monthRow($month, $index, [
-                'net_worth' => $this->figure($total->toString(MoneyConverter::SCALE), $display, $workspace),
+                'net_worth' => $this->figure(
+                    $this->worthBase($accounts, $assetBases, $balances, $dates[$month->value()], $workspace),
+                    $display,
+                    $workspace,
+                ),
             ]);
         }
+
+        $currentBase = $this->worthBase($accounts, $assetBases, $balances, $dates[$through->value()], $workspace);
+        $previousBase = $this->worthBase($accounts, $assetBases, $balances, $comparison['date'], $workspace);
 
         return [
             'through' => $this->month($through),
             'months' => $rows,
+            'previous' => [
+                'month' => $comparison['month']->label(),
+                'day' => $comparison['day'],
+                'balance' => $this->figure($previousBase, $display, $workspace),
+                'percent' => $this->changePercent($currentBase, $previousBase),
+            ],
         ];
+    }
+
+    /**
+     * Same day number last month, or that month's last day when it is shorter.
+     *
+     * @return array{month: CalendarMonth, day: int, date: string}
+     */
+    private function comparisonDate(CalendarMonth $through): array
+    {
+        $previous = $through->previous();
+        $day = min(CarbonImmutable::now()->day, $previous->start()->daysInMonth);
+
+        return [
+            'month' => $previous,
+            'day' => $day,
+            'date' => $previous->start()->addDays($day - 1)->toDateString(),
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Account>  $accounts
+     * @param  list<array{valued_on: string, base: string}>  $assets
+     * @param  array<string, array<int, string>>  $balances
+     */
+    private function worthBase(Collection $accounts, array $assets, array $balances, string $date, Workspace $workspace): string
+    {
+        $total = Decimal::of('0');
+
+        foreach ($accounts as $account) {
+            $total = $total->add(Decimal::of($this->inBase(
+                $balances[$date][$account->id],
+                $account->currency,
+                $workspace,
+            )));
+        }
+
+        foreach ($assets as $asset) {
+            if ($asset['valued_on'] > $date) {
+                continue;
+            }
+
+            $total = $total->add(Decimal::of($asset['base']));
+        }
+
+        return $total->toString(MoneyConverter::SCALE);
+    }
+
+    /**
+     * How far the current total has moved from the earlier one, as a whole percent.
+     */
+    private function changePercent(string $current, string $previous): ?int
+    {
+        $baseline = Decimal::of($previous);
+
+        if ($baseline->isZero()) {
+            return null;
+        }
+
+        if ($baseline->isNegative()) {
+            $baseline = Decimal::of('0')->subtract($baseline);
+        }
+
+        return (int) Decimal::of($current)
+            ->subtract(Decimal::of($previous))
+            ->multiply(Decimal::of('100'))
+            ->divide($baseline, 0)
+            ->toString(0);
     }
 
     /**

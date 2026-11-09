@@ -1,6 +1,15 @@
 import { Head } from '@inertiajs/react';
 import { type ComponentProps, type ReactNode } from 'react';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from 'recharts';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Line,
+    LineChart,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import { MoneyAmount } from '@/components/money-amount';
 import {
     Card,
     CardContent,
@@ -16,6 +25,7 @@ import {
     ChartTooltipContent,
     type ChartConfig,
 } from '@/components/ui/chart';
+import { cn } from '@/lib/utils';
 import { index as insights } from '@/routes/insights';
 import type {
     InsightsNetWorth,
@@ -72,8 +82,38 @@ export default function Insights({
                             {net_worth.through.label}.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex flex-col gap-4">
                         <NetWorthChart months={net_worth.months} />
+                        <p
+                            className="text-sm text-muted-foreground"
+                            data-test="net-worth-previous"
+                        >
+                            In {net_worth.previous.month} on day{' '}
+                            {net_worth.previous.day}:{' '}
+                            <MoneyAmount
+                                formatted={net_worth.previous.balance.formatted}
+                                originalFormatted={
+                                    net_worth.previous.balance
+                                        .original_formatted
+                                }
+                                className="font-medium text-foreground"
+                            />
+                            {net_worth.previous.percent === null ? null : (
+                                <span
+                                    className={cn(
+                                        'font-medium',
+                                        net_worth.previous.percent > 0 &&
+                                            'text-success',
+                                        net_worth.previous.percent < 0 &&
+                                            'text-destructive',
+                                    )}
+                                >
+                                    {' '}
+                                    ({net_worth.previous.percent > 0 ? '+' : ''}
+                                    {net_worth.previous.percent}%)
+                                </span>
+                            )}
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -112,7 +152,11 @@ function TrendChart({ months }: { months: InsightsTrendMonth[] }) {
             className="aspect-auto h-72 w-full"
             aria-label="Bar chart of income and spending"
         >
-            <BarChart accessibilityLayer data={trendChartData(months)}>
+            <BarChart
+                accessibilityLayer
+                data={trendChartData(months)}
+                margin={{ left: 12, right: 12 }}
+            >
                 <CartesianGrid vertical={false} />
                 <XAxis
                     dataKey="month"
@@ -120,6 +164,13 @@ function TrendChart({ months }: { months: InsightsTrendMonth[] }) {
                     tickMargin={10}
                     axisLine={false}
                     minTickGap={16}
+                />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={16}
+                    width={72}
                 />
                 <ChartTooltip
                     cursor={false}
@@ -152,6 +203,14 @@ function NetWorthChart({ months }: { months: InsightsNetWorthMonth[] }) {
                     axisLine={false}
                     tickMargin={8}
                     minTickGap={16}
+                />
+                <YAxis
+                    dataKey="netWorth"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={16}
+                    width={72}
                 />
                 <ChartTooltip
                     cursor={false}

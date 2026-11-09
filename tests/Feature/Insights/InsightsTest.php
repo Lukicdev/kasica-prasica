@@ -155,6 +155,12 @@ test('net worth is accounts plus assets at each month', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('net_worth.through.value', '2026-10')
+            ->where('net_worth.previous.month', 'September 2026')
+            ->where('net_worth.previous.day', 20)
+            ->where('net_worth.previous.balance.base_amount', '7425.00')
+            ->where('net_worth.previous.balance.formatted', '63.19 EUR')
+            ->where('net_worth.previous.balance.original_formatted', '7,425.00 RSD')
+            ->where('net_worth.previous.percent', 0)
             ->where('net_worth.months', function ($months): bool {
                 $amounts = collect($months)->mapWithKeys(fn ($month) => [
                     $month['value'] => $month['net_worth']['base_amount'],

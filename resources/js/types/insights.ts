@@ -28,4 +28,10 @@ export type InsightsNetWorthMonth = {
 export type InsightsNetWorth = {
     through: InsightsMonth;
     months: InsightsNetWorthMonth[];
+    previous: {
+        month: string;
+        day: number;
+        balance: OverviewFigure;
+        percent: number | null;
+    };
 };
