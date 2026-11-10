@@ -11,7 +11,7 @@ use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
 use Laravel\Mcp\Server\Tool;
 
-#[Name('Kasica')]
+#[Name('Kasica Prasica')]
 #[Version('1.0.0')]
 #[Cacheable(ttlMs: 0, scope: CacheScope::Private)]
 #[Instructions('Private household budget for the authenticated member. get_overview returns that member\'s workspace month overview: income, spending, category budgets, savings rate, balance, and the daily balance flow.')]
