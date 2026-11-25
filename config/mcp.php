@@ -19,6 +19,7 @@ return [
         env('APP_URL'),
         'http://localhost',
         'http://127.0.0.1',
+        'https://claude.ai',
         'https://www.cursor.com',
     ])),
 
