@@ -421,6 +421,29 @@ test('the overview balance converts every account into the display currency', fu
             ->where('balance.formatted', '1,275.00 RSD'));
 });
 
+test('the balance flow converts foreign-currency accounts into the base currency', function () {
+    $this->travelTo('2026-10-22');
+    $user = User::factory()->create();
+    Account::factory()->create([
+        'opening_balance' => '100.00',
+        'opening_balance_on' => '2026-01-01',
+        'currency' => 'RSD',
+    ]);
+    Account::factory()->inCurrency('EUR')->create([
+        'opening_balance' => '10.00',
+        'opening_balance_on' => '2026-01-01',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('flow.points', fn ($points) => $points[0]['amount'] === '1275.00'
+                && $points[21]['amount'] === '1275.00')
+            ->where('flow.previous.balance.base_amount', '1275.00')
+            ->where('balance.amount', '1275.00'));
+});
+
 /**
  * @return array{0: User, 1: User}
  */

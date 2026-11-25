@@ -454,7 +454,8 @@ class TransactionCatalog
 
         $account = $transaction->account;
         $destination = $transaction->destinationAccount;
-        $balance = $this->balances->of($account);
+        $balances = $this->balances->forAccounts(new Collection(array_filter([$account, $destination])));
+        $balance = $balances[$account->id];
 
         return [
             'id' => $transaction->id,
@@ -480,7 +481,7 @@ class TransactionCatalog
                 : $this->money((string) $transaction->destination_amount, $destination->currency),
             'destination_balance' => $destination === null
                 ? null
-                : $this->money($this->balances->of($destination), $destination->currency),
+                : $this->money($balances[$destination->id], $destination->currency),
             'excluded_from_budget' => ! $transaction->type->isIncomeOrExpense(),
             'person' => $transaction->person?->name,
             'amount' => $this->converter->present(

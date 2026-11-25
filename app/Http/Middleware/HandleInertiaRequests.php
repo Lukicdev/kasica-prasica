@@ -50,7 +50,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
-            'currencies' => $this->currencies->forRequest($user?->workspace),
+            // Lazy, so partial reloads that do not ask for it skip the rate lookups.
+            'currencies' => fn (): array => $this->currencies->forRequest($user?->workspace),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

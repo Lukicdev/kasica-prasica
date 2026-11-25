@@ -1,6 +1,8 @@
 <?php
 
 use App\Contracts\ExchangeRate;
+use App\Exceptions\MissingExchangeRate;
+use App\Models\ExchangeRateQuote;
 use App\Models\Workspace;
 use App\Money\MoneyConverter;
 use App\Money\StoredExchangeRate;
@@ -129,4 +131,21 @@ test('amounts that are not decimals are rejected', function () {
 
     expect(fn () => app(MoneyConverter::class)->baseAmount('12.345.6', 'RSD', $workspace))
         ->toThrow(InvalidArgumentException::class);
+});
+
+test('a dated rate uses the latest quote on or before that day', function () {
+    $workspace = Workspace::shared();
+    ExchangeRateQuote::query()->insert([
+        ['quoted_on' => '2026-03-01', 'currency' => 'RSD', 'per_euro' => '118', 'created_at' => now(), 'updated_at' => now()],
+        ['quoted_on' => '2026-06-01', 'currency' => 'RSD', 'per_euro' => '119.25', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+    $rate = new StoredExchangeRate;
+
+    expect($rate->basePerUnit($workspace, 'EUR', CarbonImmutable::parse('2026-02-28')))->toBe('117.5')
+        ->and($rate->basePerUnit($workspace, 'EUR', CarbonImmutable::parse('2026-03-01')))->toBe('118')
+        ->and($rate->basePerUnit($workspace, 'EUR', CarbonImmutable::parse('2026-05-31')))->toBe('118')
+        ->and($rate->basePerUnit($workspace, 'EUR', CarbonImmutable::parse('2026-06-01')))->toBe('119.25')
+        ->and($rate->basePerUnit($workspace, 'EUR', CarbonImmutable::parse('2030-01-01')))->toBe('119.25')
+        ->and(fn () => $rate->basePerUnit($workspace, 'EUR', CarbonImmutable::parse('2019-12-31')))
+        ->toThrow(MissingExchangeRate::class);
 });

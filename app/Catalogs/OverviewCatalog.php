@@ -362,9 +362,9 @@ class OverviewCatalog
 
         $byDate = $this->movementsByDate($user, $accounts, $native, $previous->start(), $month->endExclusive());
         $previousSeries = $this->flowSeries($accounts, $native, $byDate, $previous->start(), $previous->start()->daysInMonth, $display, $user->workspace);
-        $openingBase = $this->householdBase($accounts, $native);
+        $openingBase = $this->householdBase($accounts, $native, $user->workspace);
         $series = $this->flowSeries($accounts, $native, $byDate, $month->start(), $through, $display, $user->workspace);
-        $closingBase = $this->householdBase($accounts, $native);
+        $closingBase = $this->householdBase($accounts, $native, $user->workspace);
         $day = min($through, $previous->start()->daysInMonth);
         $previousBase = $previousSeries['bases'][$day] ?? $openingBase;
         $from = $month->start();
@@ -476,7 +476,7 @@ class OverviewCatalog
                 $this->applyNative($native, $transaction);
             }
 
-            $base = $this->householdBase($accounts, $native);
+            $base = $this->householdBase($accounts, $native, $workspace);
             $presented = $this->figure($base, $display, $workspace);
             $points[] = [
                 'day' => $cursor->day,
@@ -513,14 +513,13 @@ class OverviewCatalog
      * @param  Collection<int, Account>  $accounts
      * @param  array<int, string>  $native
      */
-    private function householdBase(Collection $accounts, array $native): string
+    private function householdBase(Collection $accounts, array $native, Workspace $workspace): string
     {
         $total = Decimal::of('0');
-        $workspace = $accounts->first()?->workspace;
 
         foreach ($accounts as $account) {
             $balance = $native[$account->id];
-            $base = ! $workspace instanceof Workspace || $account->currency === $workspace->base_currency
+            $base = $account->currency === $workspace->base_currency
                 ? Decimal::of($balance)->toString(MoneyConverter::SCALE)
                 : $this->converter->baseAmount($balance, $account->currency, $workspace);
             $total = $total->add(Decimal::of($base));
