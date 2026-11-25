@@ -20,9 +20,9 @@ class ReorderCategories
     {
         $archivedIds = $this->ids($workspace, $kind, archived: true);
 
-        DB::transaction(function () use ($activeIds, $archivedIds): void {
+        DB::transaction(function () use ($workspace, $activeIds, $archivedIds): void {
             foreach ([...$activeIds, ...$archivedIds] as $index => $id) {
-                Category::query()->whereKey($id)->update([
+                Category::query()->whereBelongsTo($workspace)->whereKey($id)->update([
                     'position' => $index + 1,
                 ]);
             }

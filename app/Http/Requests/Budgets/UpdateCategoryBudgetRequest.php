@@ -94,7 +94,10 @@ class UpdateCategoryBudgetRequest extends FormRequest
             return $this->resolvedCategory;
         }
 
-        $category = Category::query()->whereKey($this->integer('category_id'))->first();
+        $category = Category::query()
+            ->whereBelongsTo($this->user()?->workspace)
+            ->whereKey($this->integer('category_id'))
+            ->first();
 
         if (! $category instanceof Category) {
             abort(404);

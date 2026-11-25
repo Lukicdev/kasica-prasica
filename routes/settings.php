@@ -40,7 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where('code', '[A-Za-z]{3}')
         ->name('currencies.destroy');
     Route::patch('settings/base-currency', [CurrencyController::class, 'updateBase'])->name('base-currency.update');
-    Route::post('settings/exchange-rates', ExchangeRateController::class)->name('exchange-rates.store');
+    Route::post('settings/exchange-rates', ExchangeRateController::class)
+        ->middleware('throttle:3,1')
+        ->name('exchange-rates.store');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

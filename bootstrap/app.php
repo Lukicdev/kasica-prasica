@@ -14,7 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // Trusted proxies come from config/trustedproxy.php (TRUSTED_PROXIES),
+        // so only listed addresses can set X-Forwarded-* headers. Outside local,
+        // only APP_URL's host (and its subdomains) is accepted, so generated
+        // links such as password resets cannot point elsewhere.
+        $middleware->trustHosts();
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
