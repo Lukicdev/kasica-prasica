@@ -18,7 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { edit, index, reconcile, show } from '@/routes/accounts';
-import { show as showTransaction } from '@/routes/transactions';
+import { edit as editTransaction } from '@/routes/transactions';
 import { create as createTransfer } from '@/routes/transfers';
 import type { AccountDetail, StatementLine } from '@/types/account';
 
@@ -153,7 +153,7 @@ export default function AccountShow({
                                     const href =
                                         line.id === null
                                             ? null
-                                            : showTransaction(line.id);
+                                            : editTransaction(line.id);
 
                                     return (
                                         <TableRow

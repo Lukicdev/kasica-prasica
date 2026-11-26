@@ -39,7 +39,7 @@ class RecurrenceController extends Controller
         $existing = $this->schedule->occurrence($transaction, $month);
 
         if ($existing instanceof Transaction) {
-            return to_route('transactions.show', $existing);
+            return to_route('transactions.edit', $existing);
         }
 
         return Inertia::render('recurrences/edit', $this->catalog->form($request->user(), $transaction, $month));
@@ -56,7 +56,7 @@ class RecurrenceController extends Controller
         $existing = $this->schedule->occurrence($transaction, $month);
 
         if ($existing instanceof Transaction) {
-            return to_route('transactions.show', $existing);
+            return to_route('transactions.edit', $existing);
         }
 
         try {

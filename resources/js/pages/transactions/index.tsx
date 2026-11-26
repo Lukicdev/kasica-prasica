@@ -45,7 +45,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { cn, toUrl } from '@/lib/utils';
-import { create, index, show } from '@/routes/transactions';
+import { create, edit, index } from '@/routes/transactions';
 import { create as createTransfer } from '@/routes/transfers';
 import type { PendingRecurrence } from '@/types/recurrence';
 import type {
@@ -684,7 +684,7 @@ export default function Transactions({
                                 </TableRow>
                             ) : (
                                 transactions.map((transaction) => {
-                                    const href = show(transaction.id);
+                                    const href = edit(transaction.id);
 
                                     return (
                                         <TableRow

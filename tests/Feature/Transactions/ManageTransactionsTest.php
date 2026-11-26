@@ -18,7 +18,7 @@ test('guests cannot view or change transactions', function () {
 
     $this->get(route('transactions.index'))->assertRedirect(route('login'));
     $this->get(route('transactions.create'))->assertRedirect(route('login'));
-    $this->get(route('transactions.show', $transaction))->assertRedirect(route('login'));
+    $this->get(route('transactions.edit', $transaction))->assertRedirect(route('login'));
     $this->post(route('transactions.store'), [])->assertRedirect(route('login'));
     $this->patch(route('transactions.update', $transaction), [])->assertRedirect(route('login'));
     $this->delete(route('transactions.destroy', $transaction))->assertRedirect(route('login'));
@@ -70,20 +70,18 @@ test('a member can add an expense and the confirmation shows the new balance', f
         ->and($transaction->updated_by)->toBe($user->id)
         ->and($transaction->workspace_id)->toBe($user->workspace_id);
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', $transaction))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.type_label', 'Expense')
-            ->where('transaction.category', 'Corner shop')
-            ->where('transaction.note', 'Weekly shop')
-            ->where('transaction.person', 'Ada')
-            ->where('transaction.amount.formatted', '42.50 RSD')
-            ->where('transaction.amount.original_formatted', null)
-            ->where('transaction.account_amount.formatted', '42.50 RSD')
-            ->where('transaction.balance.amount', '957.50')
-            ->where('transaction.balance.formatted', '957.50 RSD')
-            ->where('transaction.updated_by', null));
+    $detail = app(TransactionCatalog::class)->detail($transaction, $user);
+
+    expect($detail['type_label'])->toBe('Expense')
+        ->and($detail['category'])->toBe('Corner shop')
+        ->and($detail['note'])->toBe('Weekly shop')
+        ->and($detail['person'])->toBe('Ada')
+        ->and($detail['amount']['formatted'])->toBe('42.50 RSD')
+        ->and($detail['amount']['original_formatted'])->toBe(null)
+        ->and($detail['account_amount']['formatted'])->toBe('42.50 RSD')
+        ->and($detail['balance']['amount'])->toBe('957.50')
+        ->and($detail['balance']['formatted'])->toBe('957.50 RSD')
+        ->and($detail['updated_by'])->toBe(null);
 });
 
 test('income increases the account balance', function () {
@@ -99,12 +97,10 @@ test('income increases the account balance', function () {
         ]))
         ->assertSessionHasNoErrors();
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', Transaction::query()->first()))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.type_label', 'Income')
-            ->where('transaction.balance.amount', '150.00'));
+    $detail = app(TransactionCatalog::class)->detail(Transaction::query()->first(), $user);
+
+    expect($detail['type_label'])->toBe('Income')
+        ->and($detail['balance']['amount'])->toBe('150.00');
 });
 
 test('a refund is a negative expense and increases the balance', function () {
@@ -127,12 +123,10 @@ test('a refund is a negative expense and increases the balance', function () {
         ->and(Decimal::of((string) $transaction->amount)->toString(2))->toBe('-25.00')
         ->and(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('-25.00');
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', $transaction))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.type_label', 'Refund')
-            ->where('transaction.balance.amount', '125.00'));
+    $detail = app(TransactionCatalog::class)->detail($transaction, $user);
+
+    expect($detail['type_label'])->toBe('Refund')
+        ->and($detail['balance']['amount'])->toBe('125.00');
 });
 
 test('a euro amount stores the dinar value from the exchange rate', function () {
@@ -162,14 +156,12 @@ test('a euro amount stores the dinar value from the exchange rate', function () 
         ->and(Decimal::of((string) $transaction->base_amount)->toString(2))->toBe('1175.00')
         ->and(Decimal::of((string) $transaction->exchange_rate)->toString(1))->toBe('117.5');
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', $transaction))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.balance.amount', '825.00')
-            ->where('transaction.amount.formatted', '1,175.00 RSD')
-            ->where('transaction.amount.original_formatted', '10.00 EUR')
-            ->where('transaction.account_amount.formatted', '1,175.00 RSD'));
+    $detail = app(TransactionCatalog::class)->detail($transaction, $user);
+
+    expect($detail['balance']['amount'])->toBe('825.00')
+        ->and($detail['amount']['formatted'])->toBe('1,175.00 RSD')
+        ->and($detail['amount']['original_formatted'])->toBe('10.00 EUR')
+        ->and($detail['account_amount']['formatted'])->toBe('1,175.00 RSD');
 });
 
 test('a dinar amount on a euro account is converted at the exchange rate', function () {
@@ -326,7 +318,7 @@ test('another workspace cannot be used and cannot see the transaction', function
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('transactions', []));
 
-    $this->actingAs($outsider)->get(route('transactions.show', $transaction))->assertForbidden();
+    $this->actingAs($outsider)->get(route('transactions.edit', $transaction))->assertForbidden();
     $this->actingAs($outsider)
         ->patch(route('transactions.update', $transaction), transactionPayload($account, $category, $member))
         ->assertForbidden();
@@ -468,7 +460,7 @@ test('editing and deleting update the affected balances', function () {
             'note' => 'Corrected',
         ]))
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('transactions.show', $transaction));
+        ->assertRedirect(route('transactions.index', ['month' => '2026-10']));
 
     $transaction->refresh();
 
@@ -478,12 +470,10 @@ test('editing and deleting update the affected balances', function () {
         ->and($transaction->updated_by)->toBe($editor->id)
         ->and($transaction->created_by)->toBe($owner->id);
 
-    $this->actingAs($editor)
-        ->get(route('transactions.show', $transaction))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.balance.amount', '160.00')
-            ->where('transaction.updated_by', 'Bea'));
+    $detail = app(TransactionCatalog::class)->detail($transaction, $editor);
+
+    expect($detail['balance']['amount'])->toBe('160.00')
+        ->and($detail['updated_by'])->toBe('Bea');
 
     $this->actingAs($editor)
         ->get(route('accounts.show', $cash))

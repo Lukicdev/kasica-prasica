@@ -1,5 +1,6 @@
 <?php
 
+use App\Catalogs\TransactionCatalog;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -55,20 +56,18 @@ test('a transfer moves both balances and is not income or spending', function ()
         ->and($balances->of($cash))->toBe('710.00')
         ->and($balances->of($bank))->toBe('750.00');
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', $transfer))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.type', 'transfer')
-            ->where('transaction.type_label', 'Transfer')
-            ->where('transaction.excluded_from_budget', true)
-            ->where('transaction.account.name', 'Cash')
-            ->where('transaction.account.icon', 'banknote')
-            ->where('transaction.destination.name', 'Bank')
-            ->where('transaction.destination.icon', 'landmark')
-            ->where('transaction.balance.amount', '710.00')
-            ->where('transaction.destination_balance.amount', '750.00')
-            ->where('transaction.category', null));
+    $detail = app(TransactionCatalog::class)->detail($transfer, $user);
+
+    expect($detail['type'])->toBe('transfer')
+        ->and($detail['type_label'])->toBe('Transfer')
+        ->and($detail['excluded_from_budget'])->toBe(true)
+        ->and($detail['account']['name'])->toBe('Cash')
+        ->and($detail['account']['icon'])->toBe('banknote')
+        ->and($detail['destination']['name'])->toBe('Bank')
+        ->and($detail['destination']['icon'])->toBe('landmark')
+        ->and($detail['balance']['amount'])->toBe('710.00')
+        ->and($detail['destination_balance']['amount'])->toBe('750.00')
+        ->and($detail['category'])->toBe(null);
 
     $this->actingAs($user)
         ->get(route('dashboard', ['month' => '2026-10']))
@@ -174,7 +173,7 @@ test('editing or deleting a transfer updates both the old and the new accounts',
             'note' => 'Moved again',
         ]))
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('transactions.show', $transfer));
+        ->assertRedirect(route('transactions.index', ['month' => '2026-10']));
 
     $balances = app(AccountBalance::class);
 

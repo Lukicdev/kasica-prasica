@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { AdjustmentForm } from '@/components/adjustment-form';
-import { show } from '@/routes/transactions';
+import { DeleteTransactionButton } from '@/components/delete-transaction-button';
 import { index as transactions } from '@/routes/transactions';
 import { edit } from '@/routes/adjustments';
 import type { ReconciliationEditPage } from '@/types/reconciliation';
@@ -28,6 +28,7 @@ export default function EditAdjustment({
                     accounts={accounts}
                     people={people}
                 />
+                <DeleteTransactionButton transactionId={adjustment.id} />
             </div>
         </>
     );
@@ -40,7 +41,9 @@ EditAdjustment.layout = (
 } => ({
     breadcrumbs: [
         { title: 'Transactions', href: transactions() },
-        { title: 'Balance adjustment', href: show(props.adjustment.id) },
-        { title: 'Edit', href: edit(props.adjustment.id) },
+        {
+            title: 'Edit balance adjustment',
+            href: edit(props.adjustment.id),
+        },
     ],
 });

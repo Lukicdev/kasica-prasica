@@ -72,7 +72,9 @@ class TransferController extends Controller
 
         $this->flashBalances($transaction->refresh(), 'Saved.');
 
-        return to_route('transactions.show', $transaction);
+        return to_route('transactions.index', [
+            'month' => $transaction->booked_on->format('Y-m'),
+        ]);
     }
 
     private function flashBalances(Transaction $transfer, string $prefix): void

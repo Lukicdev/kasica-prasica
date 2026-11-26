@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
+import { DeleteTransactionButton } from '@/components/delete-transaction-button';
 import { TransferForm } from '@/components/transfer-form';
-import { index as transactions, show } from '@/routes/transactions';
+import { index as transactions } from '@/routes/transactions';
 import { edit } from '@/routes/transfers';
 import type { TransferFormPage } from '@/types/transfer';
 
@@ -26,12 +27,15 @@ export default function EditTransfer({
                     </div>
                 </section>
                 {transfer ? (
-                    <TransferForm
-                        transfer={transfer}
-                        accounts={accounts}
-                        people={people}
-                        defaults={defaults}
-                    />
+                    <>
+                        <TransferForm
+                            transfer={transfer}
+                            accounts={accounts}
+                            people={people}
+                            defaults={defaults}
+                        />
+                        <DeleteTransactionButton transactionId={transfer.id} />
+                    </>
                 ) : null}
             </div>
         </>
@@ -46,11 +50,7 @@ EditTransfer.layout = (
     breadcrumbs: [
         { title: 'Transactions', href: transactions() },
         {
-            title: 'Transfer',
-            href: props.transfer ? show(props.transfer.id) : transactions(),
-        },
-        {
-            title: 'Edit',
+            title: 'Edit transfer',
             href: props.transfer ? edit(props.transfer.id) : transactions(),
         },
     ],

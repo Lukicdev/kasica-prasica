@@ -76,15 +76,6 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function show(Request $request, Transaction $transaction): Response
-    {
-        Gate::authorize('view', $transaction);
-
-        return Inertia::render('transactions/show', [
-            'transaction' => $this->catalog->detail($transaction, $request->user()),
-        ]);
-    }
-
     public function edit(Request $request, Transaction $transaction): Response|RedirectResponse
     {
         Gate::authorize('update', $transaction);
@@ -114,7 +105,9 @@ class TransactionController extends Controller
 
         $this->flashBalance($transaction->account, 'Saved.');
 
-        return to_route('transactions.show', $transaction);
+        return to_route('transactions.index', [
+            'month' => $transaction->booked_on->format('Y-m'),
+        ]);
     }
 
     public function destroy(Request $request, Transaction $transaction, DeleteTransaction $delete): RedirectResponse

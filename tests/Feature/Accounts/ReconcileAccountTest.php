@@ -1,5 +1,6 @@
 <?php
 
+use App\Catalogs\TransactionCatalog;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -62,14 +63,12 @@ test('reconciliation shows the gap and a balancing entry that is left out of the
         ->and($adjustment->created_by)->toBe($user->id)
         ->and(app(AccountBalance::class)->of($account))->toBe('1075.00');
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', $adjustment))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.type_label', 'Balance adjustment')
-            ->where('transaction.excluded_from_budget', true)
-            ->where('transaction.balance.amount', '1075.00')
-            ->where('transaction.note', 'Counted the cash'));
+    $detail = app(TransactionCatalog::class)->detail($adjustment, $user);
+
+    expect($detail['type_label'])->toBe('Balance adjustment')
+        ->and($detail['excluded_from_budget'])->toBe(true)
+        ->and($detail['balance']['amount'])->toBe('1075.00')
+        ->and($detail['note'])->toBe('Counted the cash');
 
     $this->actingAs($user)
         ->get(route('dashboard', ['month' => '2026-10']))
@@ -169,7 +168,7 @@ test('editing or deleting a balancing entry updates the account and still skips 
             'note' => 'Bank was short',
         ])
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('transactions.show', $adjustment));
+        ->assertRedirect(route('transactions.index', ['month' => '2026-10']));
 
     $balances = app(AccountBalance::class);
 

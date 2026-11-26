@@ -1,5 +1,6 @@
 <?php
 
+use App\Catalogs\TransactionCatalog;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Category;
@@ -44,12 +45,10 @@ test('a recurring expense stays pending until it is confirmed', function () {
     expect($template)->not->toBeNull()
         ->and($template->repeats)->toBeTrue();
 
-    $this->actingAs($user)
-        ->get(route('transactions.show', $template))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('transaction.repeats', true)
-            ->where('transaction.balance.amount', '800.00'));
+    $detail = app(TransactionCatalog::class)->detail($template, $user);
+
+    expect($detail['repeats'])->toBe(true)
+        ->and($detail['balance']['amount'])->toBe('800.00');
 
     $this->actingAs($user)
         ->get(route('transactions.index', ['month' => '2026-10']))
@@ -113,7 +112,7 @@ test('a recurring expense stays pending until it is confirmed', function () {
 
     $this->actingAs($user)
         ->post(route('recurrences.store', $template), ['month' => '2026-11'])
-        ->assertRedirect(route('transactions.show', $confirmed));
+        ->assertRedirect(route('transactions.edit', $confirmed));
 
     expect(Transaction::query()->where('recurrence_id', $template->id)->count())->toBe(1);
 });

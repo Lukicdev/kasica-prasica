@@ -29,7 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('categories/{category}/archive', [CategoryController::class, 'archive'])->name('categories.archive');
     Route::patch('categories/{category}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
 
-    Route::resource('transactions', TransactionController::class);
+    Route::resource('transactions', TransactionController::class)->except(['show']);
 
     Route::get('recurrences/{transaction}', [RecurrenceController::class, 'edit'])->name('recurrences.edit');
     Route::post('recurrences/{transaction}', [RecurrenceController::class, 'store'])->name('recurrences.store');

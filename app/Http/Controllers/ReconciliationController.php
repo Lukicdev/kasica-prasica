@@ -63,7 +63,9 @@ class ReconciliationController extends Controller
 
         $this->flashBalance($transaction->account, 'Saved.');
 
-        return to_route('transactions.show', $transaction);
+        return to_route('transactions.index', [
+            'month' => $transaction->booked_on->format('Y-m'),
+        ]);
     }
 
     private function flashBalance(Account $account, string $prefix): void

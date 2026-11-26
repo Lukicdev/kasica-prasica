@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
+import { DeleteTransactionButton } from '@/components/delete-transaction-button';
 import { TransactionForm } from '@/components/transaction-form';
-import { edit, index, show } from '@/routes/transactions';
+import { edit, index } from '@/routes/transactions';
 import type { TransactionFormPage } from '@/types/transaction';
 
 export default function EditTransaction({
@@ -26,13 +27,18 @@ export default function EditTransaction({
                     </div>
                 </section>
                 {transaction ? (
-                    <TransactionForm
-                        transaction={transaction}
-                        accounts={accounts}
-                        categories={categories}
-                        people={people}
-                        defaults={defaults}
-                    />
+                    <>
+                        <TransactionForm
+                            transaction={transaction}
+                            accounts={accounts}
+                            categories={categories}
+                            people={people}
+                            defaults={defaults}
+                        />
+                        <DeleteTransactionButton
+                            transactionId={transaction.id}
+                        />
+                    </>
                 ) : null}
             </div>
         </>
@@ -47,11 +53,7 @@ EditTransaction.layout = (
     breadcrumbs: [
         { title: 'Transactions', href: index() },
         {
-            title: 'Transaction',
-            href: props.transaction ? show(props.transaction.id) : index(),
-        },
-        {
-            title: 'Edit',
+            title: 'Edit transaction',
             href: props.transaction ? edit(props.transaction.id) : index(),
         },
     ],
