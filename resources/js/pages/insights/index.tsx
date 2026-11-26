@@ -9,6 +9,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { CategoryLabel } from '@/components/category-label';
 import { MoneyAmount } from '@/components/money-amount';
 import {
     Card,
@@ -28,11 +29,13 @@ import {
 import { cn } from '@/lib/utils';
 import { index as insights } from '@/routes/insights';
 import type {
+    InsightsAverages,
     InsightsNetWorth,
     InsightsNetWorthMonth,
     InsightsTrendMonth,
     InsightsTrends,
 } from '@/types/insights';
+import type { OverviewFigure } from '@/types/overview';
 
 const chartConfig = {
     income: {
@@ -54,9 +57,11 @@ const netWorthChartConfig = {
 
 export default function Insights({
     trends,
+    averages,
     net_worth,
 }: {
     trends: InsightsTrends;
+    averages: InsightsAverages;
     net_worth: InsightsNetWorth;
 }) {
     return (
@@ -83,6 +88,71 @@ export default function Insights({
                     </CardHeader>
                     <CardContent>
                         <TrendChart months={trends.months} />
+                    </CardContent>
+                </Card>
+                <Card data-test="averages">
+                    <CardHeader>
+                        <CardTitle>Monthly averages</CardTitle>
+                        <CardDescription>
+                            {averages.months} completed months,{' '}
+                            {averages.from.label} through{' '}
+                            {averages.through.label}.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-6">
+                        <dl className="grid gap-4 sm:grid-cols-2">
+                            <AverageTile
+                                label="Income"
+                                figure={averages.income}
+                                test="average-income"
+                            />
+                            <AverageTile
+                                label="Expenses"
+                                figure={averages.spent}
+                                test="average-spent"
+                            />
+                        </dl>
+                        <div
+                            className="flex flex-col gap-2"
+                            data-test="average-budgets"
+                        >
+                            <h2 className="text-sm font-medium">
+                                Spending per budget
+                            </h2>
+                            {averages.budgets.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    No budgets in this period.
+                                </p>
+                            ) : (
+                                <ul className="divide-y rounded-lg border border-sidebar-border/70 dark:border-sidebar-border">
+                                    {averages.budgets.map((budget) => (
+                                        <li
+                                            key={budget.id}
+                                            className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm"
+                                        >
+                                            <CategoryLabel
+                                                name={budget.name}
+                                                icon={budget.icon}
+                                                color={budget.color}
+                                            />
+                                            <span className="text-muted-foreground">
+                                                <MoneyAmount
+                                                    formatted={
+                                                        budget.spent.formatted
+                                                    }
+                                                    originalFormatted={
+                                                        budget.spent
+                                                            .original_formatted
+                                                    }
+                                                    className="font-medium text-foreground tabular-nums"
+                                                />{' '}
+                                                / month
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card data-test="net-worth">
@@ -129,6 +199,32 @@ export default function Insights({
                 </Card>
             </div>
         </>
+    );
+}
+
+function AverageTile({
+    label,
+    figure,
+    test,
+}: {
+    label: string;
+    figure: OverviewFigure;
+    test: string;
+}) {
+    return (
+        <div
+            className="flex flex-col gap-1 rounded-lg border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+            data-test={test}
+        >
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+            <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                <MoneyAmount
+                    formatted={figure.formatted}
+                    originalFormatted={figure.original_formatted}
+                />
+            </dd>
+            <dd className="text-xs text-muted-foreground">Per month</dd>
+        </div>
     );
 }
 

@@ -2,9 +2,13 @@
 
 namespace App\Catalogs;
 
+use App\Enums\CategoryKind;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Asset;
+use App\Models\BudgetMonth;
+use App\Models\Category;
+use App\Models\CategoryBudget;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
@@ -21,6 +25,9 @@ use Illuminate\Support\Collection;
  * Income and spending are the sums of those transactions in the base currency.
  * Net worth is account balances plus asset values on each date. Debt is not
  * subtracted yet.
+ *
+ * Averages cover the twelve completed months before the current one, so a
+ * half-finished month does not pull them down.
  */
 class InsightsCatalog
 {
@@ -34,6 +41,7 @@ class InsightsCatalog
     /**
      * @return array{
      *     trends: array<string, mixed>,
+     *     averages: array<string, mixed>,
      *     net_worth: array<string, mixed>
      * }
      */
@@ -44,6 +52,7 @@ class InsightsCatalog
 
         return [
             'trends' => $this->trends($workspace, $display),
+            'averages' => $this->averages($workspace, $display),
             'net_worth' => $this->netWorth($workspace, $display),
         ];
     }
@@ -101,6 +110,116 @@ class InsightsCatalog
             'through' => $this->month($through),
             'months' => $rows,
         ];
+    }
+
+    /**
+     * Monthly income and spending averaged over up to twelve completed months.
+     *
+     * The window starts at the first month with income or spending, so months
+     * before the workspace had any records do not count as zero. Budgets lists
+     * every expense category that had a budget in those months, with what was
+     * actually spent in it, averaged over the same months.
+     *
+     * @return array<string, mixed>
+     */
+    private function averages(Workspace $workspace, string $display): array
+    {
+        $months = $this->averageMonths($workspace, CalendarMonth::current()->previous());
+        $first = $months[0];
+        $last = $months[array_key_last($months)];
+        $count = Decimal::of((string) count($months));
+
+        $transactions = Transaction::query()
+            ->whereBelongsTo($workspace)
+            ->whereIn('type', [TransactionType::Income->value, TransactionType::Expense->value])
+            ->where('booked_on', '>=', $first->start()->toDateString())
+            ->where('booked_on', '<', $last->endExclusive()->toDateString())
+            ->get(['type', 'category_id', 'base_amount']);
+
+        $income = Decimal::of('0');
+        $spent = Decimal::of('0');
+        /** @var array<int, Decimal> $byCategory */
+        $byCategory = [];
+
+        foreach ($transactions as $transaction) {
+            $amount = Decimal::of((string) $transaction->base_amount);
+
+            if ($transaction->type === TransactionType::Income) {
+                $income = $income->add($amount);
+
+                continue;
+            }
+
+            $spent = $spent->add($amount);
+
+            if ($transaction->category_id !== null) {
+                $byCategory[$transaction->category_id] = ($byCategory[$transaction->category_id] ?? Decimal::of('0'))->add($amount);
+            }
+        }
+
+        $budgeted = Category::query()
+            ->whereBelongsTo($workspace)
+            ->where('kind', CategoryKind::Expense)
+            ->whereIn('id', CategoryBudget::query()
+                ->select('category_id')
+                ->whereIn('budget_month_id', BudgetMonth::query()
+                    ->select('id')
+                    ->whereBelongsTo($workspace)
+                    ->where('month', '>=', $first->value())
+                    ->where('month', '<=', $last->value())))
+            ->ordered()
+            ->get(['id', 'name', 'icon', 'color']);
+
+        $average = fn (Decimal $total): array => $this->figure(
+            $total->divide($count, MoneyConverter::SCALE)->toString(MoneyConverter::SCALE),
+            $display,
+            $workspace,
+        );
+
+        return [
+            'from' => $this->month($first),
+            'through' => $this->month($last),
+            'months' => count($months),
+            'income' => $average($income),
+            'spent' => $average($spent),
+            'budgets' => $budgeted->map(fn (Category $category): array => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'icon' => $category->icon,
+                'color' => $category->color,
+                'spent' => $average($byCategory[$category->id] ?? Decimal::of('0')),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Twelve completed months, trimmed to start at the first recorded month.
+     *
+     * With no records in the window, all twelve are kept and average to zero.
+     *
+     * @return non-empty-list<CalendarMonth>
+     */
+    private function averageMonths(Workspace $workspace, CalendarMonth $through): array
+    {
+        $months = $this->trendMonths($through);
+        $earliest = Transaction::query()
+            ->whereBelongsTo($workspace)
+            ->whereIn('type', [TransactionType::Income->value, TransactionType::Expense->value])
+            ->where('booked_on', '>=', $months[0]->start()->toDateString())
+            ->where('booked_on', '<', $through->endExclusive()->toDateString())
+            ->min('booked_on');
+
+        if (! is_string($earliest)) {
+            return $months;
+        }
+
+        $start = substr($earliest, 0, 7);
+        $trimmed = array_values(array_filter(
+            $months,
+            fn (CalendarMonth $month): bool => $month->value() >= $start,
+        ));
+
+        return $trimmed === [] ? $months : $trimmed;
     }
 
     /**

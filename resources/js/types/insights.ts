@@ -18,6 +18,23 @@ export type InsightsTrends = {
     months: InsightsTrendMonth[];
 };
 
+export type InsightsAverages = {
+    from: InsightsMonth;
+    through: InsightsMonth;
+    months: number;
+    income: OverviewFigure;
+    spent: OverviewFigure;
+    budgets: InsightsBudgetAverage[];
+};
+
+export type InsightsBudgetAverage = {
+    id: number;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    spent: OverviewFigure;
+};
+
 export type InsightsNetWorthMonth = {
     value: string;
     label: string;

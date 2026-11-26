@@ -3,7 +3,9 @@
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Asset;
+use App\Models\BudgetMonth;
 use App\Models\Category;
+use App\Models\CategoryBudget;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workspace;
@@ -84,6 +86,109 @@ test('trends cover the last twelve months', function () {
                     && $october['income']['base_amount'] === '0.00'
                     && $october['spent']['base_amount'] === '30.00';
             }));
+});
+
+test('averages cover the twelve completed months', function () {
+    $this->travelTo('2026-10-20');
+    $user = User::factory()->create();
+    $account = Account::factory()->create();
+    $groceries = Category::query()->where('name', 'Groceries')->firstOrFail();
+    $salary = Category::query()->where('name', 'Salary')->firstOrFail();
+    $unbudgeted = Category::factory()->create(['name' => 'Unbudgeted']);
+    $idle = Category::factory()->create(['name' => 'Idle']);
+
+    recordTransaction($account, $user, [
+        'type' => TransactionType::Income,
+        'category' => $salary,
+        'amount' => '1200.00',
+        'booked_on' => '2026-05-02',
+    ]);
+    recordTransaction($account, $user, [
+        'category' => $groceries,
+        'amount' => '60.00',
+        'booked_on' => '2025-10-01',
+    ]);
+    recordTransaction($account, $user, [
+        'category' => $unbudgeted,
+        'amount' => '120.00',
+        'booked_on' => '2026-03-10',
+    ]);
+    recordTransaction($account, $user, [
+        'category' => $groceries,
+        'amount' => '50.00',
+        'booked_on' => '2025-09-30',
+    ]);
+    recordTransaction($account, $user, [
+        'category' => $groceries,
+        'amount' => '500.00',
+        'booked_on' => '2026-10-02',
+    ]);
+
+    foreach ([[$groceries, '2026-08'], [$idle, '2026-09'], [$unbudgeted, '2026-10']] as [$category, $month]) {
+        CategoryBudget::factory()->create([
+            'budget_month_id' => BudgetMonth::query()->firstOrCreate([
+                'workspace_id' => $user->workspace_id,
+                'month' => $month,
+            ])->id,
+            'category_id' => $category->id,
+            'amount' => '100.00',
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('insights.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('averages.from.value', '2025-10')
+            ->where('averages.through.value', '2026-09')
+            ->where('averages.months', 12)
+            ->where('averages.income.base_amount', '100.00')
+            ->where('averages.spent.base_amount', '15.00')
+            ->where('averages.budgets', function ($budgets): bool {
+                $rows = collect($budgets)->mapWithKeys(fn (array $row): array => [
+                    $row['name'] => $row['spent']['base_amount'],
+                ])->all();
+
+                return $rows === ['Groceries' => '5.00', 'Idle' => '0.00']
+                    || $rows === ['Idle' => '0.00', 'Groceries' => '5.00'];
+            }));
+});
+
+test('averages start at the first recorded month', function () {
+    $this->travelTo('2026-11-26');
+    $user = User::factory()->create();
+    $account = Account::factory()->create();
+    $salary = Category::query()->where('name', 'Salary')->firstOrFail();
+
+    foreach (['2026-07-05' => '400.00', '2026-08-05' => '600.00', '2026-09-05' => '500.00', '2026-10-05' => '500.00', '2026-11-05' => '9000.00'] as $date => $amount) {
+        recordTransaction($account, $user, [
+            'type' => TransactionType::Income,
+            'category' => $salary,
+            'amount' => $amount,
+            'booked_on' => $date,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('insights.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('averages.from.value', '2026-07')
+            ->where('averages.through.value', '2026-10')
+            ->where('averages.months', 4)
+            ->where('averages.income.base_amount', '500.00'));
+});
+
+test('budget averages are empty without budgets', function () {
+    $this->travelTo('2026-10-20');
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('insights.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('averages.income.base_amount', '0.00')
+            ->where('averages.budgets', []));
 });
 
 test('net worth is accounts plus assets at each month', function () {
