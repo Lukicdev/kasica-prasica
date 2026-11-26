@@ -13,6 +13,7 @@ use App\Enums\AccountType;
 use App\Http\Requests\Accounts\StoreAccountRequest;
 use App\Http\Requests\Accounts\UpdateAccountRequest;
 use App\Models\Account;
+use App\Queries\AccountStatementFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -67,11 +68,9 @@ class AccountController extends Controller
     {
         Gate::authorize('view', $account);
 
-        $page = $request->integer('page');
-
         return Inertia::render('accounts/show', [
             'account' => $this->catalog->detail($account),
-            ...$this->statement->lines($account, $page > 0 ? $page : 1),
+            ...$this->statement->lines($account, AccountStatementFilters::fromRequest($request)),
         ]);
     }
 

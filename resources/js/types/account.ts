@@ -71,3 +71,36 @@ export type StatementLine = {
     amount: (MoneyFigure & { original_formatted: string | null }) | null;
     running_balance: MoneyFigure;
 };
+
+export type AccountActivitySortColumn =
+    | 'date'
+    | 'type'
+    | 'category'
+    | 'person'
+    | 'amount';
+
+export type AccountActivitySort = {
+    column: AccountActivitySortColumn;
+    direction: 'asc' | 'desc';
+};
+
+export type AccountActivityFilters = {
+    type: string | null;
+    category: number | null;
+    person: number | null;
+    currency: string | null;
+    search: string;
+};
+
+export type AccountActivityOptions = {
+    types: { value: string; label: string }[];
+    categories: {
+        id: number;
+        name: string;
+        kind: string;
+        icon: string | null;
+        color: string | null;
+    }[];
+    people: { id: number; name: string }[];
+    currencies: { value: string; label: string }[];
+};

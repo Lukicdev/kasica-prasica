@@ -1,25 +1,26 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { format, lastDayOfMonth, parse } from 'date-fns';
 import {
-    ArrowDown,
     ArrowLeftRight,
-    ArrowUp,
     CalendarIcon,
     ListFilter,
     Plus,
     SearchIcon,
-    XIcon,
 } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { AccountLabel } from '@/components/account-label';
 import { CategoryLabel } from '@/components/category-label';
+import { FilterChip } from '@/components/filter-chip';
 import { FormSelect } from '@/components/form-select';
 import { MoneyAmount, moneyDirection } from '@/components/money-amount';
 import { MonthNav } from '@/components/month-nav';
 import { PaginationNav } from '@/components/pagination-nav';
 import { PendingRecurrences } from '@/components/pending-recurrences';
+import {
+    nextSortDirection,
+    SortableTableHead,
+} from '@/components/sortable-table-head';
 import { TableRowLink } from '@/components/table-row-link';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     InputGroup,
@@ -91,50 +92,11 @@ function listQuery(
     };
 }
 
-function nextDirection(
-    sort: TransactionSort,
-    column: TransactionSortColumn,
-): 'asc' | 'desc' {
-    if (sort.column !== column) {
-        return column === 'date' || column === 'amount' ? 'desc' : 'asc';
-    }
-
-    return sort.direction === 'asc' ? 'desc' : 'asc';
-}
-
 function monthSpan(value: string): string {
     const start = parse(value, 'yyyy-MM', new Date());
     const end = lastDayOfMonth(start);
 
     return `${format(start, 'dd MMM')} — ${format(end, 'dd MMM')}`;
-}
-
-function FilterChip({
-    icon,
-    label,
-    href,
-    removeLabel,
-    test,
-}: {
-    icon?: ReactNode;
-    label: string;
-    href: string;
-    removeLabel: string;
-    test?: string;
-}) {
-    return (
-        <Badge variant="outline" className="h-7 px-2" data-test={test}>
-            {icon}
-            {label}
-            <Link
-                href={href}
-                aria-label={removeLabel}
-                className="inline-flex size-5 items-center justify-center rounded-sm"
-            >
-                <XIcon className="size-3" />
-            </Link>
-        </Badge>
-    );
 }
 
 function TransactionToolbar({
@@ -602,72 +564,34 @@ export default function Transactions({
                         </TableCaption>
                         <TableHeader>
                             <TableRow className="group">
-                                {columns.map((column) => {
-                                    const active =
-                                        sort.column === column.column;
-                                    const direction = nextDirection(
-                                        sort,
-                                        column.column,
-                                    );
-
-                                    return (
-                                        <TableHead
-                                            key={column.column}
-                                            scope="col"
-                                            aria-sort={
-                                                active
-                                                    ? sort.direction === 'asc'
-                                                        ? 'ascending'
-                                                        : 'descending'
-                                                    : 'none'
-                                            }
-                                            className={cn(
-                                                column.column === 'date' &&
-                                                    pinnedColumn,
-                                                column.column === 'amount' &&
-                                                    'text-right',
-                                            )}
-                                        >
-                                            <Link
-                                                href={index({
-                                                    query: listQuery(
-                                                        month.value,
-                                                        filters,
-                                                        {
-                                                            column: column.column,
-                                                            direction,
-                                                        },
-                                                    ),
-                                                })}
-                                                className="inline-flex min-h-11 items-center gap-1"
-                                                data-test={`sort-${column.column}`}
-                                            >
-                                                {column.label}
-                                                {active ? (
-                                                    sort.direction === 'asc' ? (
-                                                        <ArrowUp
-                                                            className="size-4"
-                                                            aria-hidden="true"
-                                                        />
-                                                    ) : (
-                                                        <ArrowDown
-                                                            className="size-4"
-                                                            aria-hidden="true"
-                                                        />
-                                                    )
-                                                ) : null}
-                                                <span className="sr-only">
-                                                    {active
-                                                        ? sort.direction ===
-                                                          'asc'
-                                                            ? ', sorted ascending'
-                                                            : ', sorted descending'
-                                                        : ', sort'}
-                                                </span>
-                                            </Link>
-                                        </TableHead>
-                                    );
-                                })}
+                                {columns.map((column) => (
+                                    <SortableTableHead
+                                        key={column.column}
+                                        column={column.column}
+                                        label={column.label}
+                                        sort={sort}
+                                        href={index({
+                                            query: listQuery(
+                                                month.value,
+                                                filters,
+                                                {
+                                                    column: column.column,
+                                                    direction:
+                                                        nextSortDirection(
+                                                            sort,
+                                                            column.column,
+                                                        ),
+                                                },
+                                            ),
+                                        })}
+                                        className={cn(
+                                            column.column === 'date' &&
+                                                pinnedColumn,
+                                            column.column === 'amount' &&
+                                                'text-right',
+                                        )}
+                                    />
+                                ))}
                             </TableRow>
                         </TableHeader>
                         <TableBody>

@@ -122,22 +122,11 @@ class TransactionCatalog
         $start = $filters->start();
         $nextMonth = $start->copy()->addMonth();
 
-        $categories = Category::query()
-            ->whereBelongsTo($workspace)
-            ->ordered()
-            ->get();
-        $accounts = Account::query()
-            ->whereBelongsTo($workspace)
-            ->orderBy('name')
-            ->get();
-        $people = User::query()
-            ->whereBelongsTo($workspace)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $options = $this->filterOptions($workspace);
 
-        $categoryId = $this->knownId($filters->categoryId, $categories->modelKeys());
-        $accountId = $this->knownId($filters->accountId, $accounts->modelKeys());
-        $personId = $this->knownId($filters->personId, $people->modelKeys());
+        $categoryId = $this->knownId($filters->categoryId, array_column($options['categories'], 'id'));
+        $accountId = $this->knownId($filters->accountId, array_column($options['accounts'], 'id'));
+        $personId = $this->knownId($filters->personId, array_column($options['people'], 'id'));
 
         $query = Transaction::query()
             ->whereBelongsTo($workspace)
@@ -212,37 +201,7 @@ class TransactionCatalog
                 || $personId !== null
                 || $filters->currency !== null
                 || $filters->search !== '',
-            'options' => [
-                'types' => TransactionType::options(),
-                'categories' => array_values($categories->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'name' => $category->archived_at === null
-                        ? $category->name
-                        : $category->name.' (archived)',
-                    'kind' => $category->kind->value,
-                    'icon' => $category->icon,
-                    'color' => $category->color,
-                ])->all()),
-                'accounts' => array_values($accounts->map(fn (Account $account): array => [
-                    'id' => $account->id,
-                    'name' => $account->archived_at === null
-                        ? $account->name
-                        : $account->name.' (archived)',
-                    'icon' => $account->icon,
-                ])->all()),
-                'people' => array_values($people->map(fn (User $person): array => [
-                    'id' => $person->id,
-                    'name' => $person->name,
-                ])->all()),
-                'currencies' => array_values($user->workspace->currencies()
-                    ->orderBy('code')
-                    ->pluck('code')
-                    ->map(fn (string $code): array => [
-                        'value' => $code,
-                        'label' => $code,
-                    ])
-                    ->all()),
-            ],
+            'options' => $options,
             'transactions' => array_values($page->getCollection()->map(function (Transaction $transaction) use ($display, $user): array {
                 $destination = $transaction->type === TransactionType::Transfer
                     ? $transaction->destinationAccount
@@ -293,6 +252,65 @@ class TransactionCatalog
                 $filters->currency,
                 $filters->search,
             ),
+        ];
+    }
+
+    /**
+     * The choices offered in the transaction filters.
+     *
+     * @return array{
+     *     types: list<array{value: string, label: string}>,
+     *     categories: list<array{id: int, name: string, kind: string, icon: string|null, color: string|null}>,
+     *     accounts: list<array{id: int, name: string, icon: string|null}>,
+     *     people: list<array{id: int, name: string}>,
+     *     currencies: list<array{value: string, label: string}>
+     * }
+     */
+    public function filterOptions(Workspace $workspace): array
+    {
+        $categories = Category::query()
+            ->whereBelongsTo($workspace)
+            ->ordered()
+            ->get();
+        $accounts = Account::query()
+            ->whereBelongsTo($workspace)
+            ->orderBy('name')
+            ->get();
+        $people = User::query()
+            ->whereBelongsTo($workspace)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return [
+            'types' => TransactionType::options(),
+            'categories' => array_values($categories->map(fn (Category $category): array => [
+                'id' => $category->id,
+                'name' => $category->archived_at === null
+                    ? $category->name
+                    : $category->name.' (archived)',
+                'kind' => $category->kind->value,
+                'icon' => $category->icon,
+                'color' => $category->color,
+            ])->all()),
+            'accounts' => array_values($accounts->map(fn (Account $account): array => [
+                'id' => $account->id,
+                'name' => $account->archived_at === null
+                    ? $account->name
+                    : $account->name.' (archived)',
+                'icon' => $account->icon,
+            ])->all()),
+            'people' => array_values($people->map(fn (User $person): array => [
+                'id' => $person->id,
+                'name' => $person->name,
+            ])->all()),
+            'currencies' => array_values($workspace->currencies()
+                ->orderBy('code')
+                ->pluck('code')
+                ->map(fn (string $code): array => [
+                    'value' => $code,
+                    'label' => $code,
+                ])
+                ->all()),
         ];
     }
 

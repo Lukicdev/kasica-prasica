@@ -365,3 +365,101 @@ test('a zero amount is rejected', function () {
 
     expect(fn () => recordExpense($account, $user, '0'))->toThrow(ValidationException::class);
 });
+
+test('account activity can be sorted by a column and keeps each running balance', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create([
+        'workspace_id' => $user->workspace_id,
+        'opening_balance' => '1000.00',
+        'opening_balance_on' => '2026-10-01',
+        'currency' => 'RSD',
+    ]);
+
+    recordExpense($account, $user, '50.00', '2026-10-02', 'Small');
+    recordExpense($account, $user, '300.00', '2026-10-03', 'Large');
+    recordExpense($account, $user, '100.00', '2026-10-04', 'Medium');
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'sort' => 'amount']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('sort.column', 'amount')
+            ->where('sort.direction', 'desc')
+            ->where('lines', fn ($lines): bool => count($lines) === 3)
+            ->where('lines.0.note', 'Large')
+            ->where('lines.0.running_balance.amount', '650.00')
+            ->where('lines.1.note', 'Medium')
+            ->where('lines.1.running_balance.amount', '550.00')
+            ->where('lines.2.note', 'Small')
+            ->where('lines.2.running_balance.amount', '950.00'));
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'sort' => 'amount', 'direction' => 'asc']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('lines.0.note', 'Small')
+            ->where('lines.2.note', 'Large'));
+});
+
+test('newest-first account activity ends with the opening balance', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create([
+        'workspace_id' => $user->workspace_id,
+        'opening_balance' => '1000.00',
+        'opening_balance_on' => '2026-10-01',
+        'currency' => 'RSD',
+    ]);
+
+    recordExpense($account, $user, '50.00', '2026-10-02', 'First');
+    recordExpense($account, $user, '100.00', '2026-10-04', 'Second');
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'sort' => 'date', 'direction' => 'desc']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('lines.0.note', 'Second')
+            ->where('lines.0.running_balance.amount', '850.00')
+            ->where('lines.1.note', 'First')
+            ->where('lines.1.running_balance.amount', '950.00')
+            ->where('lines.2.kind', 'opening')
+            ->where('lines.2.running_balance.amount', '1000.00'));
+});
+
+test('account activity can be searched and filtered without the opening balance line', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create([
+        'workspace_id' => $user->workspace_id,
+        'opening_balance' => '1000.00',
+        'opening_balance_on' => '2026-10-01',
+        'currency' => 'RSD',
+    ]);
+
+    recordExpense($account, $user, '50.00', '2026-10-02', 'Groceries');
+    recordTransaction($account, $user, [
+        'type' => TransactionType::Income,
+        'amount' => '500.00',
+        'booked_on' => '2026-10-03',
+        'note' => 'Salary',
+    ]);
+    recordExpense($account, $user, '20.00', '2026-10-04', 'More groceries');
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'search' => 'groceries']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filtered', true)
+            ->where('filters.search', 'groceries')
+            ->where('lines', fn ($lines): bool => count($lines) === 2)
+            ->where('lines.0.note', 'Groceries')
+            ->where('lines.0.running_balance.amount', '950.00')
+            ->where('lines.1.note', 'More groceries')
+            ->where('lines.1.running_balance.amount', '1430.00')
+            ->where('pagination.total', 2));
+
+    $this->actingAs($user)
+        ->get(route('accounts.show', ['account' => $account, 'type' => 'income']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.type', 'income')
+            ->where('lines', fn ($lines): bool => count($lines) === 1)
+            ->where('lines.0.note', 'Salary')
+            ->where('lines.0.running_balance.amount', '1450.00'));
+});
